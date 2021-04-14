@@ -12,3 +12,15 @@ modern.jsonp
 resources/sass/.sass-cache/
 resources/.arch-internal-preview.css
 .arch-internal-preview.css
+node_modules
+.vscode/
+.idea/
+.metals/
+contracts/
+hel_keyfiles/
+migrations/
+key_file.json
+valhalla_.json
+valhalla_key_file.json
+.history/
+data/db/

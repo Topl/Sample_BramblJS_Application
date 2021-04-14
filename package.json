@@ -1,0 +1,42 @@
+{
+  "name": "brambljs-sample-application",
+  "version": "1.0.0",
+  "description": "A sample BrambleJS application that uses all of the APIs which can be used for documentation, tutorials, training and onboarding.",
+  "main": "server.js",
+  "scripts": {
+    "lint": "eslint src --ext .js",
+    "lint:fix": "npm run lint -- --fix",
+    "test:it": "./node_modules/mocha/bin/mocha test/it --timeout 15000",
+    "test:e2e": "./node_modules/mocha/bin/mocha test/e2e --timeout 15000",
+    "test:all": "npm run lint && npm run test:it && npm run test:e2e",
+    "test": "npm run lint && npm run test:it",
+    "start": "nodemon server.js",
+    "build": "node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Topl/Sample_BrambleJS_Application.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Topl/Sample_BrambleJS_Application/issues"
+  },
+  "homepage": "https://github.com/Topl/Sample_BrambleJS_Application#readme",
+  "dependencies": {
+    "brambljs": "^1.2.1",
+    "dotenv": "^8.2.0",
+    "express": "^4.17.1",
+    "mongodb": "^3.6.6",
+    "nodemon": "^2.0.7",
+    "shortid": "^2.2.16"
+  },
+  "babel": {
+    "plugins": [
+      [
+        "@babel/plugin-syntax-class-properties"
+      ]
+    ]
+  }
+}
