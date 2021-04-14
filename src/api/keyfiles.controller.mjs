@@ -1,8 +1,9 @@
-import UsersDAO from "../dao/usersDAO"
-import KeyfilesDAO from "../dao/keyfilesDAO"
-import { User } from "./users.controller"
-import {ObjectId} from "bson"
-import AddressesDAO from "../dao/addressesDAO"
+import UsersDAO from "../dao/usersDAO.mjs"
+import KeyfilesDAO from "../dao/keyfilesDAO.mjs"
+import { User } from "./users.controller.mjs"
+import pkg from 'bson';
+const {ObjectId} = pkg;
+import AddressesDAO from "../dao/addressesDAO.mjs"
 
 export default class KeyfilesController {
     static async apiPostKeyfile(req, res, next) {
@@ -71,7 +72,7 @@ export default class KeyfilesController {
             const addressId = req.body.address_id
             const updatedAddress = await AddressesDAO.getKeyfileByAddress(addressId)
 
-            res.json({keyfileId: updatedAddress.keyfileId})
+            res.json({keyfile_id: updatedAddress.keyfileId})
         } catch (e) {
             res.status(500).json({e})
         }
@@ -96,7 +97,7 @@ export default class KeyfilesController {
 
             const addressId = req.body.address_id
 
-            const {keyfileId } = await AddressesDAO.getKeyfileByID(addressId)
+            const {keyfile} = await AddressesDAO.getKeyfileByID(addressId)
             res.json({keyfileId})
         } catch (e) {
             res.status(500).json({e})

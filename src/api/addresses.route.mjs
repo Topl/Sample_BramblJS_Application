@@ -1,6 +1,6 @@
 import { Router } from "express"
-import AddressesCtrl from "./addresses.controller"
-import KeyFilesCtrl from "./keyfiles.controller"
+import AddressesCtrl from "./addresses.controller.mjs"
+import KeyFilesCtrl from "./keyfiles.controller.mjs"
 
 const router = new Router()
 
@@ -17,5 +17,11 @@ router
     .post(KeyFilesCtrl.apiPostKeyfile)
     .put(KeyFilesCtrl.apiUpdateKeyfile)
     .delete(KeyFilesCtrl.apiDeleteKeyfile)
+
+router  
+    .route("/address")
+    .post(AddressesCtrl.apiPostAddress)
+    .put(AddressesCtrl.apiUpdateAddress)
+    .delete(AddressesCtrl.apiDeleteAddress)
 
 export default router

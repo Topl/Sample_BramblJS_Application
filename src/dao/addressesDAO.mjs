@@ -1,10 +1,11 @@
-import {ObjectId} from "bson"
+import pkg from 'bson';
+const {ObjectId} = pkg;
 import e from "express"
-import UsersDAO from "../dao/usersDAO"
+import UsersDAO from "./usersDAO.mjs"
 
 let addresses
 let topl
-const DEFAULT_SORT = [[polyBalance, -1]]
+const DEFAULT_SORT = [["polyBalance", -1]]
 export default class AddressesDAO {
     static async injectDB(conn) {
         if (addresses) {
@@ -63,7 +64,7 @@ export default class AddressesDAO {
             if (await addresses.findOne({
                 _id: ObjectId(insertResult.insertedId)
             })) {
-                return {success: true}
+                return {success: true, addressId: insertedResult.insertedId}
             } else {
                 console.error(`Insert Address Unsuccessful`)
                 return {error: `Insertion unsuccessful`}

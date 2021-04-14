@@ -1,7 +1,30 @@
-import AddressesDAO from "../dao/addressesDAO";
-import { User } from "./users.controller";
+import AddressesDAO from "../dao/addressesDAO.mjs"
+import { User } from "./users.controller.mjs"
+import b from 'brambljs';
+const {BramblJS} = b;
+import bs from 'bson';
+const {ObjectId} = bs;
+
+let brambljs
 
 export default class AddressesController {
+
+    static async injectBramblJS(conn) {
+        if (brambljs) {
+            return
+        }
+        try {
+            brambljs = new BramblJS({
+                networkPrefix : process.env.NETWORK_PREFIX,
+                Requests: {
+                    url: `${conn}${process.env.PROJECT_ID}`,
+                    apiKey: process.env.API_KEY
+                }
+            })
+        } catch (e) {
+            console.error(`Unable to establish connection to Topl blockchain in AddressesController: ${e}`)
+        }
+    }
 
     static async apiPostAddress(req, res, next) {
         try {
@@ -16,7 +39,88 @@ export default class AddressesController {
             const keyfileId = req.body.keyfileId
             const title = req.body.title
             const trustRating = req.body.trustRating
-            co
+            const address = req.body.address
+            const date = new Date()
+
+            const polyBalance = BigInt(await brambljs.requests.lookupBalancesByAddresses({addresses: [address]}).result[address].Balances.Polys) 
+
+            const addressResponse = await AddressesDAO.addAddress(
+                address,
+                title,
+                polyBalance ? polyBalance : 0,
+                trustRating ? trustRating: 0,
+                keyfileId,
+                date
+            )
+            
+            const updatedAddress = await AddressesDAO.getAddressByID(addressResponse.addressId)
+            res.json({status: "success", addressId: updatedAddress._id})
+
+        } catch (e) {
+            res.status(500).json({e})
+        }
+    }
+
+    static async apiUpdateAddress(req, res, next) {
+        try {
+            const userJwt = req.get("Authorization").slice("Bearer ".length)
+            const user = await User.decoded(userJwt)
+            var {error} = user
+            if (error) {
+                res.status(401).json({error})
+                return
+            }
+
+            const addressId = req.body.addresss_id
+            const title = req.body.title
+            const trustRating = req.body.trustRating
+            const polyBalance =  BigInt(await brambljs.requests.lookupBalancesByAddresses({addresses: [address]}).result[address].Balances.Polys) 
+            const date = new Date()
+
+            const addressResponse = await AddressesDAO.updateAddress(
+                ObjectId(addressId),
+                title,
+                polyBalance,
+                trustRating,
+                date
+            )
+
+            var {error} = addressResponse
+            if (error) {
+                res.status(400).json({error})
+            }
+
+            const updatedAddress = await AddressesDAO.getAddressByID(addressId)
+
+            res.json({address_id: updatedAddress.addressId})
+
+        } catch (e) {
+            res.status(500).json({e})
+        }
+    }
+
+    static async apiDeleteAddress(req, res, next) {
+        try {
+            const userJwt = req.get("Authorization").slice("Bearer ".length)
+            const user = await User.decoded(userJwt)
+            var {error} = user
+            if (error) {
+                res.status(401).json({error})
+                return
+            }
+
+            const addressId = req.body.addressId
+            const userEmail = user.userEmail
+
+            const addressResponse = await AddressesDAO.deleteAddress(
+                ObjectId(addressId),
+                userEmail,
+            )
+
+            const {address} = await AddressesDAO.getAddressByID(addressId)
+            res.json({keyfileId})
+        } catch (e) {
+            res.status(500).json({e})
         }
     }
 
@@ -24,9 +128,9 @@ export default class AddressesController {
         const ADDRESSES_PER_PAGE = 20
         const { addressesList, totalNumAddresses } = await AddressesDAO.getAddresses()
         let response = {
-            addresses = addressesList,
-            page = 0,
-            filters = {},
+            addresses: addressesList,
+            page: 0,
+            filters: {},
             entries_per_page: ADDRESSES_PER_PAGE,
             total_results: totalNumAddresses,
         }

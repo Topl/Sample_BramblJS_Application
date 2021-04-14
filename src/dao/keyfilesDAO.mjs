@@ -1,8 +1,9 @@
-import { ObjectId } from "bson"
-import UsersDAO from "./usersDAO"
+import pkg from 'bson';
+const { ObjectId } = pkg;
+import UsersDAO from "./usersDAO.mjs"
 
 let keyfileDb
-export default class KeyfilesDao {
+export default class KeyfilesDAO {
     /**
      * Establishes the connection to the database and creates a handle for the keyfiles collection
      * This is wrapped in a try/catch block in case there is a network error, or some other issue

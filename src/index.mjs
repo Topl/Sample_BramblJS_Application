@@ -1,7 +1,9 @@
-import app from "./server"
-import { MongoClient } from "mongodb"
-import KeyfilesDao from "./dao/keyfilesDAO"
-import UsersDAO from "./dao/usersDAO"
+import app from "./server.js"
+import pkg from 'mongodb';
+const { MongoClient } = pkg;
+import KeyfilesDAO from "./dao/keyfilesDAO.mjs"
+import UsersDAO from "./dao/usersDAO.mjs"
+import Envs from 'envs'
 
 const port = process.env.PORT || 8082
 
@@ -18,7 +20,7 @@ MongoClient.connect(
     process.exit(1)
 })
 .then(async client => {
-   await KeyfilesDao.injectDB
+   await KeyfilesDAO.injectDB
    await UsersDAO.injectDB
    app.listen(port, () => {
        console.log(`listening on port ${port}`)
