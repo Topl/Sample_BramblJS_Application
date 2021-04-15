@@ -1,7 +1,6 @@
+import brambl from require('../helpers/brambl.js')
 import AddressesDAO from "../dao/addressesDAO.mjs"
 import { User } from "./users.controller.mjs"
-import b from 'brambljs';
-const {BramblJS} = b;
 import bs from 'bson';
 const {ObjectId} = bs;
 
@@ -9,21 +8,14 @@ let brambljs
 
 export default class AddressesController {
 
-    static async injectBramblJS(conn) {
-        if (brambljs) {
-            return
-        }
-        try {
-            brambljs = new BramblJS({
-                networkPrefix : process.env.NETWORK_PREFIX,
-                Requests: {
-                    url: `${conn}${process.env.PROJECT_ID}`,
-                    apiKey: process.env.API_KEY
-                }
-            })
-        } catch (e) {
-            console.error(`Unable to establish connection to Topl blockchain in AddressesController: ${e}`)
-        }
+    static async getTest(req, res, next) {
+        res.send("Topl Sample API")
+    }
+
+    static create(req, res, next){
+       brambl.createAddress().then((value) => {
+           return res.send(value)
+       } );
     }
 
     static async apiPostAddress(req, res, next) {

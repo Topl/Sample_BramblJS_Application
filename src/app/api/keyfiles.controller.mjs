@@ -13,19 +13,17 @@ export default class KeyfilesController {
             var {error} = user
             if (error) {
                 res.status(401).json({error})
-                return
+                return 
             }
 
             const addressId = req.body.address_id
             const keyfile = req.body.keyfile
-            const keyfilePassword = req.body.password
             const date = new Date()
 
             const keyfileResponse = await KeyfilesDAO.addKeyfile(
                 addressId,
                 user.email,
-                keyfile,
-                keyfilePassword,
+                keyfile
                 date,
             )
 
@@ -48,13 +46,11 @@ export default class KeyfilesController {
             }
 
             const keyfileId = req.body.keyfile_id
-            const keyfilePassword = req.body.password
             const date = new Date()
 
             const keyfileResponse = await KeyfilesDAO.updateKeyfile(
                 ObjectId(keyfileId),
                 user.email,
-                keyfilePassword,
                 date
             )
 
