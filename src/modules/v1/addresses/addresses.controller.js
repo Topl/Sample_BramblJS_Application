@@ -1,4 +1,4 @@
-import brambl from require('../helpers/brambl.js')
+import brambl from require('../../../lib/brambl.js')
 import AddressesDAO from "../dao/addressesDAO.mjs"
 import { User } from "./users.controller.mjs"
 import bs from 'bson';

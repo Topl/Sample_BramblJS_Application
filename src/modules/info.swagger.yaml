@@ -1,0 +1,27 @@
+paths:
+    /v1/info:
+        get:
+          tags:
+          - public
+          summary: Retrieve text that the template server is working
+          security: []
+          operationId: getInfo
+          responses:
+            200:
+              description: Ok
+              content:
+                application/json:
+                  schema:
+                    type: object
+                    properties:
+                        msg:
+                            type: string
+                        data:
+                            type: string
+            500:
+              description: Uncaught error response
+              content:
+                plain/text:
+                  schema:
+                    type: string
+                    example: "Internal Server Error"

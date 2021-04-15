@@ -4,7 +4,8 @@ const networkUrl = connections.networkUrl;
 const projectId = connections.projectId;
 const apiKey = connections.networkApiKey;
 const BramblJS = require('brambljs');
-var BigNumber = require('bignumber'); // handles topl balances
+var BN = require('bn.js'); // handles topl balances
+var utils = require('./utils.js');
 
 var bramblJsRequests;
 var brambljs;
@@ -25,6 +26,23 @@ BramblJSObject = {
     brambljs: brambljs,
     BigNumber: BigNumber,
     network: network
+}
+
+var fromNanoPoly = function(number, unit) {
+    number = getUnitValue(unit);
+
+    if (!utils.isBN(number) && !_.isString(number)) {
+        throw new Error('Please pass numbers as strings or BN objects to avoid precision errors');
+    }
+
+    return utils.isBN(number) ? 
+}
+
+var getUnitValue = function(unit) {
+    if (!unit === "poly") {
+        throw new Error('This unit "' + unit + '"does\'t exist, please use "poly"');
+    }
+    return new BN(1e9);
 }
 
 module.exports = BramblJSObject;

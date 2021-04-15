@@ -19,8 +19,21 @@ export default class BramblHelper {
                 keyfile: kf
             };
 
-            console.log('new address', a);
+            csonsole.log('new address', a);
             resolve(Address);      
         }))
+    }
+
+    /**
+     * Get the poly and nanopoly balances for a valid address
+     * @param {string} address 
+     * @return {Promise} Promise obj with data or error
+     */
+    static async getBalance(address) {
+        let obj = {};
+        let e = await brambljs.requests.lookupBalancesByAddresses({addresses: [address]})
+                    .then(function(result) {
+                        obj.nanoPolyBalance = result.result[address].Balances.Polys
+                    })
     }
 }

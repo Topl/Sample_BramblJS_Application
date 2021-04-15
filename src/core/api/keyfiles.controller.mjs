@@ -1,6 +1,6 @@
 import UsersDAO from "../dao/usersDAO.mjs"
 import KeyfilesDAO from "../dao/keyfilesDAO.mjs"
-import { User } from "./users.controller.mjs"
+import { User } from "../../modules/v1/user/users.controller.mjs"
 import pkg from 'bson';
 const {ObjectId} = pkg;
 import AddressesDAO from "../dao/addressesDAO.mjs"
