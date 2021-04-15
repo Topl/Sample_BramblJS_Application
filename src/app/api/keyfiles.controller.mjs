@@ -23,7 +23,7 @@ export default class KeyfilesController {
             const keyfileResponse = await KeyfilesDAO.addKeyfile(
                 addressId,
                 user.email,
-                keyfile
+                keyfile,
                 date,
             )
 
