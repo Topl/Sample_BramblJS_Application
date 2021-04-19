@@ -6,12 +6,12 @@ const networkApiKey = network.apiKey
 const projectId = network.projectId
 
 Connections = {
-    connections = connections,
-    networkType = networkType,
-    network = network,
-    networkUrl = networkUrl,
-    networkApiKey = networkApiKey,
-    projectId = projectId
+    connections: connections,
+    networkType: networkType,
+    network: network,
+    networkUrl: networkUrl,
+    networkApiKey: networkApiKey,
+    projectId: projectId
 }
 
 module.exports = Connections;

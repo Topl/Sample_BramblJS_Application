@@ -1,4 +1,5 @@
-const mongoDBSettings = require('../../config/connections.json')
+const mongoDBSettings = require('../../config/mongoDBSettings.json')
+require('dotenv').config()
 
 const settings = {
     mongoURI: process.env.MONGO_URI || mongoDBSettings.mongoURI,

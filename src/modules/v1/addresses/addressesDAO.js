@@ -1,12 +1,11 @@
 const ObjectId = require('bson')
-import e from "express"
-import UsersDAO from "./usersDAO.mjs"
+const e = require("express")
 
 let addresses
 let topl
 const DEFAULT_SORT = [["polyBalance", -1]]
-export default class AddressesDAO {
-    static async injectDB(conn) {
+AddressesDAO = {
+    injectDB: async function(conn) {
         if (addresses) {
             return
         }
@@ -19,12 +18,12 @@ export default class AddressesDAO {
                 `Unable to establish a collection handle in addressesDAO: ${e}`,
             )
         }
-    }
+    },
     /**
      * Retrieves the connection pool size, write concern and user roles on the current client.
      * @returns {Promise<ConfigurationResult>} An object with configuration details
      */
-    static async getConfiguration() {
+    getConfiguration: async function() {
         const roleInfo = await topl.command({connectionStatus: 1})
         const authInfo = roleInfo.authInfo.authenticatedUserRoles[0]
         const {poolSize, wtimeout} = addresses.s.db.serverConfig.s.options
@@ -34,110 +33,7 @@ export default class AddressesDAO {
             authInfo,
         }
         return response
-    }
-    /**
-     * Inserts an address into the "addresses" collection with the following fields:
-     * 
-     * @param {*} address: The Base58 encoded address string
-     * @param {*} title: a descriptive short title for this address
-     * @param {*} polyBalance: The total polyBalance for this address
-     * @param {*} trustRating: The level of trust that this asset has accumulated (that the data stored on the blockchain is reliable) 
-     * @param {*} keyfileId: id for corresponding keyfile (if it has already been inserted into the db)
-     * @param {string} date: The date on which the address was created
-     */
-    static async addAddress(address, title, polyBalance, trustRating, keyfileId, date) {
-        try {
-            address = address || "" 
-            let insertResult = await addresses.insertOne({
-                address: address,
-                title: title,
-                polyBalance: polyBalance,
-                trustRating: trustRating,
-                keyfileId: keyfileId,
-                date: date
-            })
-            console.log("inserted address", insertedResult.address)
-
-            //let's ensure that we can find the address that we just inserted with the insertion id that we just received
-
-            if (await addresses.findOne({
-                _id: ObjectId(insertResult.insertedId)
-            })) {
-                return {success: true, addressId: insertedResult.insertedId}
-            } else {
-                console.error(`Insert Address Unsuccessful`)
-                return {error: `Insertion unsuccessful`}
-            }
-        } catch (e) {
-            // return an error message stating we've tried to insert a duplicate key
-            if (String(e).startsWith("MongoError: E11000 duplicate key error")) {
-                return {error: "That address already exists!"}
-            }
-            console.error(`Error occurred while adding new address, ${e}.`)
-            return {error: e}
-        }
-    }
-
-    /**
-     * Updates an address in the addresses collection. Note that unlike keyfiles, addresses are public and thus the fields such as the polyBalance and trustRating can be modified by the community to ensure accuracy. 
-     * @param {string} addressId: The _id of this address to update
-     * @param {string} title: The updated title for this address
-     * @param {number} polyBalance: The updated polyBalance for this address
-     * @param {number} trustRating: The updated trustRating for this address
-     * @param {string | Date} date: The date on which the address was most recently updated.
-     * @returns {DAOResponse} Returns either a "success" or an "error" object
-     */
-    static async updateAddress(addressId, title, polyBalance, trustRating, date) {
-        try {
-            const oldAddress = await addresses.findOne({_id: addressId})
-            if (oldAddress) {
-                const updateAddressResult = await addresses.updateOne(
-                    {_id: addressId},
-                    {
-                        $set: {title: title},
-                        $set: {polyBalance: polyBalance},
-                        $set: {trustRating: trustRating},
-                        $set: {date: date}
-                    }
-                )
-                return updateAddressResult
-            } else {
-                console.error(`Update unsuccessful`)
-                return {error: `Update unsuccessful`}
-            }
-        } catch(e) {
-            console.error(`Error occurred while updating address ${e}`)
-            return {error: e}
-        }
-    }
-
-    /**
-     * Ensures the delete operation is limited to only admin users of the system but not anybody else. 
-     * @param {*} addressId address to be deleted
-     * @param {*} email email of the user requesting the delete functionality
-     */
-    static async deleteAddress(addressId, email) {
-        try {
-            if (!(await UsersDAO.checkAdmin(email))) {
-                console.error(`Deletion unsuccessful`)
-                return {error: `Deletion unsuccessful`}
-            }
-            const deletedAddress = addresses.findOneAndDelete(
-                {
-                    _id: addressId         
-                }
-            )
-            if (!(await this.getAddressByID(deletedAddress._id))) {
-                return {success: true}
-            } else {
-                console.error(`Deletion unsuccessful`)
-                return {error: `Deletion unsuccessful`}
-            }
-        } catch (e) {
-            console.error(`Error occurred while deleting user, ${e}`)
-            return {error: e}
-        }
-    }
+    },
 
     /**
      * Find and return addresses owned by one or more users.
@@ -146,26 +42,26 @@ export default class AddressesDAO {
      * @param {string[]} users: The list of users
      * @returns {Promise<AddressResult>} A promise that will resolve to a list of AddressResults
      */
-    static userSearchQuery(users) {
+    userSearchQuery: function (users) {
         const searchUsers = Array.isArray(users) ? users : users.split(", ")
         const query = {user_id: {$in: searchUsers}}
         const project = {}
         const sort = DEFAULT_SORT
         return {query, project, sort}
-    }
+    },
 
     /**
      * Finds and returns addresses matching a given text in their title or description
      * @param {string} text - the text to match with
      * @returns {QueryParams} The QueryParams for text search
      */
-    static textSearchQuery(text) {
+    textSearchQuery: function(text) {
         const query = {$text: {$search: text}}
         const meta_score = {$meta: "textScore"}
         const sort = [["score", meta_score]]
         const project = {score: meta_score}
         return {query, project, sort}
-    }
+    },
 
     /**
      * 
@@ -174,7 +70,7 @@ export default class AddressesDAO {
      * @param {number} addressesPerPage - The number of addresses to display per page.
      * @param {FacetedSearchReturn} FacetedSearchReturn
      */
-    static async facetedSearch({
+    facetedSearch: async function({
         filters = null,
         page = 0,
         addressesPerPage = 20,
@@ -240,14 +136,14 @@ export default class AddressesDAO {
         } catch (e) {
             return {error: "Results too large, be more restrictive in filter"}
         }
-    }
+    },
 
     /**
      * Retrieves an address by its id
      * @param {string} id - the desired address id, the _id in the db
      * @returns {ToplAddress | null} Returns either a single address or nothing
      */
-    static async getAddressByID(id) {
+    getAddressByID: async function(id) {
         try {
             // TODO Given an address ID, retrieve the keyfile matching that address
             const pipeline = [
@@ -268,14 +164,14 @@ export default class AddressesDAO {
             console.error(`Error occurred while aattempting to retrieve address, ${e}`)
             return {error: e}
         }
-    }
+    },
     /**
      * Finds and returns addresses
      * @param {Object} filters - The search parameters to use in the query
      * @param {number} page - The page of addresses to retrieve
      * @param {number} addressesPerPage - The number of addresses to display per page
      */
-    static async getAddresses({
+    getAddresses: async function({
         // here's where the default parameters are set for the getAddresses method
         filters = null,
         page = 0,

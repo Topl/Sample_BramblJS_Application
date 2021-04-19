@@ -1,8 +1,7 @@
 const KeyfilesService = require('./keyfiles.service')
-const keyfilesService = new KeyfilesService()
 
- KeyfilesController = {
-    apiPostKeyfile: async function(req, res) {
+ class KeyfilesController {
+    static async apiPostKeyfile(req, res) {
             const userJwt = req.get("Authorization").slice("Bearer ".length)
             const user = await User.decoded(userJwt)
             var {error} = user
@@ -16,7 +15,7 @@ const keyfilesService = new KeyfilesService()
             const date = new Date()
             const email = user.email
 
-            handler = keyfilesService.addKeyfile
+            handler = KeyfilesService.addKeyfile
             args = {
                 addressId,
                 email,
@@ -28,38 +27,9 @@ const keyfilesService = new KeyfilesService()
                 success: "success"
             }
             stdRoute(req, res, handler, args, responseMsg)
-    }, 
+    }
  
-    // apiUpdateKeyfile: async function(req, res) {
-    //         const userJwt = req.get("Authorization").slice("Bearer ".length)
-    //         const user = await User.decoded(userJwt)
-    //         var { error } = user
-    //         if (error) {
-    //             res.status(401).json({error})
-    //             return
-    //         }
-
-    //         const keyfileId = req.body.keyfile_id
-    //         const date = new Date()
-    //         const email = user.email
-    //         const id = ObjectId(keyfileId)
-
-    //         handler = keyfilesService.updateKeyfile
-    //         args = {
-    //             id,
-    //             email,
-    //             date
-    //         }
-
-    //         responseMsg = {
-    //             success: "Successfully updated keyfile"
-    //         }
-            
-    //         stdRoute(req, res, handler, args, responseMsg)
-    // },
-    // Currently keyfiles are immutable, this decision can be different depending on the metadata that the implementation decides to add to the keyfile storage
-
-    apiDeleteKeyfile: async function(req, res) {
+    static async apiDeleteKeyfile(req, res) {
             const userJwt = req.get("Authorization").slice("Bearer ".length)
             const user = await User.decoded(userJwt)
             var {error} = user
@@ -72,7 +42,7 @@ const keyfilesService = new KeyfilesService()
             const userEmail = user.email
             const id = ObjectId(keyfileId)
 
-            handler = keyfilesService.deleteKeyfile
+            handler = KeyfilesService.deleteKeyfile
             args = {
                 id,
                 userEmail
@@ -83,11 +53,13 @@ const keyfilesService = new KeyfilesService()
             }
 
             stdRoute(req, res, handler, args, responseMsg)
-    }, 
+    } 
 
-    apiGetKeyfileById: async function(req, res) {
+    static async apiGetKeyfileById(req, res) {
         let id = req.params.id || {}
-        handler = keyfilesService.getAddressById
+        handler = KeyfilesService.getAddressById
         args
     } 
 }
+
+module.exports = KeyfilesController

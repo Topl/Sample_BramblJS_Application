@@ -1,10 +1,10 @@
-import bcrypt from "bcryptjs"
-import jwt from "jsonwebtoken"
+const bcrypt = require("bcryptjs")
+const jwt = require("jsonwebtoken")
 const UserService = require(`./users.service`)
 
 const hashPassword = async password => bcrypt.hash(password, 10)
 
-export class User {
+class User {
     constructor({name, email, password, keyfiles = {}} = {}) {
         this.name = name,
         this.email = email,
@@ -36,7 +36,7 @@ export class User {
     }
 }
 
-export default class UserController {
+class UserController{
     static async register(req, res) {
         try {
             const userFromBody = req.userFromBody
@@ -77,7 +77,7 @@ export default class UserController {
         }
     }
 
-    static async login(req, res, next) {
+    static async login(req, res) {
         try {
             const {email, password} = req.body
             if (!email || typeof email !== "string") {
@@ -206,3 +206,5 @@ export default class UserController {
         }
     }
 }
+
+module.exports = UserController, User

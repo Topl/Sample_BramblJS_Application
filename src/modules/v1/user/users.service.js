@@ -134,7 +134,7 @@ UsersService = {
                return errors
            }
 
-           const makeAdminResponse = findAndUpdate(models = userModel, updates = {$set:{isAdmin:true}}, filters = {user_id: userModel.email}, opts = {serviceName: serviceName, upsert = false})
+           const makeAdminResponse = findAndUpdate(models = userModel, updates = {$set:{isAdmin:true}}, filters = {user_id: userModel.email}, opts = {serviceName: serviceName, upsert: false})
            const userFromDb = this.getUser(userObj)
            if (!userFromDb) {
                errors.general = "Internal error, please try again later!"

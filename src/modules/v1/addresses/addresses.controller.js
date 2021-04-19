@@ -1,30 +1,29 @@
 const stdRoute = require(`../../../core/standardRoute`)
 
-const brambl =  require('../../../lib/brambl.js')
+const brambl =  require('../../../lib/bramblHelper')
 const AddressesService = require('./addresses.service')
-const addresssesService = new AddressesService()
-const AddressesDAO = require( "../dao/addressesDAO.js")
-const User = require ("./users.controller.js")
+const AddressesDAO = require( "./addressesDAO")
+const User = require ("../user/users.controller")
 const ObjectId = require('bson');
 
 let brambljs
 
-AddressesController = {
+class AddressesController{
 
-    getTest: function(req, res) {
+    static getTest(req, res) {
         res.send("Topl Sample API")
-    },
+    }
 
-    create: function(req, res, next){
-       handler = addressesService.createAddress
+    static create(req, res, next){
+       handler = AddressesService.createAddress
        const args = {}
        const responseMsg = {
            success: "Address Created!"
        }
        stdRoute(req, res, handler, args, responseMsg)
-    },
+    }
 
-    apiPostAddress: async function(req, res) {
+    static async apiPostAddress(req, res) {
             const userJwt = req.get("Authorization").slice("Bearer ".length)
             const user = await User.decoded(userJwt)
             var {error} = user
@@ -37,7 +36,7 @@ AddressesController = {
             const title = req.body.title
             const trustRating = req.body.trustRating
             const address = req.body.address
-            const handler = addressesService.postAddress
+            const handler = AddressesService.postAddress
             const args = {
                 keyfileId, 
                 title,
@@ -52,9 +51,9 @@ AddressesController = {
             
             stdRoute(req, res, handler, args, responseMessage)
 
-    },
+    }
 
-    apiUpdateAddress: async function(req, res, next) {
+    static async apiUpdateAddress(req, res, next) {
             const userJwt = req.get("Authorization").slice("Bearer ".length)
             const user = await User.decoded(userJwt)
             var {error} = user
@@ -66,7 +65,7 @@ AddressesController = {
             const addressId = req.body.addresss_id
             const title = req.body.title
             const trustRating = req.body.trustRating
-            handler = addressesService.updateAddress
+            handler = AddressesService.updateAddress
             const args = {
                 title,
                 trustRating,
@@ -76,11 +75,11 @@ AddressesController = {
                 success: 'Addresses Updated!'
             }
             stdRoute(req, res, handler, args, responseMsg)
-    } ,
+    }
 
-    apiDeleteAddress(req, res) {
+    static async apiDeleteAddress(req, res) {
             const userJwt = req.get("Authorization").slice("Bearer ".length)
-            const user = await User.decoded(userJwt)
+            const user = User.decoded(userJwt)
             var {error} = user
             if (error) {
                 res.status(401).json({error})
@@ -90,7 +89,7 @@ AddressesController = {
             const addressId = req.body.addressId
             const userEmail = user.userEmail
 
-            handler = addressesService.deleteAddress
+            handler = AddressesService.deleteAddress
             args = {
                 addressId
             }
@@ -99,21 +98,21 @@ AddressesController = {
                 success: 'Address Deleted!'
             }
             stdRoute(req, res, handler, args, responseMsg)
-    } ,
+    }
 
-    apiGetAddresses: async function(req, res) {
+    static async apiGetAddresses(req, res) {
         const ADDRESSES_PER_PAGE = 20
-        handler = addressesService.getAddresses
+        handler = AddressesService.getAddresses
         args = {}
         resonseMsg = {
             success: "Addresses retrieved!"
         }
         stdRoute(req, res, handler, args, responseMsg)
-    },
+    }
 
-    apiGetAddressesByUsers: async function(req, res) {
+    static async apiGetAddressesByUsers(req, res) {
         let users = req.query.users
-        handler = addressesService.getAddressesByUser
+        handler = AddressesService.getAddressesByUser
         args = {
             users
         }
@@ -121,9 +120,9 @@ AddressesController = {
             success: "Successfully retrieved Addresses!"
         }
         stdRoute(req, res, handler, args, responseMsg)
-    },
+    }
 
-    apiGetAddressById: async function(req, res) {
+    static async apiGetAddressById(req, res) {
             let id = req.params.id || {}
             handler = AddressesService.getAddressById
             args = {
@@ -133,9 +132,9 @@ AddressesController = {
                 success: "Successfully retrieved Address!"
             }
             stdRoute(req, res, handler, args, responseMsg)
-    },
+    }
 
-    apiSearchAddresses: async function(req, res) {
+    static async apiSearchAddresses(req, res) {
         const ADDRESSES_PER_PAGE = 20
         let page
         try {
@@ -167,7 +166,7 @@ AddressesController = {
             default:
                 //nothing to do
         }
-        handler = addressesService.searchAddresses
+        handler = AddressesService.searchAddresses
         args = {
             page,
             filters
@@ -176,9 +175,9 @@ AddressesController = {
             success: "Addresses Search Successful!"
         }
         stdRoute(req, res, handler, args, responseMsg)
-    },
+    }
 
-    apiFacetedSearch: async function(req, res, next) {
+    static async apiFacetedSearch(req, res, next) {
         const ADDRESSES_PER_PAGE = 20
 
         let page
@@ -194,7 +193,7 @@ AddressesController = {
             ? {users: new RegExp(req.query.users, "i")}
             : {users: "Chris Georgen"}
         
-        handler = addressesService.facetedSearch
+        handler = AddressesService.facetedSearch
         args = {page, filters}
         responseMsg = {
             success: "Faceted Search Successful!"
@@ -202,10 +201,10 @@ AddressesController = {
 
         stdRoute(req, res, handler, args, responseMsg)
 
-    },
+    }
     
-    getConfig(req, res) {
-        handler = addressesService.getConfiguration
+    static getConfig(req, res) {
+        handler = AddressesService.getConfiguration
         args = {}
         const responseMsg = {
             success: "Configuration retrieved! "
@@ -214,3 +213,5 @@ AddressesController = {
     }
 
 }
+
+module.exports = AddressesController

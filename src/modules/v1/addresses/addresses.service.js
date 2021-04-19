@@ -1,18 +1,16 @@
 const Address = require("./addresses.model");
 const AddressesDao = require("./addressesDao.js");
-const addressesDAO = new AddressesDao();
 const UsersService = require("../user/users.service");
 const ObjectId = require('bson'); 
 const mongoose = require('mongoose');
-const brambl = require('../../../lib/brambl.js');
-var BigNumber = require('bignumber.js');//handles topl poly balances
+const brambl = require('../../../lib/bramblHelper');
+var BigNumber = require('bignumber');//handles topl poly balances
 
 const stdErr = require('../../../core/standardError');
 const bramblHelper = require("../../../lib/bramblHelper");
 const save2db = require('../../../lib/saveToDatabase');
 const findAndUpdate = require('../../../lib/findOneAndUpdate');
 const deleteFromDb = require(`../../../lib/deleteFromDb`);
-const { default: AddressesDAO } = require("./addressesDao.js");
 
 const serviceName = 'Address'
 
@@ -72,7 +70,7 @@ AddressesService  = {
     }, 
 
     getAddresses: async function() {
-        const {addressesList, totalNumAddresses} = await addressesDAO.getAddresses()
+        const {addressesList, totalNumAddresses} = await AddressesDAO.getAddresses()
         let response = {
             addresses: addressesList,
             total_results: totalNumAddresses
@@ -83,7 +81,7 @@ AddressesService  = {
 
     getAddressesByUsers: async function(users) {
         let usersList = Array.isArray(users) ? users : Array(users)
-        let addressesList = await addressesDAO.getAddresses({filters: {
+        let addressesList = await AddressesDAO.getAddresses({filters: {
             "users": usersList
         }})
         let response = {
@@ -94,7 +92,7 @@ AddressesService  = {
 
     getAddressById: async function(id) {
         try {
-            let address = await addressesDAO.getAddressById(id)
+            let address = await AddressesDAO.getAddressById(id)
             if (!address) {
                 return {error: "Not found"}
             }
@@ -108,7 +106,7 @@ AddressesService  = {
 
     searchAddresses: async function(page, filters) {
         const ADDRESSES_PER_PAGE = 20
-        const {addressesList, totalNumAddresses} = await addressesDAO.getAddresses({
+        const {addressesList, totalNumAddresses} = await AddressesDAO.getAddresses({
             filters,
             page,
             ADDRESSES_PER_PAGE
@@ -117,7 +115,7 @@ AddressesService  = {
             addresses: addressesList,
             page: page,
             filters,
-            entries_per_page = ADDRESSES_PER_PAGE,
+            entries_per_page: ADDRESSES_PER_PAGE,
             totalResults: totalNumAddresses
         }
         return response
@@ -125,7 +123,7 @@ AddressesService  = {
 
     facetedSearch: async function(page, filters) {
         const ADDRESSES_PER_PAGE = 20
-        const facetedSearchResult = await addressesDAO.facetedSearch(
+        const facetedSearchResult = await AddressesDAO.facetedSearch(
             {
                 filters,
                 page,
@@ -136,9 +134,9 @@ AddressesService  = {
     },
 
     getConfig: async function() {
-        const {poolSize, wtimeout, authInfo} = await addressesDAO.getConfiguration()
+        const {poolSize, wtimeout, authInfo} = await AddressesDAO.getConfiguration()
         return {
-            pool_size = poolSize,
+            pool_size: poolSize,
             wtimeout,
             ...authInfo
         }

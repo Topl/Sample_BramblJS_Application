@@ -55,4 +55,4 @@ SessionsService = {
     }
 }
 
-module.exports = UsersHelper
+module.exports = SessionsService

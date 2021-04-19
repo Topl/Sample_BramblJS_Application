@@ -1,6 +1,5 @@
 const Keyfile = require("./keyfiles.model");
 const KeyfileDAO = require("./keyfilesDAO");
-const keyfileDAO = new KeyfileDAO();
 const save2db = require('../../../lib/saveToDatabase');
 const deleteFromDb = require(`../../../lib/deleteFromDb`);
 
@@ -34,7 +33,7 @@ KeyfilesService = {
     
     getKeyfileById: async function(id) {
         try {
-            let keyfile = await keyfileDAO.getKeyfileById(id)
+            let keyfile = await KeyfileDAO.getKeyfileById(id)
             if (!keyfile) {
                 return {error: "Not found"}
             }

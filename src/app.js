@@ -1,25 +1,23 @@
 /* eslint-disable no-console */
 'use strict'
-
-import { POINT_CONVERSION_COMPRESSED } from "constants";
-
 // External App Dependencies 
 const express = require("express");
 const bodyParser = require("body-parser");
 const cookieParser = require("cookie-parser");
 const cors = require('cors');
 const morgan = require('morgan');
-const helment = require('helmet');
+const helmet = require('helmet');
 
 // logging dependencies
 const mongoose = require('mongoose')
 var path = require('path')
-var rsf = require("rotating-file-stream")
+var rfs = require("rotating-file-stream")
 
 // Internal Dependencies
 const addresses = require("./core/routes/addresses.route");
 const users = require( "./core/routes/users.route");
 const settings = require("./lib/mongoDBSettings")
+const connectDB = require("./lib/mongodb")
 
 // Initialization
 //-------------------------------------------------------------------------------------//
@@ -69,7 +67,6 @@ app.set('views', path.join(__dirname, 'app/views'))
 app.set('view engine', 'ejs')
 
 // Register api routes
-app.use('/docs', require('./docs/swagger'))
 app.use("/api/v1/addresses", addresses);
 app.use("/api/v1/user", users);
 app.use("/status", express.static("build"));
@@ -91,7 +88,7 @@ connectDB().then(async () => {
 
 // Allow graceful shutdown
 //-------------------------------------------------------------------------------------
-process.on.apply('SIGTERM', shutdown)
+process.on('SIGTERM', shutdown)
 process.on('SIGINT', shutdown)
 
 function shutdown() {
@@ -117,5 +114,3 @@ function shutdown() {
         })
     })
 }
-
-export default app;
