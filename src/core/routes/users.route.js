@@ -1,6 +1,5 @@
-import { Router } from "express"
-import usersCtrl from "./users.controller.mjs"
-import keyfileCtrl from "./keyfiles.controller.mjs"
+const Router = require("express").Router
+const usersCtrl = require("../../modules/v1/user/users.controller")
 
 const router = new Router()
 
@@ -12,4 +11,4 @@ router.route("/delete").delete(usersCtrl.delete)
 router.route("/update-keyfile").put(usersCtrl.save)
 router.route("/make-admin").post(usersCtrl.createAdminUser)
 
-export default router
+module.exports = router

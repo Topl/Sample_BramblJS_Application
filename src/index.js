@@ -2,10 +2,6 @@
 const glob = require('glob')
 const settings = require("./lib/mongoDBSettings")
 const mongoose = require('mongoose')
-import app from "./app.js"
-import KeyfilesDAO from "./dao/keyfilesDAO.mjs"
-import UsersDAO from "./dao/usersDAO.mjs"
-import Envs from 'envs'
 
 const clientOptions = {
     useNewUrlParser = true,

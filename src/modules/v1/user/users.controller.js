@@ -1,7 +1,6 @@
 import bcrypt from "bcryptjs"
 import jwt from "jsonwebtoken"
-import UsersDAO from "../dao/usersDAO.mjs"
-import UsersDao from "../dao/usersDAO.mjs"
+const UserService = require(`./users.service`)
 
 const hashPassword = async password => bcrypt.hash(password, 10)
 
@@ -59,28 +58,22 @@ export default class UserController {
                 password: await hashPassword(userFromBody.password)
             }
 
-            const insertResult = await UsersDAO.addUser(userInfo)
+            const insertResult = await UserService.addUser(userInfo)
             if (!insertResult.success) {
                 errors.email = insertResult.error
             } 
-            const userFromDb = await UsersDAO.getUser(userFromBody.email)
-            if (!userFromDB) {
-                errors.general = "Internal error, please try again later"
-            }
-
+        
             if (Object.keys(errors).length > 0) {
                 res.status(400).json(errors)
                 return 
             }
 
-            const user = new User(userFromDb)
-
             res.json({
-                auth_token: user.encoded(),
-                info: user.toJson(),
+                auth_token: insertResult.user.encoded(),
+                info: insertResult.user.toJson(),
             })
         } catch (e) {
-            res.status(500).jspn({error :e})
+            res.status(500).json({error :e})
         }
     }
 
@@ -95,24 +88,14 @@ export default class UserController {
                 res.status(400).json({error: "Bad password format, expected string."})
                 return 
             }
-            let userData = await UsersDAO.getUser(email)
-            if (!userData) {
-                res.status(401).json({error: "Make sure your email is correct."})
-                return
-            }
-
-            const user = new User(userData)
-
-            if (!(await user.comparePassword(password))) {
-                res.status(401).json({error: "Make sure your password is correct."})
-                return 
-            }
-            const loginResponse = await UsersDAO.loginUser(user.email, user.encoded())
+            
+            const loginResponse = await UsersService.loginUser(email, password)
+            
             if (!loginResponse.success) {
                 res.status(500).json({error: loginResponse.error})
                 return
             }
-            res.json({auth_token: user.encoded(), info: user.toJson()})
+            res.json({auth_token: loginResponse.user.encoded(), info: loginResponse.user.toJson()})
         } catch (e) {
             res.status(400).json({error: e})
             return 
@@ -128,7 +111,7 @@ export default class UserController {
                 res.status(401).json({error})
                 return
             }
-            const logoutResult = await UsersDAO.logoutUser(userObj.email)
+            const logoutResult = await UsersService.logoutUser(userObj.email)
             var {error} = logoutResult
             if (error) {
                 res.status(500).json({error})
@@ -154,12 +137,7 @@ export default class UserController {
                 res.status(401).json({error})
                 return
             }
-            const user = new User(await UsersDAO.getUser(userClaim.email))
-            if (!(await user.comparePassword(password))) {
-                res.status.json({error: "Make sure your password is correct."})
-                return
-            }
-            const deleteResult = await UsersDAO.deleteUser(userClaim.email)
+            const deleteResult = await UsersService.deleteUser(userClaim.email, password)
             var {error} = deleteResult
             if (error) {
                 res.status(500).json({error})
@@ -181,9 +159,7 @@ export default class UserController {
                 return
             }
 
-            await UsersDAO.updateUser(userFromHeader.email, req.body.password)
-            const userFromDb = await UsersDAO.getUser(userFromHeader.email)
-            const updatedUser = new User(userFromDb)
+            const updatedUser = await UsersService.updateUser(userFromHeader.email)
 
             res.json({
                 auth_token: updatedUser.encoded(),
@@ -216,34 +192,14 @@ export default class UserController {
                 password: await hashPassword(userFromBody.password),
             }
 
-            const insertResult = await UsersDAO.addUser(userInfo)
-            if (!insertResult.success) {
+            const adminResult = await UsersService.makeAdmin(userInfo)
+            if (!adminResult.success) {
                 errors.email = insertResult.error
             }
 
-            if (Object.keys(errors).length > 0) {
-                res.status(400).json(errors)
-                return
-            }
-
-            const makeAdminResponse = await UsersDAO.makeAdmin(userFromBody.email)
-            const userFromDb = await UsersDAO.getUser(userFromBody.email)
-            if (!userFromDb) {
-                errors.general = "Internal error, please try again later"
-            }
-
-            if (Object.keys(errors).length > 0) {
-                res.status(400).json(errors)
-                return
-            }
-
-            const user = new User(userFromDb)
-            const jwt = user.encoded()
-            const loginResponose = await UsersDAO.loginUser(user.email, jwt)
-
             res.json({
-                auth_token: jwt,
-                info: user.toJson(),
+                auth_token: adminResult.user.encoded(),
+                info: adminResult.user.toJson(),
             })
         } catch (e) {
             res.status(500).json(e)

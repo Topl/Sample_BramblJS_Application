@@ -19,7 +19,7 @@ export default class BramblHelper {
                 keyfile: kf
             };
 
-            csonsole.log('new address', a);
+            console.log('new address', a);
             resolve(Address);      
         }))
     }
@@ -34,6 +34,13 @@ export default class BramblHelper {
         let e = await brambljs.requests.lookupBalancesByAddresses({addresses: [address]})
                     .then(function(result) {
                         obj.nanoPolyBalance = result.result[address].Balances.Polys
-                    })
+                        obj.polyBalance = brambljs.fromNanoPoly(result, "poly");
+                        console.log('obj', obj);
+                        return obj;
+                    }).catch(function (err) {
+                        console.log(err.message);
+                        return obj.error = err.message;
+                });
+        return e;
     }
 }

@@ -71,7 +71,7 @@ export default class UsersDAO {
                 jwt: jwt
             }
 
-            const upsertResult = await users.updateOne(
+            const upsertResult = await sessions.updateOne(
                 {
                    user_id: email 
                 },

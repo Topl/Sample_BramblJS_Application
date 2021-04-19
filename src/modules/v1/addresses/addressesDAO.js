@@ -1,5 +1,4 @@
-import pkg from 'bson';
-const {ObjectId} = pkg;
+const ObjectId = require('bson')
 import e from "express"
 import UsersDAO from "./usersDAO.mjs"
 

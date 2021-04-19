@@ -1,6 +1,6 @@
 import pkg from 'bson';
 const { ObjectId } = pkg;
-import UsersDAO from "./usersDAO.mjs"
+import UsersDAO from "../../../core/dao/usersDAO.js"
 
 let keyfileDb
 export default class KeyfilesDAO {
@@ -60,7 +60,7 @@ export default class KeyfilesDAO {
                 address_id: address_id, 
                 user_id: email,
                 keyfile: keyfile,
-                date: date
+                lastUpdatedDate: date
             })
             console.log("inserted _id", insertedResult.insertedId)
             

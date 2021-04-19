@@ -3,20 +3,25 @@ const BramblJS = require("brambljs");
 
 //console.log("Valid Networks: " + BramblJS.utils.getValidNetworksList());
 
+const brambl = new BramblJS({
+  networkPrefix: "valhalla",
+  password: "topl_the_world!"
+ }
+)
 //const AdminBrambl = require('./adminbljs/src/AdminBrambl');
 
 // let unlockedKeySenderAddress;
 // let unlockedKeyRecipientAddress;
 
-const myKeyPath1 =
-  "hel_keyfiles/5jbNEm3Js83e7kNpbpsTVv7rbFnT8P6mszgcrZqYWrmQKqSQtiZh.json";
+//const myKeyPath1 =
+// "hel_keyfiles/5jbNEm3Js83e7kNpbpsTVv7rbFnT8P6mszgcrZqYWrmQKqSQtiZh.json";
 // const myKeyPath2 = "hel_keyfiles/5jcoHDP4L6Q2kpFrL3xTC1Psd7MkFav7TaHi2HbwCAoC6B6DcLN7.json";
 // const myKeyPath3 = "hel_keyfiles/hel_keyfile.json";
 
-const keyManager1 = BramblJS.KeyManager({
-  password: "8NdWykvjsKZV",
-  keyPath: myKeyPath1
-});
+// const keyManager1 = BramblJS.KeyManager({
+//   password: "8NdWykvjsKZV",
+//   keyPath: myKeyPath1
+// });
 
 // const keyManager2 = BramblJS.KeyManager({
 //     password: "EcW5q76vEzOr",
@@ -79,14 +84,14 @@ const keyManager1 = BramblJS.KeyManager({
 //         }
 // });
 
-const brambl1 = new BramblJS({
-  networkPrefix: "hel",
-  KeyManager: keyManager1,
-  Requests: {
-    url: "https://hel.torus.topl.network",
-    apiKey: "obsession-arise-recast"
-  }
-});
+// const brambl1 = new BramblJS({
+//   networkPrefix: "hel",
+//   KeyManager: keyManager1,
+//   Requests: {
+//     url: "https://hel.torus.topl.network",
+//     apiKey: "obsession-arise-recast"
+//   }
+// });
 
 //  const brambl2 = new BramblJS({
 //          networkPrefix: "hel",

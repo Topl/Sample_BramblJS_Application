@@ -1,6 +1,6 @@
-import { Router } from "express"
-import AddressesCtrl from "./addresses.controller.mjs"
-import KeyFilesCtrl from "./keyfiles.controller.mjs"
+const Router = require("express").Router
+const AddressesCtrl = require("../../modules/v1/addresses/addresses.controller")
+const KeyFilesCtrl = require("../../modules/v1/keyfiles//keyfiles.controller")
 
 const router = new Router()
 
@@ -24,4 +24,4 @@ router
     .put(AddressesCtrl.apiUpdateAddress)
     .delete(AddressesCtrl.apiDeleteAddress)
 
-export default router
+module.exports = router
