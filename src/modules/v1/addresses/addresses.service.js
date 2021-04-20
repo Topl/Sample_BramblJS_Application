@@ -122,7 +122,7 @@ class AddressesService {
         }
     } 
     
-    static async getAddressesByUser(users) {
+    static async getAddressesByUser(args) {
         try {
             const [fetchedUser, projects] = await Promise.all([
                 checkExists(UserModel, args.user_id, {serviceName} ),
