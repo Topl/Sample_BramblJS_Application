@@ -10,15 +10,15 @@ var BN = require('bn.js'); // handles topl balances
 
 class BramblHelper {
 
-    constructor(password) {
+    constructor(password, network) {
         // Initialize bramblJS and set request body to the url provided in the configuration
-        bramblJsRequests = {
+        const bramblJsRequests = {
             "url": `${networkUrl}${projectId}`,
             "apiKey": `${apiKey}`
         };
 
         this.brambljs = new BramblJS({
-            networkPrefix: network.connectApi,
+            networkPrefix: network,
             Requests: bramblJsRequests,
             password: password
         });
@@ -30,8 +30,8 @@ class BramblHelper {
      */
     async createAddress() {
         return new Promise(((resolve, reject) => {
-            a = this.brambljs.KeyManager.address;
-            kf = this.brambljs.KeyManager.getKeyStorage();
+            const a = this.brambljs.keyManager.address;
+            const kf = this.brambljs.keyManager.getKeyStorage();
 
             Address = {
                 address: a,
@@ -63,3 +63,5 @@ class BramblHelper {
         return e;
     }
 }
+
+module.exports = BramblHelper

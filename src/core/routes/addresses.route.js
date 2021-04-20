@@ -9,7 +9,15 @@ const router = new Router()
 // associate put, delete, and get(id)
 router.route("/").get(AddressesCtrl.apiGetAddresses)
 router.route("/search").get(AddressesCtrl.apiSearchAddresses)
-router.route("/users").get(AddressesCtrl.apiGetAddressesByUsers)
+router.route("/users/:email/").get(
+    auth,
+    checkSchema({
+        email: { in: ["params"], optional: true, isEmail: true, errorMessage: "Please provide a valid email" },
+        page: { in: ["query"], optional: true, isInt: true, errorMessage: "Please provide a valid page" },
+        limit: { in: ["query"], optional: true, isInt: true, errorMessage: "Please provide a valid limit" },
+    }),
+    AddressesCtrl.apiGetAddressesByUser
+    )
 router.route("/facet-search").get(AddressesCtrl.apiFacetedSearch)
 router.route("/id/:id").get(AddressesCtrl.apiGetAddressById)
 router.route("/config-options").get(AddressesCtrl.getConfig)
@@ -40,7 +48,18 @@ router
 
 router  
     .route("/address")
-    .post(AddressesCtrl.apiPostAddress)
+    .post(
+        auth,
+        checkSchema({
+            name: {
+                in: ["body"],
+                optional: false,
+                isString: true,
+                errorMessage: "Please provide a valid Address name"
+            },
+            user_id: { in: ["body"], optional: false, isEmail: true, errorMessage: "Please provide a valid email" },
+        }),
+        AddressesCtrl.create)
     .put(AddressesCtrl.apiUpdateAddress)
     .delete(AddressesCtrl.apiDeleteAddress)
 

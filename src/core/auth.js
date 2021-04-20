@@ -1,17 +1,14 @@
 const settings = require("../lib/mongoDBSettings");
 const User = require('../modules/v1/user/user.model');
-const UserService = require('../modules/v1/user/users.service');
+const {checkExists} = require('../lib/validation');
+
+const serviceName = "auth";
 
 module.exports = async(req, res, next) => {
 
     try {
-        const requestingUserId = req.query.email;
-        const userRequestedId = req.body.requestedEmail;
-        args = {
-            requestedEmail: requestingUserId,
-            userEmail: userRequestedId,
-        }
-        const fetchedUser = await UserService.getUser(args);
+        const userId = req.body.user_id
+        const fetchedUser = await checkExists(User, userId, {serviceName})
         if (!fetchedUser || fetchedUser.isActive == false) {
             throw new Error('User not found');
         }

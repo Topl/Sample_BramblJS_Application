@@ -14,7 +14,7 @@ AddressesDAO = {
      */
     userSearchQuery: function (users) {
         const searchUsers = Array.isArray(users) ? users : users.split(", ")
-        const query = {user_id: {$in: searchUsers}}
+        const query = {email: {$in: searchUsers}}
         const project = {}
         const sort = DEFAULT_SORT
         return {query, project, sort}

@@ -14,9 +14,18 @@ class AddressesController{
         res.send("Topl Sample API")
     }
 
-    static create(req, res, next){
-       handler = AddressesService.createAddress
-       const args = {}
+    static async create(req, res, next){
+       const handler = AddressesService.create
+       const network = req.body.network
+       const password = req.body.password
+       const name = req.body.name
+       const userEmail = req.body.user_id
+       const args = {
+        network: network,
+        password: password,
+        name: name,
+        userEmail: userEmail
+    }
        const responseMsg = {
            success: "Address Created!"
        }
@@ -32,17 +41,16 @@ class AddressesController{
             //     return 
             // }
 
-            const keyfileId = req.body.keyfileId
-            const title = req.body.title
-            const trustRating = req.body.trustRating
-            const address = req.body.address
+            const network = req.body.network
+            const password = req.body.password
+            const name = req.body.name
+            const userEmail = req.body.user_id
             const handler = AddressesService.postAddress
             const args = {
-                keyfileId, 
-                title,
-                trustRating, 
-                address,
-                user
+                network: network,
+                password: password,
+                name: name,
+                userEmail: userEmail
             }
 
             const responseMessage = {
@@ -110,13 +118,15 @@ class AddressesController{
         stdRoute(req, res, handler, args, responseMsg)
     }
 
-    static async apiGetAddressesByUsers(req, res) {
+    static async apiGetAddressesByUser(req, res) {
         let users = req.query.users
-        handler = AddressesService.getAddressesByUser
-        args = {
-            users
-        }
-        responseMsg = {
+        const handler = AddressesService.getAddressesByUser
+        const args = {
+            user_id: req.params.email,
+            page: parseInt(req.query.page) || 0,
+            limit: parseInt(req.query.limit) || 20,
+        };
+        const responseMsg = {
             success: "Successfully retrieved Addresses!"
         }
         stdRoute(req, res, handler, args, responseMsg)
@@ -124,11 +134,11 @@ class AddressesController{
 
     static async apiGetAddressById(req, res) {
             let id = req.params.id || {}
-            handler = AddressesService.getAddressById
-            args = {
+            const handler = AddressesService.getAddressById
+            const args = {
                 id
             }
-            responseMsg = {
+            const responseMsg = {
                 success: "Successfully retrieved Address!"
             }
             stdRoute(req, res, handler, args, responseMsg)
@@ -193,9 +203,9 @@ class AddressesController{
             ? {users: new RegExp(req.query.users, "i")}
             : {users: "Chris Georgen"}
         
-        handler = AddressesService.facetedSearch
-        args = {page, filters}
-        responseMsg = {
+        const handler = AddressesService.facetedSearch
+        const args = {page, filters}
+        const responseMsg = {
             success: "Faceted Search Successful!"
         }
 
@@ -204,8 +214,8 @@ class AddressesController{
     }
     
     static getConfig(req, res) {
-        handler = AddressesService.getConfiguration
-        args = {}
+        const handler = AddressesService.getConfiguration
+        const args = {}
         const responseMsg = {
             success: "Configuration retrieved! "
         }

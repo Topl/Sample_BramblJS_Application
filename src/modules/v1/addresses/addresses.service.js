@@ -1,30 +1,70 @@
+const UserModel = require(`../user/user.model`)
 const Address = require("./addresses.model");
 const AddressesDao = require("./addressesDao.js");
 const UsersService = require("../user/users.service");
 const ObjectId = require('bson'); 
 const mongoose = require('mongoose');
-const brambl = require('../../../lib/bramblHelper');
 var BigNumber = require('bignumber');//handles topl poly balances
 
 const stdErr = require('../../../core/standardError');
-const bramblHelper = require("../../../lib/bramblHelper");
+const BramblHelper = require("../../../lib/bramblHelper");
 const save2db = require('../../../lib/saveToDatabase');
 const findAndUpdate = require('../../../lib/findOneAndUpdate');
 const deleteFromDb = require(`../../../lib/deleteFromDb`);
+const {checkExists} = require('../../../lib/validation');
+const paginateAddresses = require(`../../../lib/paginateAddresses`)
 
 const serviceName = 'Address'
 
-AddressesService  = {
+class AddressesService {
 
-    getTest: function() {
+    getTest() {
         return "Topl Sample API"
-    },
+    }
 
-    create: async function() {
-        return brambl.createAddress()
-    },
+    static async create(args) {
+        const session = await mongoose.startSession();
+        try {
+            const timestamp = new Date();
+            const userArgs = {
+                userEmail: args.userEmail,
+                requestedEmail: args.userEmail
+            }
 
-    postAddress: async function(keyfileId, title, trustRating, address, user) {
+            // fetch information of user
+            let fetchedUser = await UserModel.findOne({"email": args.userEmail});
+
+            // create address
+            const brambl = new BramblHelper(args.password, args.network);
+
+            const address = await brambl.createAddress();
+
+            let addressDoc = {
+                name: args.name,
+                user_id: args.userEmail,
+                address: address.address,
+                keyfile: address.keyfile,
+                network: args.network
+            };
+
+            addressDoc.isActive = {
+                status: true,
+                asOf: timestamp,
+            }
+            let newAddress = new Address(addressDoc)
+
+            // Save Address and User in transaction
+            fetchedUser.addresses.push(newAddress._id);
+            await save2db([fetchedUser, newAddress], {timestamp, serviceName, session});
+            return newAddress;
+        } catch (err) {
+            throw err;
+        } finally {
+            session.endSession();
+        }
+    };
+
+    static async postAddress(keyfileId, title, trustRating, address, user) {
         const date = new Date()
         const polyBalance = await bramblHelper.getBalance(address);
         const addressData = new Address({
@@ -43,9 +83,9 @@ AddressesService  = {
         return updatedAddress = this.getAddressById(
             addressResponse._id
         )
-    },
+    }
 
-    updateAddress: async function(title, trustRating, addressId) {
+    static async updateAddress(title, trustRating, addressId) {
         const polyBalance = await bramblHelper.getBalance(address);
         const addressUpdate = {
             $set: {title: title},
@@ -54,9 +94,9 @@ AddressesService  = {
         }
 
         return await findAndUpdate(Address, addressUpdate, addressId, {serviceName: serviceName})
-    },
+    }
 
-    deleteAddress: async function(addressId, user) {
+    static async deleteAddress(addressId, user) {
         try {
             if (!(await UsersService.checkAdmin(email))) {
                 console.error(`Deletion unsuccessful`)
@@ -67,30 +107,41 @@ AddressesService  = {
             console.error(`Error occurred while deleting user., ${e}`)
             return {error:e}
         }
-    }, 
-
-    getAddresses: async function() {
-        const {addressesList, totalNumAddresses} = await AddressesDAO.getAddresses()
-        let response = {
-            addresses: addressesList,
-            total_results: totalNumAddresses
-        }
-        return response
     } 
-    ,
 
-    getAddressesByUsers: async function(users) {
-        let usersList = Array.isArray(users) ? users : Array(users)
-        let addressesList = await AddressesDAO.getAddresses({filters: {
-            "users": usersList
-        }})
-        let response = {
-            addresses: addressesList,
+    static async getAddresses(args) {
+        try {
+            const [fetchedUser, projects] = await Promise.all([
+                checkExists(UserModel, args.user_id, {serviceName} ),
+                paginateAddresses(args.user_id, args.page. args.limit),
+            ]);
+
+            if (!fetchedUser.isActive.status) {
+                throw stdErr(404, "No Active User Found", serviceName, serviceName);
+            }
+            return projects
+        } catch (err) {
+            throw err;
         }
-        return response
-    },
+    } 
+    
+    static async getAddressesByUser(users) {
+        try {
+            const [fetchedUser, projects] = await Promise.all([
+                checkExists(UserModel, args.user_id, {serviceName} ),
+                paginateAddresses(args.user_id, args.page. args.limit),
+            ]);
 
-    getAddressById: async function(id) {
+            if (!fetchedUser.isActive.status) {
+                throw stdErr(404, "No Active User Found", serviceName, serviceName);
+            }
+            return projects
+        } catch (err) {
+            throw err;
+        }
+    }
+
+    static async getAddressById(id) {
         try {
             let address = await AddressesDAO.getAddressById(id)
             if (!address) {
@@ -102,9 +153,9 @@ AddressesService  = {
             console.log(`api, ${e}`)
             return {error: e}
         }
-    },
+    }
 
-    searchAddresses: async function(page, filters) {
+    static async searchAddresses(page, filters) {
         const ADDRESSES_PER_PAGE = 20
         const {addressesList, totalNumAddresses} = await AddressesDAO.getAddresses({
             filters,
@@ -119,9 +170,9 @@ AddressesService  = {
             totalResults: totalNumAddresses
         }
         return response
-    },
+    }
 
-    facetedSearch: async function(page, filters) {
+    static async facetedSearch(page, filters) {
         const ADDRESSES_PER_PAGE = 20
         const facetedSearchResult = await AddressesDAO.facetedSearch(
             {
@@ -131,9 +182,9 @@ AddressesService  = {
             }
         )
         return facetedSearchResult
-    },
+    }
 
-    getConfig: async function() {
+    static async getConfig() {
         const {poolSize, wtimeout, authInfo} = await AddressesDAO.getConfiguration()
         return {
             pool_size: poolSize,

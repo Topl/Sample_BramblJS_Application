@@ -1,4 +1,3 @@
-const User = require(`./user`)
 const UserModel = require(`./user.model`)
 const save2db = require('../../../lib/saveToDatabase');
 const findAndUpdate = require('../../../lib/findOneAndUpdate');
