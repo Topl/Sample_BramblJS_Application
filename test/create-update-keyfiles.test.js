@@ -1,8 +1,9 @@
-import { NIL as NIL_UUID } from 'uuid';
-import brambl from require('../src/lib/brambl.js');
-import { ObjectID } from "bson";
-import {KeyfilesDAO} from "../src/dao/keyfilesDAO.mjs";
-import {AddressesDAO} from "../src/dao/addressesDAO.mjs";
+const mongoose = require('mongoose')
+const NIL_UUID = require('uuid').NIL;
+const brambl = require('../src/lib/bramblHelper');
+const ObjectID =  require("bson").ObjectId;
+const KeyfileController = require('../src/modules/v1/keyfiles/keyfiles.controller')
+const supertest = require("supertest")
 
 const testUser = {
     name: "foobar",
@@ -19,21 +20,28 @@ const date = new Date()
 let keyfile = await brambl.createAddress()
 
 describe("Create/Update Keyfiles", () => {
-    beforeAll(async () => {
-        await AddressesDAO.injectDB(global.toplClient)
-        await KeyfilesDAO.injectDB(global.toplClient)
+    beforeEach((done) => {
+        const url = `mongodb://127.0.0.1:27017/keyfiles_1`
+        await mongoose.connect(url, {useNewUrlParser: true, useUnifiedTopology: true},
+            () => done()
+            )
     })
 
-    afterAll(async () => {
-        const keyfileCollection = await global.toplClient   
-                                        .db(process.env.TOPL_NS)
-                                        .collection("keyfiles")
-        const deleteResult = await keyfileCollection.deleteMany({
-            address_id: ObjectID(NIL_UUID)
+    afterEach((done) => {
+        mongoose.connection.db.dropDatabase(() => {
+            mongoose.connection.close(() => done())
         })
     })
 
-    test("Can post a keyfile", async () => {
+    test("POST /keyfile", async done => {
+
+        const post = await KeyfileController.apiPostKeyfile(
+            {
+
+            }
+        )
+
+
         const postKeyfileResult = await KeyfilesDAO.addKeyfile(
             ObjectID(NIL_UUID),
             ObjectID(NIL_UUID),

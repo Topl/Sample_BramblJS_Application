@@ -1,6 +1,5 @@
 const User = require(`./user`)
 const UserModel = require(`./user.model`)
-const SessionsService = require('../sessions/sessions.service')
 const save2db = require('../../../lib/saveToDatabase');
 const findAndUpdate = require('../../../lib/findOneAndUpdate');
 const deleteFromDb = require(`../../../lib/deleteFromDb`)
@@ -8,12 +7,13 @@ const makeAdmin = require(`./lib/makeAdmin`)
 
 const serviceName = "users";
 
-UsersService = {
-    addUser: async function(userInfo) {
+class UsersService {
+    static async addUser(userInfo) {
         try { 
 
             const user = new UserModel({
-                name: userInfo.name,
+                firstName: userInfo.firstName,
+                lastName: userInfo.lastName,
                 email: userInfo.email
                 }
             )
@@ -35,61 +35,14 @@ UsersService = {
         } catch (e) {
             return {error: e}
         }
-    },
+    }
 
-    getUser: async function (userObj) {
-        const userModel = await UserModel({
-            name: userObj.name,
-            email: userObj.email
-            })
-        return await userModel.findOne({email: userObj.email})
-    },
+    static async getUser(userObj) {
+        return await UserModel.findOne({email: userObj.email})
+    }
 
-    loginUser: async function(userObj) {
+    static async deleteUser(userObj) {
         try {
-            const user = new User(this.getUser(userObj))
-
-            if (!user) {
-                return {error: "Make sure your email is correct"}
-            }
-
-            if (!(await user.comparePassword(userObj.password))) {
-                return {error: "Make sure your password is correct."}
-            }
-
-            const loginResponse = await SessionsService.loginUser(user.email, user.encoded())
-
-            if (!loginResponse.success) {
-                return {error: loginResponse.error}
-            }
-
-            return {success: true, user: user}
-
-        } catch (e) {
-            return {error: e}
-        }
- 
-    },
-
-    logoutUser: async function(email) {
-        try {
-            const logoutResult = SessionsService.logoutUser(email)
-            var {error} = logoutResult
-            if (error) {
-                return {error}
-            }
-            return logoutResult
-        } catch (e) {
-            return e;
-        }
-    },
-
-    deleteUser: async function(userObj) {
-        try {
-            const user = new User(this.getUser(userObj))
-            if (!(await user.comparePassword(userObj.password))) {
-                return {error: "Make sure your password is correct."}
-            }
             const deleteResult = await deleteFromDb(UserModel, {email: userObj.email}, {serviceName:serviceName})
             var {error} = deleteResult
             if (error) {
@@ -99,9 +52,9 @@ UsersService = {
         } catch (e) {
             return e
         }
-    },
+    }
 
-    updateUser: async function(userObj) {
+    static async updateUser(userObj) {
         
         try {
 
@@ -116,9 +69,9 @@ UsersService = {
         } catch (e) {
             return e
         }
-    },
+    }
     
-    makeAdmin: async function(userObj) {
+    static async makeAdmin(userObj) {
         try {
             let errors = {}
             const userModel = await UserModel({
@@ -151,9 +104,9 @@ UsersService = {
         } catch (e) {
             return {error: e}
         }
-    },
+    }
 
-    checkAdmin: async function(email) {
+    static async checkAdmin(email) {
         try {
             const {isAdmin} = await this.getUser(email)
             return isAdmin || false
@@ -162,3 +115,5 @@ UsersService = {
         }
     }
 }
+
+module.exports =  UsersService

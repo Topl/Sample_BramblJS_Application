@@ -1,30 +1,34 @@
-const KeyfilesService = require('./keyfiles.service')
+const KeyfilesService = require('../keyfiles/keyfiles.service')
+const stdRoute = require('../../../core/standardRoute')
 
  class KeyfilesController {
     static async apiPostKeyfile(req, res) {
-            const userJwt = req.get("Authorization").slice("Bearer ".length)
-            const user = await User.decoded(userJwt)
-            var {error} = user
-            if (error) {
-                res.status(401).json({error})
-                return 
-            }
+            // const userJwt = req.get("Authorization").slice("Bearer ".length)
+            // const user = await User.decoded(userJwt)
+            // var {error} = user
+            // if (error) {
+            //     res.status(401).json({error})
+            //     return 
+            // Commenting out the authorization middleware based on conversation with Raul
+            // }
 
             const addressId = req.body.address_id
             const keyfile = req.body.keyfile
-            const date = new Date()
-            const email = user.email
+            const email = req.body.email
+            const address = req.body.address
+            const network = req.body.network
 
-            handler = KeyfilesService.addKeyfile
-            args = {
-                addressId,
-                email,
-                keyfile,
-                date
+            const handler = KeyfilesService.addKeyfile
+            const args = {
+                addressId:addressId,
+                address: address,
+                network: network,
+                user_id: email,
+                keyfile: keyfile
             }
 
             const responseMsg = {
-                success: "success"
+                success: "Keyfile Created!"
             }
             stdRoute(req, res, handler, args, responseMsg)
     }
@@ -42,13 +46,13 @@ const KeyfilesService = require('./keyfiles.service')
             const userEmail = user.email
             const id = ObjectId(keyfileId)
 
-            handler = KeyfilesService.deleteKeyfile
-            args = {
+            const handler = KeyfilesService.deleteKeyfile
+            const args = {
                 id,
                 userEmail
             }
 
-            responseMsg = {
+            const responseMsg = {
                 success: "Successfully deleted keyfile"
             }
 

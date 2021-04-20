@@ -24,13 +24,13 @@ class AddressesController{
     }
 
     static async apiPostAddress(req, res) {
-            const userJwt = req.get("Authorization").slice("Bearer ".length)
-            const user = await User.decoded(userJwt)
-            var {error} = user
-            if (error) {
-                res.status(401).json({error})
-                return 
-            }
+            // const userJwt = req.get("Authorization").slice("Bearer ".length)
+            // const user = await User.decoded(userJwt)
+            // var {error} = user
+            // if (error) {
+            //     res.status(401).json({error})
+            //     return 
+            // }
 
             const keyfileId = req.body.keyfileId
             const title = req.body.title

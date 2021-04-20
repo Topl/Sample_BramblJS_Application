@@ -27,3 +27,4 @@ valhalla_key_file.json
 data/db/
 .env
 config/connections.json
+.log

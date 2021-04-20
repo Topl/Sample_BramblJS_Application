@@ -3,45 +3,6 @@ const ObjectId = require('bson').ObjectID;
 let keyfileDb
 KeyfilesDAO = {
     /**
-     * Establishes the connection to the database and creates a handle for the keyfiles collection
-     * This is wrapped in a try/catch block in case there is a network error, or some other issue
-     * @param {string} conn: connection uri to the DB
-     */
-    injectDB: async function(conn) {
-        if (keyfileDb) {
-            return
-        }
-        try {
-            topl = await conn.db(process.env.TOPL_NS)
-            keyfileDb = await conn.db(process.env.TOPL_NS).collection("addresses")
-            this.keyfileDb = keyfileDb //only for testing
-        } catch (e) {
-            console.error(
-                `Unable to establish a collection handle in addressesDAO: ${e}`
-            )
-        }
-    },
-
-    /**
-        * Retrieves the connection pool size, write concern, and user roles on the current client
-        *
-        * @returns {Promise<ConfigurationResult>} An object with configuration details. 
-        * 
-    */
-
-    getConfiguration: async function() {
-        const roleInfo = await topl.command({connectionStatus: 1})
-        const authInfo = roleInfo.authInfo.authenticatedUserRoles[0]
-        const {poolSize, wtimeout} = keyfileDb.s.db.serverConfig.s.options
-        let response = {
-            poolSize,
-            wtimeout,
-            authInfo
-        }
-        return response
-    },
-
-    /**
      * Finds all the keyfiles for a given email
      * @param {string} email - The email of the desired user
      * @returns {Object | null} Returns either an array of keyfiles, or nothing

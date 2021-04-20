@@ -2,12 +2,13 @@ const Keyfile = require("./keyfiles.model");
 const KeyfileDAO = require("./keyfilesDAO");
 const save2db = require('../../../lib/saveToDatabase');
 const deleteFromDb = require(`../../../lib/deleteFromDb`);
+const mongoose = require('mongoose');
 
 
-const serviceName = "Keyfile"
+const serviceName = "Keyfile";
 
 
-KeyfilesService = {
+class KeyfilesService {
 
     /**
      * Inserts a keyfile into the "keyfiles" collection with the following fields: 
@@ -18,20 +19,40 @@ KeyfilesService = {
      * @param {*} date: The date on wwhich the keyfile was created
      * @returns {string}: ID of the new keyfile
      */
-    postKeyFile: async function(addressId, email, keyfile, date) {
-        keyfile = keyfile || {}
-        const keyfileData = new Keyfile({
-            address_id: addressId,
-            user_id: email,
-            keyfile: keyfile,
-            lastUpdatedDate: date
-        })
-        let insertResult = await save2db(keyfileData, {serviceName: serviceName})
+    static async addKeyfile(args) {
+        const session = await mongoose.startSession();
+        try {
+            // Create Keyfile Model
+            const timestamp = new Date();
+            const keyfile = args.keyfile || {};
+            const keyfileDoc = {
+                address_id: args.addressId,
+                address: args.address,
+                user_id: args.email,
+                network: args.network,
+                keyfile: keyfile,
+                dateCreated: timestamp,
+                lastUpdated: timestamp
+            };
 
-        return this.getKeyfileById(insertResult._id)
-    },
+            keyfileDoc.isActive = {
+                status: true,
+                asOf: timestamp
+            };
+            
+            const KeyfileInstance = new Keyfile(keyfileDoc);
+                
+            let insertResult = await save2db(KeyfileInstance, {timestamp, serviceName, session});
+
+            return insertResult;
+        } catch (err) {
+            throw err;
+        } finally {
+            session.endSession();
+        }
+    }
     
-    getKeyfileById: async function(id) {
+    static async getKeyfileById(id) {
         try {
             let keyfile = await KeyfileDAO.getKeyfileById(id)
             if (!keyfile) {
@@ -43,9 +64,9 @@ KeyfilesService = {
             console.log(`api, ${e}`)
             return {error: e}
         }
-    },
+    }
 
-    deleteKeyfile: async function(id, userEmail) {
+    static async deleteKeyfile(id, userEmail) {
         try {
             return deleteFromDb(Keyfile, {_user_id: userEmail, _id:id})
         } catch {
@@ -56,3 +77,5 @@ KeyfilesService = {
 
 
 }
+
+module.exports = KeyfilesService

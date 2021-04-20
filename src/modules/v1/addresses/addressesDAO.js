@@ -5,36 +5,6 @@ let addresses
 let topl
 const DEFAULT_SORT = [["polyBalance", -1]]
 AddressesDAO = {
-    injectDB: async function(conn) {
-        if (addresses) {
-            return
-        }
-        try {
-            topl = await conn.db(process.env.TOPL_NS)
-            addresses = await conn.db(process.env.TOPL_NS).collection("addresses")
-            this.addresses = addresses // this is only for testing
-        } catch (e) {
-            console.error(
-                `Unable to establish a collection handle in addressesDAO: ${e}`,
-            )
-        }
-    },
-    /**
-     * Retrieves the connection pool size, write concern and user roles on the current client.
-     * @returns {Promise<ConfigurationResult>} An object with configuration details
-     */
-    getConfiguration: async function() {
-        const roleInfo = await topl.command({connectionStatus: 1})
-        const authInfo = roleInfo.authInfo.authenticatedUserRoles[0]
-        const {poolSize, wtimeout} = addresses.s.db.serverConfig.s.options
-        let response = {
-            poolSize,
-            wtimeout,
-            authInfo,
-        }
-        return response
-    },
-
     /**
      * Find and return addresses owned by one or more users.
      * Returns a list of objects, each object containing and address and an _id.
@@ -252,8 +222,6 @@ AddressesDAO = {
      * @property {object} polyBalance
      * @property {ToplAddress[]} addresses
     */
-
-    
-
-
 }
+
+module.exports = AddressesDAO

@@ -1,23 +1,75 @@
 const mongoose = require('mongoose')
 
 const KeyfileSchema = new mongoose.Schema({
-    _id: String,
-    address_id: String,
-    user_id: String,
+    address_id: {
+        type: String,
+        required: false,
+    },
+    address: {
+        type: String,
+        required: true,
+    },
+    user_id: {
+        type: String,
+        required: true,
+    },
+    network: {
+        type: String,
+        required: true,
+    },
     keyfile: {
-        address: String,
+        type: mongoose.Schema.Types.Mixed,
+        required: true,
+        address: {
+            type: String,
+            required: true,
+        },
         crypto: {
-            mac: String,
-            kdf: String,
-            cipherText: String,
-            kdfSalt: String,
-            cipher: String,
+            type: mongoose.Schema.Types.Mixed,
+            required: true,
+            mac: {
+                type: String,
+                required: true,
+            },
+            kdf: {
+                type: String,
+                required: true,
+            },
+            cipherText: {
+                type: String,
+                required: true,
+            },
+            kdfSalt: {
+                type: String,
+                required: true,
+            },
+            cipher: {
+                type: String,
+                required: true,
+            },
             cipherParams: {
-                iv: String
+                type: mongoose.Schema.Types.Mixed,
+                required: true,
+                iv: {
+                    type: String,
+                    required: true,
+                }
             }
         }
     },
-    lastUpdatedDate: {type: Date, default: Date.now},
+    dateCreated: {type: Date, default: Date.now},
+    lastUpdate: {type: Date, default: Date.now},
+    isActive: {
+        type: mongoose.Schema.Types.Mixed,
+        status: {
+            type: Boolean,
+            default: true,
+        },
+        asOf: {
+            type: Date,
+        },
+        required: true,
+    }
 })
 
 //eslint-disable-next-line no-undef
