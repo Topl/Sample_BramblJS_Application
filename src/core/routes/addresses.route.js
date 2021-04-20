@@ -60,7 +60,20 @@ router
             user_id: { in: ["body"], optional: false, isEmail: true, errorMessage: "Please provide a valid email" },
         }),
         AddressesCtrl.create)
-    .put(AddressesCtrl.apiUpdateAddress)
+
+router.patch(
+        `/:_id`,
+        auth,
+        checkSchema({ 
+            _id: { in: ["params"], optional: false, isMongoId: true, errorMessage: "Please provide a valid Project ID" },
+            name: {
+                in: ["body"],
+                optional: true,
+                isString: true,
+                errorMessage: "Please provide a valid Project name",
+            },
+        }),
+        AddressesCtrl.apiUpdateAddress)
     .delete(AddressesCtrl.apiDeleteAddress)
 
 module.exports = router

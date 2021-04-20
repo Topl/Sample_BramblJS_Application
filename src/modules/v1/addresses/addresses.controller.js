@@ -32,55 +32,16 @@ class AddressesController{
        stdRoute(req, res, handler, args, responseMsg)
     }
 
-    static async apiPostAddress(req, res) {
-            // const userJwt = req.get("Authorization").slice("Bearer ".length)
-            // const user = await User.decoded(userJwt)
-            // var {error} = user
-            // if (error) {
-            //     res.status(401).json({error})
-            //     return 
-            // }
-
-            const network = req.body.network
-            const password = req.body.password
-            const name = req.body.name
-            const userEmail = req.body.user_id
-            const handler = AddressesService.postAddress
-            const args = {
-                network: network,
-                password: password,
-                name: name,
-                userEmail: userEmail
-            }
-
-            const responseMessage = {
-                success: "success"
-            }
-            
-            stdRoute(req, res, handler, args, responseMessage)
-
-    }
-
     static async apiUpdateAddress(req, res, next) {
-            const userJwt = req.get("Authorization").slice("Bearer ".length)
-            const user = await User.decoded(userJwt)
-            var {error} = user
-            if (error) {
-                res.status(401).json({error})
-                return
-            }
 
-            const addressId = req.body.addresss_id
-            const title = req.body.title
-            const trustRating = req.body.trustRating
-            handler = AddressesService.updateAddress
+            const name = req.body.name
+            const handler = AddressesService.updateAddress
             const args = {
-                title,
-                trustRating,
-                addressId
+                name: name,
+                addressId: req.params._id
             }
             const responseMsg = {
-                success: 'Addresses Updated!'
+                success: 'Address Updated!'
             }
             stdRoute(req, res, handler, args, responseMsg)
     }

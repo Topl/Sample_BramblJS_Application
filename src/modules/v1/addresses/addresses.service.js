@@ -11,7 +11,7 @@ const BramblHelper = require("../../../lib/bramblHelper");
 const save2db = require('../../../lib/saveToDatabase');
 const findAndUpdate = require('../../../lib/findOneAndUpdate');
 const deleteFromDb = require(`../../../lib/deleteFromDb`);
-const {checkExists} = require('../../../lib/validation');
+const {checkExists, checkExistsById} = require('../../../lib/validation');
 const paginateAddresses = require(`../../../lib/paginateAddresses`)
 
 const serviceName = 'Address'
@@ -64,37 +64,40 @@ class AddressesService {
         }
     };
 
-    static async postAddress(keyfileId, title, trustRating, address, user) {
-        const date = new Date()
-        const polyBalance = await bramblHelper.getBalance(address);
-        const addressData = new Address({
-            address: address,
-            title: title,
-            lastUpdatedDate: date,
-            polyBalance: polyBalance,
-            user_id: user.email,
-            trustRating: trustRating,
-            keyfileId: keyfileId
+    static async updateAddress(args) {
+        const session = await mongoose.startSession();
+        try {
+            const timestamp = new Date();
+            // check if the address exists
+            const [fetchedAddress, hasAdminAccess] = await Promise.all([
+                checkExistsById(Address, args.addressId, {serviceName}),
+                UsersService.checkAdmin(args.user_id),
+                ]   
+            )
+
+            if (!fetchedAddress.isActive.status) {
+                throw stdErr(404, "No Active Address", serviceName, serviceName);
             }
-        )
 
-        const addressResponse = await save2db(addressData, {serviceName: serviceName})
+            // access control
+            if (!hasAdminAccess && !(fetchedAddress.user_id === args.user_id)) {
+                throw stdErr(403, "Not Authorized", serviceName, serviceName)
+            }
+            
+            // update fields
+            if (args.name) {
+                fetchedAddress.name = args.name;
+            }
 
-        return updatedAddress = this.getAddressById(
-            addressResponse._id
-        )
-    }
-
-    static async updateAddress(title, trustRating, addressId) {
-        const polyBalance = await bramblHelper.getBalance(address);
-        const addressUpdate = {
-            $set: {title: title},
-            $set: {trustRating: trustRating},
-            $set: {polyBalance: polyBalance}
+            // save 
+            await save2db(fetchedAddress, {timestamp, serviceName, session});
+            return fetchedAddress;
+        } catch (err) {
+            throw err;
+        } finally {
+            session.endSession();
         }
-
-        return await findAndUpdate(Address, addressUpdate, addressId, {serviceName: serviceName})
-    }
+    };
 
     static async deleteAddress(addressId, user) {
         try {
