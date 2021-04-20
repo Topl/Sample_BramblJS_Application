@@ -5,10 +5,12 @@ const UserService = require('../modules/v1/user/users.service');
 module.exports = async(req, res, next) => {
 
     try {
-        const userId = req.body.email;
+        const requestingUserId = req.query.email;
+        const userRequestedId = req.body.requestedEmail;
         args = {
-            email: userId
-        };
+            requestedEmail: requestingUserId,
+            userEmail: userRequestedId,
+        }
         const fetchedUser = await UserService.getUser(args);
         if (!fetchedUser || fetchedUser.isActive == false) {
             throw new Error('User not found');
@@ -18,7 +20,7 @@ module.exports = async(req, res, next) => {
         console.error(err);
         res.status(403).json({
             errors: [
-                {msg: 'An error occurred while verifying your token. Please provide a valid token with your request. '}
+                {msg: 'An error occurred while verifying your email. Please provide a valid email.'}
             ]
         });
     }

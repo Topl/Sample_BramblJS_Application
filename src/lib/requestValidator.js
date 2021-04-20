@@ -2,7 +2,7 @@ const BramblJS = require("brambljs")
 
 class RequestValidator {
 
-    static validateAddress(value) {
+    static validateAddress(value, {req}) {
         try {
             if (!value || typeof value !== "string" || value === "") {
                 return Promise.reject("Please enter a valid Address");

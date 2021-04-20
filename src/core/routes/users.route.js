@@ -14,14 +14,15 @@ router.route("/register").post(
     }
     ),  
     usersCtrl.register)
-router.route("/:email").delete(
+router.route("/email")
+.delete(
     auth,
     checkSchema({
-        email: { in: ["params"], optional: true, isEmail: true, errorMessage: "Please provide a valid email" },
-    },
-    usersCtrl.delete)
-)
-router.route("/:email").patch(
+        email: { in: ["query"], optional: true, isEmail: true, errorMessage: "Please provide a valid email" },
+        requestedEmail: { in: ["body"], optional: true, isEmail: true, errorMessage: "Please provide a valid email" }
+    }),
+    usersCtrl.delete
+).patch(
     auth,
     checkSchema({
         email: { in: ["params"], optional: true, isEmail: true, errorMessage: "Please provide a valid email" },
@@ -29,6 +30,14 @@ router.route("/:email").patch(
         lastName: { in: ["body"], optional: true, isString: true, errorMessage: "Please provide a valid last name" },
     }),
     usersCtrl.save)
+.get(
+    auth,
+    checkSchema({
+        email: { in: ["query"], optional: true, isEmail: true, errorMessage: "Please provide a valid email" },
+        requestedEmail: { in: ["body"], optional: true, isEmail: true, errorMessage: "Please provide a valid email" }
+    }),
+    usersCtrl.getUser
+)
 //router.route("/make-admin").post(usersCtrl.createAdminUser)
 
 module.exports = router

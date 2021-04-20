@@ -28,7 +28,7 @@ class KeyfilesService {
             const keyfileDoc = {
                 address_id: args.addressId,
                 address: args.address,
-                user_id: args.email,
+                user_id: args.user_id,
                 network: args.network,
                 keyfile: keyfile,
                 dateCreated: timestamp,

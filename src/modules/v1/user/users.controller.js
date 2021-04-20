@@ -15,10 +15,22 @@ class UserController{
             stdRoute(req, res, handler, args, responseMsg);
     }
 
+    static async getUser(req, res) {
+        const handler = UserService.getUser;
+        const args = {
+            requestedEmail: req.body.requestedEmail,
+            userEmail: req.query.email
+        }
+
+        const responseMsg = {success: "User Retrieved"};
+        stdRoute(req, res, handler, args, responseMsg);
+    }
+
     static async delete(req, res) {
         const handler = UserService.deleteUser;
         const args = {
-            email: req.body.email
+            requestedEmail: req.body.requestedEmail,
+            userEmail: req.query.email
         }
         const responseMsg = {success: "User Deleted!"};
         stdRoute(req, res, handler, args, responseMsg);
@@ -76,4 +88,4 @@ class UserController{
     // }
 }
 
-module.exports = UserController, User
+module.exports = UserController
