@@ -97,7 +97,7 @@ class AddressesController{
             let id = req.params.id || {}
             const handler = AddressesService.getAddressById
             const args = {
-                id
+                addressId: id
             }
             const responseMsg = {
                 success: "Successfully retrieved Address!"

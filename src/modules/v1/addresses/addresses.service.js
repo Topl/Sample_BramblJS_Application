@@ -144,17 +144,23 @@ class AddressesService {
         }
     }
 
-    static async getAddressById(id) {
+    static async getAddressById(args) {
+        const session = await mongoose.startSession();
         try {
-            let address = await AddressesDAO.getAddressById(id)
-            if (!address) {
-                return {error: "Not found"}
+            // check if address exists and is active
+
+            const fetchedAddress = await checkExistsById(Address, args.addressId, {serviceName} ) 
+
+            if (!fetchedAddress.isActive.status) {
+                throw stdErr(404, "No Active Project", serviceName, serviceName);
             }
-            let updated_type = address.lastUpdatedDate instanceof Date ? "Date" : "other"
-            return {address, updated_type}
-        } catch (e) {
-            console.log(`api, ${e}`)
-            return {error: e}
+
+            return fetchedAddress;
+
+        } catch (err) {
+            throw err
+        } finally {
+            session.endSession
         }
     }
 
