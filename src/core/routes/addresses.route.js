@@ -7,7 +7,26 @@ const {checkSchema} = require("express-validator")
 const router = new Router()
 
 // associate put, delete, and get(id)
-router.route("/").get(AddressesCtrl.apiGetAddresses)
+router.route("/").get(
+    auth,
+    checkSchema({
+        page: {
+            in: ["query"],
+            optional: true,
+            isInt: true,
+            errorMessage: "Please provide a valid page number",
+        },
+        limit: {
+            in: ["query"],
+            optional: true,
+            isInt: {
+                options: { max: 100 },
+            },
+            errorMessage: "Please provide a valid limit",
+        },
+    }),
+    AddressesCtrl.apiGetAddresses
+    )
 router.route("/search").get(AddressesCtrl.apiSearchAddresses)
 router.route("/users/:email/").get(
     auth,

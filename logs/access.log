@@ -163,3 +163,6 @@
 ::1 - - [20/Apr/2021:21:15:06 +0000] "POST /api/v1/addresses/address HTTP/1.1" 200 664 "-" "PostmanRuntime/7.26.10"
 ::1 - - [20/Apr/2021:21:16:56 +0000] "GET /api/v1/addresses/607f3689c772d05ca7b14286 HTTP/1.1" 404 111 "-" "PostmanRuntime/7.26.10"
 ::1 - - [20/Apr/2021:21:18:44 +0000] "GET /api/v1/addresses/607f3689c772d05ca7b14286 HTTP/1.1" 200 679 "-" "PostmanRuntime/7.26.10"
+::1 - - [20/Apr/2021:21:24:27 +0000] "GET /api/v1/addresses/607f3689c772d05ca7b14286 HTTP/1.1" 200 679 "-" "PostmanRuntime/7.26.10"
+::1 - - [20/Apr/2021:21:25:27 +0000] "GET /api/v1/addresses/ HTTP/1.1" 500 21 "-" "PostmanRuntime/7.26.10"
+::1 - - [20/Apr/2021:21:25:51 +0000] "GET /api/v1/addresses/ HTTP/1.1" 200 2562 "-" "PostmanRuntime/7.26.10"

@@ -70,11 +70,14 @@ class AddressesController{
     }
 
     static async apiGetAddresses(req, res) {
-        const ADDRESSES_PER_PAGE = 20
-        handler = AddressesService.getAddresses
-        args = {}
-        resonseMsg = {
-            success: "Addresses retrieved!"
+        const handler = AddressesService.getAddresses
+        const args = {
+            user_id: req.body.user_id,
+            page: parseInt(req.query.page) || 0,
+            limit: parseInt(req.query.limit) || 20,
+        };
+        const responseMsg = {
+            success: "Addresses retrieved!",
         }
         stdRoute(req, res, handler, args, responseMsg)
     }

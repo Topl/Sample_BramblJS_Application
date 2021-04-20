@@ -114,15 +114,9 @@ class AddressesService {
 
     static async getAddresses(args) {
         try {
-            const [fetchedUser, projects] = await Promise.all([
-                checkExists(UserModel, args.user_id, {serviceName} ),
-                paginateAddresses(args.user_id, args.page. args.limit),
-            ]);
-
-            if (!fetchedUser.isActive.status) {
-                throw stdErr(404, "No Active User Found", serviceName, serviceName);
-            }
-            return projects
+            const offset = args.page == 0 ? 0 : args.page * args.limit;
+            const addresses = await Address.find().skip(offset).limit(args.limit)
+            return addresses;
         } catch (err) {
             throw err;
         }
