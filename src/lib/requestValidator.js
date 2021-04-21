@@ -16,7 +16,7 @@ class RequestValidator {
         return Promise.reject("Address invalid");
       }
     } catch (err) {
-      console.log(err);
+      //console.log(err);
       return Promise.reject("Address must be base58 encoded");
     }
   }

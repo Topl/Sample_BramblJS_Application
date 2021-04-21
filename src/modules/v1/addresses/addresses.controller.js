@@ -1,15 +1,8 @@
 const stdRoute = require(`../../../core/standardRoute`);
-
-const brambl = require("../../../lib/bramblHelper");
 const AddressesService = require("./addresses.service");
-const AddressesDAO = require("./addressesDAO");
-const User = require("../user/users.controller");
-const ObjectId = require("bson");
-
-let brambljs;
 
 class AddressesController {
-  static async create(req, res, next) {
+  static async create(req, res) {
     const handler = AddressesService.create;
     const network = req.body.network;
     const password = req.body.password;
@@ -27,7 +20,7 @@ class AddressesController {
     stdRoute(req, res, handler, args, responseMsg);
   }
 
-  static async apiUpdateAddress(req, res, next) {
+  static async apiUpdateAddress(req, res) {
     const name = req.body.name;
     const handler = AddressesService.updateAddress;
     const args = {
@@ -70,7 +63,6 @@ class AddressesController {
   }
 
   static async apiGetAddressesByUser(req, res) {
-    let users = req.query.users;
     const handler = AddressesService.getAddressesByUser;
     const args = {
       user_id: req.params.email,

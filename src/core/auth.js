@@ -1,4 +1,3 @@
-const settings = require("../lib/mongoDBSettings");
 const User = require("../modules/v1/user/user.model");
 const { checkExists } = require("../lib/validation");
 

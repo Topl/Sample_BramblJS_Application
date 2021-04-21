@@ -1,16 +1,11 @@
 const UserModel = require(`../user/user.model`);
 const Address = require("./addresses.model");
-const AddressesDao = require("./addressesDao.js");
 const UsersService = require("../user/users.service");
-const ObjectId = require("bson");
 const mongoose = require("mongoose");
-var BigNumber = require("bignumber"); //handles topl poly balances
 
 const stdErr = require("../../../core/standardError");
 const BramblHelper = require("../../../lib/bramblHelper");
 const save2db = require("../../../lib/saveToDatabase");
-const findAndUpdate = require("../../../lib/findOneAndUpdate");
-const deleteFromDb = require(`../../../lib/deleteFromDb`);
 const { checkExists, checkExistsById } = require("../../../lib/validation");
 const paginateAddresses = require(`../../../lib/paginateAddresses`);
 
@@ -25,10 +20,6 @@ class AddressesService {
     const session = await mongoose.startSession();
     try {
       const timestamp = new Date();
-      const userArgs = {
-        userEmail: args.userEmail,
-        requestedEmail: args.userEmail
-      };
 
       // fetch information of user
       let fetchedUser = await UserModel.findOne({ email: args.userEmail });
@@ -127,7 +118,7 @@ class AddressesService {
       }
 
       // access control
-      if (!hasAdminAccess && !(user_id = args.user_id)) {
+      if (!hasAdminAccess && !(user_id === args.user_id)) {
         throw stdErr(403, "Not Authorized", serviceName, serviceName);
       }
 

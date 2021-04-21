@@ -1,6 +1,5 @@
 const Router = require("express").Router;
 const AddressesCtrl = require("../../modules/v1/addresses/addresses.controller");
-const RequestValidator = require("../../lib/requestValidator");
 const auth = require("../../core/auth");
 const { checkSchema } = require("express-validator");
 const router = new Router();

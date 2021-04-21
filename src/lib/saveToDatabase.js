@@ -1,5 +1,4 @@
 const mongoose = require("mongoose");
-const ObjectId = require("bson");
 const stdErr = require("../core/standardError");
 
 const runTransactionWithRetry = async (_models, _session, _serviceName) => {
@@ -14,10 +13,10 @@ const runTransactionWithRetry = async (_models, _session, _serviceName) => {
 
     return docs;
   } catch (error) {
-    console.log(
-      "\x1b[31m%s\x1b[0m",
-      `[${_serviceName}] Transaction aborted. Caught exception during transaction.`
-    );
+    //  // console.log(
+    //     "\x1b[31m%s\x1b[0m",
+    //     `[${_serviceName}] Transaction aborted. Caught exception during transaction.`
+    //   );
 
     // If transient error, retry the whole transaction
     if (

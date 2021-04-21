@@ -5,7 +5,7 @@ const networkUrl = network.networkUrl;
 const networkApiKey = network.apiKey;
 const projectId = network.projectId;
 
-Connections = {
+const Connections = {
   connections: connections,
   networkType: networkType,
   network: network,

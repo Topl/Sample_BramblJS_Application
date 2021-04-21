@@ -1,9 +1,6 @@
 const UserModel = require(`./user.model`);
 const save2db = require("../../../lib/saveToDatabase");
-const findAndUpdate = require("../../../lib/findOneAndUpdate");
-const deleteFromDb = require(`../../../lib/deleteFromDb`);
 const stdErr = require(`../../../core/standardError`);
-const makeAdmin = require(`./lib/makeAdmin`);
 const { checkExists } = require("../../../lib/validation");
 const mongoose = require("mongoose");
 
@@ -22,7 +19,7 @@ class UsersService {
 
       const newUser = new UserModel(userInfo);
 
-      const insertResult = await save2db(newUser, { serviceName: serviceName });
+      await save2db(newUser, { serviceName: serviceName });
       return newUser.toJSON();
     } catch (err) {
       if (err.name === "MongoError" && err.code === 11000) {
@@ -61,7 +58,7 @@ class UsersService {
 
   static async deleteUser(userObj) {
     try {
-      console.log("Backend Delete Route");
+      //console.log("Backend Delete Route");
       const [isAdmin, fetchedUser] = await Promise.all([
         UsersService.checkAdmin(userObj.userEmail),
         checkExists(UserModel, userObj.requestedEmail, { serviceName })
@@ -111,7 +108,7 @@ class UsersService {
         checkExists(UserModel, userObj.changeEmail, { serviceName })
       ]);
 
-      if (!isAdmin && !(userEmail === changeEmail)) {
+      if (!isAdmin && !(userObj.userEmail === userObj.changeEmail)) {
         throw stdErr(403, "Not authorized", serviceName, serviceName);
       }
 
