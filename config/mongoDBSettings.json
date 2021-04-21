@@ -1,4 +1,4 @@
 {
-    "mongoURI": "mongodb://localhost:27017/data",
-    "port": 5000
+    "mongoURI": "mongodb://my-mongo-container_name:27017/data",
+    "port": 8082
 }

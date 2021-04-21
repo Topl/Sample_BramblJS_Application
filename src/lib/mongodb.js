@@ -22,8 +22,20 @@ const ensureCollections = () => {
     .forEach(model => model.createCollection());
 };
 
+var connectWithRetry = function() {
+  return mongoose.connect(uri, clientOption, function(err) {
+    if (err) {
+      console.error(
+        "Failed to connect to mongo on startup - retrying in one second",
+        err
+      );
+      setTimeout(connectWithRetry, 1000);
+    }
+  });
+};
+
 module.exports = async () => {
-  mongoose.connect(uri, clientOption);
+  connectWithRetry();
 
   mongoose.connection.on("connected", function() {
     ensureCollections();

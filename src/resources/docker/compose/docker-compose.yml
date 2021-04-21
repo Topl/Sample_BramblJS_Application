@@ -1,0 +1,17 @@
+services:
+    mongodb:
+        image: mongo:latest
+        container_name: my-mongo-container_name
+        restart: always
+        volumes:
+            - ~/data/docker/mongodb:/data/db
+        ports:
+            - 27017
+    sample_brambljs_service:
+        build: ./
+        ports: 
+            - "8082:8082"
+        container_name: sample_brambljs_service
+        links: 
+            - mongodb
+        restart: always
