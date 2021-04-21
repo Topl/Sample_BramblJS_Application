@@ -1,103 +1,99 @@
-const stdRoute = require(`../../../core/standardRoute`)
+const stdRoute = require(`../../../core/standardRoute`);
 
-const brambl =  require('../../../lib/bramblHelper')
-const AddressesService = require('./addresses.service')
-const AddressesDAO = require( "./addressesDAO")
-const User = require ("../user/users.controller")
-const ObjectId = require('bson');
+const brambl = require("../../../lib/bramblHelper");
+const AddressesService = require("./addresses.service");
+const AddressesDAO = require("./addressesDAO");
+const User = require("../user/users.controller");
+const ObjectId = require("bson");
 
-let brambljs
+let brambljs;
 
-class AddressesController{
+class AddressesController {
+  static async create(req, res, next) {
+    const handler = AddressesService.create;
+    const network = req.body.network;
+    const password = req.body.password;
+    const name = req.body.name;
+    const userEmail = req.body.user_id;
+    const args = {
+      network: network,
+      password: password,
+      name: name,
+      userEmail: userEmail
+    };
+    const responseMsg = {
+      success: "Address Created!"
+    };
+    stdRoute(req, res, handler, args, responseMsg);
+  }
 
-    static async create(req, res, next){
-       const handler = AddressesService.create
-       const network = req.body.network
-       const password = req.body.password
-       const name = req.body.name
-       const userEmail = req.body.user_id
-       const args = {
-        network: network,
-        password: password,
-        name: name,
-        userEmail: userEmail
-    }
-       const responseMsg = {
-           success: "Address Created!"
-       }
-       stdRoute(req, res, handler, args, responseMsg)
-    }
+  static async apiUpdateAddress(req, res, next) {
+    const name = req.body.name;
+    const handler = AddressesService.updateAddress;
+    const args = {
+      name: name,
+      addressId: req.params._id
+    };
+    const responseMsg = {
+      success: "Address Updated!"
+    };
+    stdRoute(req, res, handler, args, responseMsg);
+  }
 
-    static async apiUpdateAddress(req, res, next) {
+  static async apiDeleteAddress(req, res) {
+    const addressId = req.body.addressId;
+    const userEmail = req.body.user_id;
 
-            const name = req.body.name
-            const handler = AddressesService.updateAddress
-            const args = {
-                name: name,
-                addressId: req.params._id
-            }
-            const responseMsg = {
-                success: 'Address Updated!'
-            }
-            stdRoute(req, res, handler, args, responseMsg);
-    }
+    const handler = AddressesService.deleteAddress;
+    const args = {
+      addressId: addressId,
+      user_id: userEmail
+    };
 
-    static async apiDeleteAddress(req, res) {
-    
-            const addressId = req.body.addressId;
-            const userEmail = req.body.user_id;
+    const responseMsg = {
+      success: "Address Deleted!"
+    };
+    stdRoute(req, res, handler, args, responseMsg);
+  }
 
-            const handler = AddressesService.deleteAddress;
-            const args = {
-                addressId: addressId,
-                user_id: userEmail
-            };
+  static async apiGetAddresses(req, res) {
+    const handler = AddressesService.getAddresses;
+    const args = {
+      user_id: req.body.user_id,
+      page: parseInt(req.query.page) || 0,
+      limit: parseInt(req.query.limit) || 20
+    };
+    const responseMsg = {
+      success: "Addresses retrieved!"
+    };
+    stdRoute(req, res, handler, args, responseMsg);
+  }
 
-            const responseMsg = {
-                success: 'Address Deleted!'
-            };
-            stdRoute(req, res, handler, args, responseMsg);
-    }
+  static async apiGetAddressesByUser(req, res) {
+    let users = req.query.users;
+    const handler = AddressesService.getAddressesByUser;
+    const args = {
+      user_id: req.params.email,
+      page: parseInt(req.query.page) || 0,
+      limit: parseInt(req.query.limit) || 20
+    };
+    const responseMsg = {
+      success: "Successfully retrieved Addresses!"
+    };
+    stdRoute(req, res, handler, args, responseMsg);
+  }
 
-    static async apiGetAddresses(req, res) {
-        const handler = AddressesService.getAddresses
-        const args = {
-            user_id: req.body.user_id,
-            page: parseInt(req.query.page) || 0,
-            limit: parseInt(req.query.limit) || 20,
-        };
-        const responseMsg = {
-            success: "Addresses retrieved!",
-        }
-        stdRoute(req, res, handler, args, responseMsg)
-    }
-
-    static async apiGetAddressesByUser(req, res) {
-        let users = req.query.users
-        const handler = AddressesService.getAddressesByUser
-        const args = {
-            user_id: req.params.email,
-            page: parseInt(req.query.page) || 0,
-            limit: parseInt(req.query.limit) || 20,
-        };
-        const responseMsg = {
-            success: "Successfully retrieved Addresses!"
-        }
-        stdRoute(req, res, handler, args, responseMsg)
-    }
-
-    static async apiGetAddressById(req, res) {
-            let id = req.params.id || {}
-            const handler = AddressesService.getAddressById
-            const args = {
-                addressId: id
-            }
-            const responseMsg = {
-                success: "Successfully retrieved Address!"
-            }
-            stdRoute(req, res, handler, args, responseMsg)
-    }
-
+  static async apiGetAddressById(req, res) {
+    let id = req.params.id || {};
+    const handler = AddressesService.getAddressById;
+    const args = {
+      addressId: id
+    };
+    const responseMsg = {
+      success: "Successfully retrieved Address!"
+    };
+    stdRoute(req, res, handler, args, responseMsg);
+  }
 }
 
-module.exports = AddressesController
+module.exports = AddressesController;
