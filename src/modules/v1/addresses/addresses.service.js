@@ -194,46 +194,6 @@ class AddressesService {
             session.endSession
         }
     }
-
-    static async searchAddresses(page, filters) {
-        const ADDRESSES_PER_PAGE = 20
-        const {addressesList, totalNumAddresses} = await AddressesDAO.getAddresses({
-            filters,
-            page,
-            ADDRESSES_PER_PAGE
-        })
-        let response = {
-            addresses: addressesList,
-            page: page,
-            filters,
-            entries_per_page: ADDRESSES_PER_PAGE,
-            totalResults: totalNumAddresses
-        }
-        return response
-    }
-
-    static async facetedSearch(page, filters) {
-        const ADDRESSES_PER_PAGE = 20
-        const facetedSearchResult = await AddressesDAO.facetedSearch(
-            {
-                filters,
-                page,
-                ADDRESSES_PER_PAGE
-            }
-        )
-        return facetedSearchResult
-    }
-
-    static async getConfig() {
-        const {poolSize, wtimeout, authInfo} = await AddressesDAO.getConfiguration()
-        return {
-            pool_size: poolSize,
-            wtimeout,
-            ...authInfo
-        }
-    }
- 
-
 }
 
 module.exports = AddressesService

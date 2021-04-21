@@ -10,10 +10,6 @@ let brambljs
 
 class AddressesController{
 
-    static getTest(req, res) {
-        res.send("Topl Sample API")
-    }
-
     static async create(req, res, next){
        const handler = AddressesService.create
        const network = req.body.network
@@ -100,84 +96,6 @@ class AddressesController{
                 success: "Successfully retrieved Address!"
             }
             stdRoute(req, res, handler, args, responseMsg)
-    }
-
-    static async apiSearchAddresses(req, res) {
-        const ADDRESSES_PER_PAGE = 20
-        let page
-        try {
-            page = req.query.page ? parseInt(req.query.page, 10) : 0
-        } catch (e) {
-            console.error(`Got bad value for page:, ${e}`)
-            page = 0
-        }
-        let searchType
-        try {
-            searchType = Object.keys(req.query)[0]
-        } catch (e) {
-            console.error(`No search keys specified: ${e}`)
-        }
-
-        let filters = {}
-
-        switch(searchType) {
-            case "users" :
-                if (req.query.users !== "") {
-                    filters.users = req.query.users
-                }
-                break
-            case "text" :
-                if (req.query.text !== "") {
-                    filters.text = req.query.text
-                }
-                break
-            default:
-                //nothing to do
-        }
-        handler = AddressesService.searchAddresses
-        args = {
-            page,
-            filters
-        }
-        responseMsg = {
-            success: "Addresses Search Successful!"
-        }
-        stdRoute(req, res, handler, args, responseMsg)
-    }
-
-    static async apiFacetedSearch(req, res, next) {
-        const ADDRESSES_PER_PAGE = 20
-
-        let page
-        try {
-            page = req.query.page ? parseInt(req.query.page, 10) : 0
-        } catch (e) {
-            console.error(`Got bad value for page, defaulting to 0: ${e}`)
-            page = 0
-        }
-
-        let filters = {}
-        filters = req.query.users !== ""
-            ? {users: new RegExp(req.query.users, "i")}
-            : {users: "Chris Georgen"}
-        
-        const handler = AddressesService.facetedSearch
-        const args = {page, filters}
-        const responseMsg = {
-            success: "Faceted Search Successful!"
-        }
-
-        stdRoute(req, res, handler, args, responseMsg)
-
-    }
-    
-    static getConfig(req, res) {
-        const handler = AddressesService.getConfiguration
-        const args = {}
-        const responseMsg = {
-            success: "Configuration retrieved! "
-        }
-        stdRoute(req, res, handler, args, responseMsg)
     }
 
 }

@@ -26,7 +26,6 @@ router.route("/").get(
     }),
     AddressesCtrl.apiGetAddresses
     )
-router.route("/search").get(AddressesCtrl.apiSearchAddresses)
 router.route("/users/:email/").get(
     auth,
     checkSchema({
@@ -36,14 +35,12 @@ router.route("/users/:email/").get(
     }),
     AddressesCtrl.apiGetAddressesByUser
     )
-router.route("/facet-search").get(AddressesCtrl.apiFacetedSearch)
 router.route("/:id").get(
     auth,
     checkSchema({
-        _id: { in: ["params"], optional: false,  errorMessage: "Please provide a valid address id" },
+        _id: { in: ["params"], optional: false, isMongoId: true, errorMessage: "Please provide a valid Project ID" },
     }),
     AddressesCtrl.apiGetAddressById)
-router.route("/config-options").get(AddressesCtrl.getConfig)
 
 router  
     .route("/address")
