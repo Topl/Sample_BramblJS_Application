@@ -43,30 +43,24 @@ class AddressesController{
             const responseMsg = {
                 success: 'Address Updated!'
             }
-            stdRoute(req, res, handler, args, responseMsg)
+            stdRoute(req, res, handler, args, responseMsg);
     }
 
     static async apiDeleteAddress(req, res) {
-            const userJwt = req.get("Authorization").slice("Bearer ".length)
-            const user = User.decoded(userJwt)
-            var {error} = user
-            if (error) {
-                res.status(401).json({error})
-                return
-            }
+    
+            const addressId = req.body.addressId;
+            const userEmail = req.body.user_id;
 
-            const addressId = req.body.addressId
-            const userEmail = user.userEmail
-
-            handler = AddressesService.deleteAddress
-            args = {
-                addressId
-            }
+            const handler = AddressesService.deleteAddress;
+            const args = {
+                addressId: addressId,
+                user_id: userEmail
+            };
 
             const responseMsg = {
                 success: 'Address Deleted!'
-            }
-            stdRoute(req, res, handler, args, responseMsg)
+            };
+            stdRoute(req, res, handler, args, responseMsg);
     }
 
     static async apiGetAddresses(req, res) {

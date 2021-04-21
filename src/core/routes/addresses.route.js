@@ -73,6 +73,13 @@ router.patch(
             },
         }),
         AddressesCtrl.apiUpdateAddress)
-    .delete(AddressesCtrl.apiDeleteAddress)
+router.delete(
+        `/:_id`,
+        auth,
+        checkSchema({
+            _id: { in: ["params"], optional: false, isMongoId: true, errorMessage: "Please provide a valid Project ID" },
+        }),
+        AddressesCtrl.apiDeleteAddress
+        )
 
 module.exports = router

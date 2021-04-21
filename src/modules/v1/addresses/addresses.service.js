@@ -99,17 +99,54 @@ class AddressesService {
         }
     };
 
-    static async deleteAddress(addressId, user) {
+    static async deleteAddress(args) {
+        const session = await mongoose.startSession();
         try {
-            if (!(await UsersService.checkAdmin(email))) {
-                console.error(`Deletion unsuccessful`)
-                return {error: `Deletion unsuccessful`}
+            const timestamp = new Date();
+            const fetchedAddress = await checkExists(Address, args.addressId, {serviceName});
+
+            if (!fetchedAddress.isActive.status) {
+                throw stdErr(404, "No Active Project", serviceName, serviceName);
             }
-            return deleteFromDb(Address, {_id: addressId}, {serviceName: serviceName})
-        } catch {
-            console.error(`Error occurred while deleting user., ${e}`)
-            return {error:e}
+
+            // fetch user
+            const user_id = fetchedAddress.user_id.toString();
+            let [hasAdminAccess, fetchedUser] = await Promise.all([
+                UsersService.checkAdmin(user_id),
+                UserModel.findOne({"email": user_id})
+            ]);
+
+            if (!fetchedUser) {
+                throw stdErr(404, "No Active User", serviceName, serviceName);
+            } else if (!fetchedUser.isActive.status) {
+                throw stdErr(404, "No Active User", serviceName, serviceName);
+            }
+
+            // access control
+            if (!hasAdminAccess && !(user_id = args.user_id)) {
+                throw stdErr(403, "Not Authorized", serviceName, serviceName);
+            }
+
+            // business logic
+            fetchedAddress.isActive.status = false;
+            fetchedAddress.markModified("isActive.status");
+            fetchedAddress.isActive.asOf = timestamp;
+            fetchedAddress.markModified("isActive.asOf");
+            const addressIndex = fetchedUser.addresses.findIndex(
+                (elem) => {
+                    elem.equals(mongoose.Types.ObjectId(args.addressId));
+            });
+            fetchedUser.addresses.splice(addressIndex, 1);
+            await save2db([fetchedUser, fetchedAddress], {timestamp, serviceName, session})
+
+            return {}
+        } catch (err) {
+            throw err;
+        } finally {
+            session.endSession();
         }
+
+
     } 
 
     static async getAddresses(args) {
@@ -126,7 +163,7 @@ class AddressesService {
         try {
             const [fetchedUser, projects] = await Promise.all([
                 checkExists(UserModel, args.user_id, {serviceName} ),
-                paginateAddresses(args.user_id, args.page. args.limit),
+                paginateAddresses(args.user_id, args.page, args.limit),
             ]);
 
             if (!fetchedUser.isActive.status) {
