@@ -107,7 +107,7 @@ class UsersService {
     try {
       // Access Control
       const [isAdmin, fetchedUser] = await Promise.all([
-        UsersService.checkAdmin(userObj.userEmail),
+        UsersService.checkAdmin(userObj.user_id),
         checkExists(UserModel, userObj.changeEmail, { serviceName })
       ]);
 
@@ -127,11 +127,11 @@ class UsersService {
       }
 
       if (userObj.firstName) {
-        fetchedUser.firstName = firstName;
+        fetchedUser.firstName = userObj.firstName;
       }
 
       if (userObj.lastName) {
-        fetchedUser.lastName = lastName;
+        fetchedUser.lastName = userObj.lastName;
       }
 
       await save2db(fetchedUser, { timestamp, serviceName, session });

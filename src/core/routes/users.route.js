@@ -53,7 +53,7 @@ router
     auth,
     checkSchema({
       email: {
-        in: ["params"],
+        in: ["query"],
         optional: true,
         isEmail: true,
         errorMessage: "Please provide a valid email"

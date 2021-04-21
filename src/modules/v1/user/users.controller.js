@@ -37,12 +37,14 @@ class UserController {
   }
 
   static async save(req, res) {
-    const handler = UsersService.updateUser;
+    const handler = UserService.updateUser;
 
     const args = {
-      user_id: req.body.email,
+      user_id: req.body.user_id,
       firstName: req.body.firstName,
-      lastName: req.body.lastName
+      lastName: req.body.lastName,
+      newEmail: req.body.newEmail,
+      changeEmail: req.query.email
     };
 
     const responseMsg = { success: "Updated User Information!" };
