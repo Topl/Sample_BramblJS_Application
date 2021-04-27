@@ -1,13 +1,13 @@
-# Sample_BrambleJS_Application
+# Sample_BramblJS_Application
 
 ## Description
-A sample BrambleJS application that uses all of the APIs which can be used for documentation, tutorials, training and onboarding. 
+A sample BramblJS application that uses all of the APIs which can be used for documentation, tutorials, training and onboarding. 
 
 ## Project Setup
 ### Local Installation
 * To start local development, first clone this repository and install the local dependencies
 ```
-git clone git@github.com:Topl/Sample_BrambleJS_Application.git
+git clone git@github.com:Topl/Sample_BramblJS_Application.git
 cd Sample_BramblJS_Application
 npm install
 ```

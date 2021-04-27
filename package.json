@@ -1,7 +1,7 @@
 {
   "name": "brambljs-sample-application",
   "version": "1.0.0",
-  "description": "A sample BrambleJS application that uses all of the APIs which can be used for documentation, tutorials, training and onboarding.",
+  "description": "A sample BramblJS application that uses all of the APIs which can be used for documentation, tutorials, training and onboarding.",
   "main": "index.js",
   "scripts": {
     "lint": "eslint src --ext .js",
@@ -14,15 +14,15 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/Topl/Sample_BrambleJS_Application.git"
+    "url": "https://github.com/Topl/Sample_BramblJS_Application.git"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/Topl/Sample_BrambleJS_Application/issues"
+    "url": "https://github.com/Topl/Sample_BramblJS_Application/issues"
   },
-  "homepage": "https://github.com/Topl/Sample_BrambleJS_Application#readme",
+  "homepage": "https://github.com/Topl/Sample_BramblJS_Application#readme",
   "dependencies": {
     "@babel/eslint-parser": "^7.13.14",
     "@babel/eslint-plugin": "^7.13.16",

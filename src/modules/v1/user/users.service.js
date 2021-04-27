@@ -70,7 +70,7 @@ class UsersService {
       }
 
       // access control
-      if (!isAdmin || !(userObj.userEmail === userObj.requestedEmail)) {
+      if (!isAdmin && !(userObj.userEmail === userObj.requestedEmail)) {
         throw stdErr(403, "Not Authorized", serviceName, serviceName);
       }
 
@@ -139,41 +139,6 @@ class UsersService {
       session.endSession();
     }
   }
-
-  // static async makeAdmin(userObj) {
-  //     try {
-  //         let errors = {}
-  //         const userModel = await UserModel({
-  //             name: userObj.name,
-  //             email: userObj.email
-  //         })
-
-  //        const insertResult = await this.addUser(userObj)
-  //        if (!insertResult.success) {
-  //            errors.email = insertResult.error
-  //        }
-  //        if (Object.keys(errors).length > 0) {
-  //            return errors
-  //        }
-
-  //        const makeAdminResponse = findAndUpdate(models = userModel, updates = {$set:{isAdmin:true}}, filters = {user_id: userModel.email}, opts = {serviceName: serviceName, upsert: false})
-  //        const userFromDb = this.getUser(userObj)
-  //        if (!userFromDb) {
-  //            errors.general = "Internal error, please try again later!"
-  //        }
-
-  //        if (Object.keys(errors).length > 0) {
-  //            return errors
-  //        }
-
-  //        const user = new User(userFromDb)
-  //        const loginResponse = this.loginUser(user.email, userObj.password)
-  //        return {success:true, user: user}
-
-  //     } catch (e) {
-  //         return {error: e}
-  //     }
-  // }
 
   static async checkAdmin(email) {
     try {

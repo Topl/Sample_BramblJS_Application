@@ -23,9 +23,7 @@ class RequestValidator {
 
   static validateNetwork(value) {
     // Check that the networks field is not empty, a string, and a valid network
-
-    const networks = ["toplnet", "valhalla", "local", "private"];
-    if (!value || typeof value !== "string" || !networks.includes(value)) {
+    if (!BramblJS.utils.isValidNetwork(value)) {
       return Promise.reject("Please provide a valid network");
     }
     return Promise.resolve();

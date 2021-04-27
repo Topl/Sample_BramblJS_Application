@@ -29,68 +29,67 @@ router.route("/register").post(
   }),
   usersCtrl.register
 );
-router
-  .route("/email")
-  .delete(
-    auth,
-    checkSchema({
-      email: {
-        in: ["query"],
-        optional: true,
-        isEmail: true,
-        errorMessage: "Please provide a valid email"
-      },
-      requestedEmail: {
-        in: ["body"],
-        optional: true,
-        isEmail: true,
-        errorMessage: "Please provide a valid email"
-      }
-    }),
-    usersCtrl.delete
-  )
-  .patch(
-    auth,
-    checkSchema({
-      email: {
-        in: ["query"],
-        optional: true,
-        isEmail: true,
-        errorMessage: "Please provide a valid email"
-      },
-      firstName: {
-        in: ["body"],
-        optional: true,
-        isString: true,
-        errorMessage: "Please provide a valid first name"
-      },
-      lastName: {
-        in: ["body"],
-        optional: true,
-        isString: true,
-        errorMessage: "Please provide a valid last name"
-      }
-    }),
-    usersCtrl.save
-  )
-  .get(
-    auth,
-    checkSchema({
-      email: {
-        in: ["query"],
-        optional: true,
-        isEmail: true,
-        errorMessage: "Please provide a valid email"
-      },
-      requestedEmail: {
-        in: ["body"],
-        optional: true,
-        isEmail: true,
-        errorMessage: "Please provide a valid email"
-      }
-    }),
-    usersCtrl.getUser
-  );
-//router.route("/make-admin").post(usersCtrl.createAdminUser)
+router.route("").delete(
+  auth,
+  checkSchema({
+    user_id: {
+      in: ["body"],
+      optional: false,
+      isEmail: true,
+      errorMessage: "Please provide a valid email"
+    },
+    requestedEmail: {
+      in: ["body"],
+      optional: true,
+      isEmail: true,
+      errorMessage: "Please provide a valid email"
+    }
+  }),
+  usersCtrl.delete
+);
+
+router.route("").patch(
+  auth,
+  checkSchema({
+    email: {
+      in: ["body"],
+      optional: true,
+      isEmail: true,
+      errorMessage: "Please provide a valid email"
+    },
+    firstName: {
+      in: ["body"],
+      optional: true,
+      isString: true,
+      errorMessage: "Please provide a valid first name"
+    },
+    lastName: {
+      in: ["body"],
+      optional: true,
+      isString: true,
+      errorMessage: "Please provide a valid last name"
+    }
+  }),
+  usersCtrl.save
+);
+
+router.route("").get(
+  auth,
+  checkSchema({
+    email: {
+      in: ["body"],
+      optional: true,
+      isEmail: true,
+      errorMessage: "Please provide a valid email"
+    },
+    requestedEmail: {
+      in: ["body"],
+      optional: true,
+      isEmail: true,
+      errorMessage: "Please provide a valid email"
+    }
+  }),
+  usersCtrl.getUser
+);
 
 module.exports = router;

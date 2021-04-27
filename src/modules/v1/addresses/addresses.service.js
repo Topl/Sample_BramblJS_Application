@@ -96,12 +96,12 @@ class AddressesService {
     const session = await mongoose.startSession();
     try {
       const timestamp = new Date();
-      const fetchedAddress = await checkExists(Address, args.addressId, {
+      const fetchedAddress = await checkExistsById(Address, args.addressId, {
         serviceName
       });
 
       if (!fetchedAddress.isActive.status) {
-        throw stdErr(404, "No Active Project", serviceName, serviceName);
+        throw stdErr(404, "No Active Address", serviceName, serviceName);
       }
 
       // fetch user
@@ -183,7 +183,7 @@ class AddressesService {
       });
 
       if (!fetchedAddress.isActive.status) {
-        throw stdErr(404, "No Active Project", serviceName, serviceName);
+        throw stdErr(404, "No Active Address", serviceName, serviceName);
       }
 
       return fetchedAddress;
