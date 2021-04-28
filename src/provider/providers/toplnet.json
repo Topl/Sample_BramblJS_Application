@@ -1,0 +1,12 @@
+{
+  "name": "toplnet",
+  "networkId": 1,
+  "providerId": 1,
+  "consensus": {
+    "type": "pos",
+    "algorithm": "NXT"
+  },
+  "comment": "The Topl Main Network",
+  "url": "",
+  "nanopolyFee": "1000000000"
+}

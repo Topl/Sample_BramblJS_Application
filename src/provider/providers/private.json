@@ -1,0 +1,12 @@
+{
+  "name": "private",
+  "networkId": 3,
+  "providerId": 3,
+  "consensus" : {
+    "type": "pos",
+    "algorithm": "nxt"
+  },
+  "comment": "private testnet for testing, with forging turned on",
+  "url": "http://127.0.0.1:9085",
+  "nanopolyFee": "0"
+}
