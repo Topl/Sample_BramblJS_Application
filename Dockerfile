@@ -1,5 +1,5 @@
 FROM node:alpine
-
+ENV PYTHONUNBUFFERED=1
 # Define the WORKDIR, because recent versions of NodeJS and NPM require it
 # Otherwise packages are installed at the container root level
 
@@ -11,9 +11,13 @@ COPY .env ./
 ADD config/ ./config
 ADD src/ ./src
 ADD test/ ./test
-COPY package*.json .
+COPY package*.json ./
 
-RUN apk add --no-cache make gcc g++ python && npm install --silent && apk del make gcc g++ python
+#Install python
+RUN apk add --update --no-cache python3 && ln -sf python3 /usr/bin/python
+RUN python3 -m ensurepip
+
+RUN apk add --no-cache make gcc g++ && npm install --silent && apk del make gcc g++
 
 # App binds to port 8082
 EXPOSE 8082
