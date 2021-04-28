@@ -1,0 +1,24 @@
+services:
+    mongodb:
+        image: mongo:latest
+        container_name: my-mongo-container_name
+        restart: always
+        volumes:
+            - ~/data/docker/mongodb:/data/db
+        ports:
+            - 27017
+    sample_brambljs_service:
+        build: .
+        ports: 
+            - "8082:8082"
+        container_name: sample_brambljs_service
+        depends_on: 
+            - mongodb
+        restart: always
+    bifrost: 
+        image: toplprotocol/bifrost:1.3.3
+        container_name: bifrost
+        ports:
+            - "9085:9085"
+        restart: always 
+

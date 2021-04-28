@@ -32,3 +32,13 @@ nvm use
 
 ### Launch
 * Once everything is installed, launch the application using `npm run start:dev`
+
+### Docker Containerization
+This is done by building a Docker image with the Dockerfile included. First, make sure that your working directory for your terminal is the docker directory within the resources folder. Then run the following commands
+`docker build . -t topl/sample_brambljs_service`
+
+### Docker Compose
+In order to build a multi-container application, also providing the linking between containers, is through the [Docker Compose](https://docs.docker.com/compose/overview/).
+
+Run the following command to get up and running quickly, with no hassle from the docker/compose directory
+`docker-compose up`
