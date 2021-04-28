@@ -34,7 +34,7 @@ class AddressesController {
   }
 
   static async apiDeleteAddress(req, res) {
-    const addressId = req.body.addressId;
+    const addressId = req.params._id;
     const userEmail = req.body.user_id;
 
     const handler = AddressesService.deleteAddress;

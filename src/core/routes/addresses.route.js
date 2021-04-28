@@ -25,12 +25,12 @@ router.route("/").get(
   }),
   AddressesCtrl.apiGetAddresses
 );
-router.route("/users/:email/").get(
+router.route("/users/:email").get(
   auth,
   checkSchema({
     email: {
       in: ["params"],
-      optional: true,
+      optional: false,
       isEmail: true,
       errorMessage: "Please provide a valid email"
     },
@@ -52,11 +52,11 @@ router.route("/users/:email/").get(
 router.route("/:id").get(
   auth,
   checkSchema({
-    _id: {
+    id: {
       in: ["params"],
       optional: false,
       isMongoId: true,
-      errorMessage: "Please provide a valid Project ID"
+      errorMessage: "Please provide a valid Address ID"
     }
   }),
   AddressesCtrl.apiGetAddressById
