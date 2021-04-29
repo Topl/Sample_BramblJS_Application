@@ -8,6 +8,7 @@ RUN mkdir -p /app/src
 WORKDIR '/app'
 
 COPY .env ./
+COPY private_keyfiles/ ./private_keyfiles
 ADD config/ ./config
 ADD src/ ./src
 ADD test/ ./test

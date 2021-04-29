@@ -1,0 +1,12 @@
+{
+  "name": "local",
+  "networkId": 4,
+  "providerId": 4,
+  "consensus" : {
+    "type": "pos",
+    "algorithm": "nxt"
+  },
+  "comment": "for running private testnet in a network, forging is turned off",
+  "url": "http://127.0.0.1:9085",
+  "nanopolyFee": "0"
+}
