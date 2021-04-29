@@ -10,7 +10,7 @@ services:
     sample_brambljs_service:
         build: .
         ports: 
-            - "8082:8082"
+            - "127.0.0.1:8082:8082"
         container_name: sample_brambljs_service
         depends_on: 
             - mongodb
@@ -20,5 +20,7 @@ services:
         container_name: bifrost
         ports:
             - "9085:9085"
-        restart: always 
+            - "9084:9084"
+        restart: always
+        command: java -jar bifrost-1.3.3.jar --seed test --apiKeyHash BWz6Gw6gnb4NXzfgie8fetjk3m4xHyS5oV16GtHXptE4
 
