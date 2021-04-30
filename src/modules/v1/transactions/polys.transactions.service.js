@@ -5,13 +5,15 @@ const stdError = require("../../../core/standardError");
 
 const serviceName = "polyTransaction";
 
+const PROPOSITION_TYPES = ["PublicKeyCurve25519", "ThresholdCurve25519"];
+
 const MAX_INTEGER = new BN("7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF", 16);
 
 /**
  * This constructor takes the values, validates them if necessary and assigns them and freezes the object.
  */
 class PolyTransactionService {
-  static getBalance(args) {
+  static async getBalance(args) {
     const bramblHelper = new BramblHelper(args.password, args.network);
     let address = "";
     address =
@@ -22,56 +24,58 @@ class PolyTransactionService {
     if (address === false) {
       throw stdError(404, "Unable to find address", serviceName, serviceName);
     } else {
-      bramblHelper.getBalance(address).then(value => {
-        return value;
-      });
+      return await bramblHelper.getBalance(address);
     }
   }
 
-  static getBlockNumber(args) {
+  static async getBlockNumber(args) {
     const bramblHelper = new BramblHelper(args.password, args.network);
-    bramblHelper.getBlockNumber().then(value => {
-      return value;
-    });
+    return await bramblHelper.getBlockNumber();
   }
 
-  static getBlock(args) {
+  static async getBlock(args) {
     const bramblHelper = new BramblHelper(args.password, args.network);
-    bramblHelper.getBlock(args.blockNumber).then(value => {
-      return value;
-    });
+    return await bramblHelper.getBlock(args.blockNumber);
   }
 
-  static getTransactionFromMempool(args) {
+  static async getTransactionFromMempool(args) {
     const bramblHelper = new BramblHelper(args.password, args.network);
-    bramblHelper.getTransactionFromMempool(args.transactionId).then(value => {
-      return value;
-    });
+    return await bramblHelper.getTransactionFromMempool(args.transactionId);
   }
 
-  static getTransactionFromBlock(args) {
+  static async getTransactionFromBlock(args) {
     const bramblHelper = new BramblHelper(args.password, args.network);
-    bramblHelper.getTransactionFromBlock(args.transactionId).then(value => {
-      return value;
-    });
+    return await bramblHelper.getTransactionFromBlock(args.transactionId);
   }
 
   static async rawPolyTransaction(args) {
     const bramblHelper = new BramblHelper(args.password, args.network);
-    await this.validateBody(args).then(obj => {
-      bramblHelper.sendRawPolyTransaction(obj).then(value => {
-        return value;
-      });
+    const e = await PolyTransactionService.validateBody(args).then(obj => {
+      return bramblHelper.sendRawPolyTransaction(obj);
     });
+    return e;
   }
 
   static async polyTransaction(args) {
-    const bramblHelper = new BramblHelper(args.password, args.network);
-    await this.validateBody(args).then(obj => {
-      bramblHelper.polyTransaction(args).then(value => {
-        return value;
+    const bramblHelper = new BramblHelper(
+      args.password,
+      args.network,
+      args.keyFilePath
+    );
+    if (bramblHelper != null) {
+      return await PolyTransactionService.validateBody(args).then(function(
+        result
+      ) {
+        return bramblHelper.polyTransaction(result);
       });
-    });
+    } else {
+      throw stdError(
+        404,
+        "Missing or Invalid Private Key",
+        serviceName,
+        serviceName
+      );
+    }
   }
 
   _validateCannotExceedMaxInteger(values) {
@@ -82,21 +86,28 @@ class PolyTransactionService {
     }
   }
 
-  async validateBody(body) {
+  static async validateBody(body) {
     return new Promise((resolve, reject) => {
       if (typeof body === "object" && Object.keys(body).length != 0) {
         let obj = {};
+        obj.propositionType = PROPOSITION_TYPES.find(proposition => {
+          return proposition === body.propositionType;
+        })
+          ? body.propositionType
+          : null;
         obj.sender = body.sender != null ? body.sender : null;
         obj.sender =
           body.sender != null && AddressValidator.isAddress(body.sender)
             ? body.sender
             : (obj.error = "invalid address");
         if (Array.isArray(body.recipients)) {
-          for (i = 0; i < body.recipients.length; i++) {
+          for (var i = 0; i < body.recipients.length; i++) {
             if (body.recipients[i][0] == null) {
               obj.error = "recipient address missing";
             } else if (!AddressValidator.isAddress(body.recipients[i][0])) {
               obj.error = "invalid address";
+            } else {
+              obj.recipients = body.recipients;
             }
           }
         } else {

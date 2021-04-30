@@ -17,7 +17,7 @@ router.route("/balance/:address").get(
 );
 
 router.route("/block").get(NetworkCtrl.getBlockNumber);
-router.route("block/:blockNumber").get(NetworkCtrl.getBlock);
+router.route("/block/:blockNumber").get(NetworkCtrl.getBlock);
 router.route("/tx/:transactionId").get(NetworkCtrl.getTransactionFromMempool);
 router
   .route("/tx-from-block/:transactionId")
@@ -25,6 +25,6 @@ router
 
 // Endpoints to perform a poly transaction
 router.route("/send-raw-poly-tx").post(NetworkCtrl.sendRawPolyTransaction);
-router.post("/send-poly-tx").post(NetworkCtrl.sendPolyTransaction);
+router.route("/send-poly-tx").post(NetworkCtrl.sendPolyTransaction);
 
 module.exports = router;
