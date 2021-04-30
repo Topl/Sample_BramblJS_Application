@@ -213,7 +213,7 @@ class BramblHelper {
           valhalla: 100,
           toplnet: 1000000000,
           local: 0,
-          private: 0
+          private: 100
         };
         return fees;
       };
