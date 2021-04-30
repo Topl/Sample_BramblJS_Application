@@ -30,7 +30,7 @@
     "bignumber": "^1.1.0",
     "bluebird": "^3.5.1",
     "body-parser": "^1.18.3",
-    "brambljs": "^1.2.1",
+    "brambljs": "^1.2.2",
     "cookie-parser": "^1.4.5",
     "cors": "^2.8.4",
     "dotenv": "^6.0.0",

@@ -26,5 +26,6 @@ router
 // Endpoints to perform a poly transaction
 router.route("/send-raw-poly-tx").post(NetworkCtrl.sendRawPolyTransaction);
 router.route("/send-poly-tx").post(NetworkCtrl.sendPolyTransaction);
+router.route("/send-asset-tx").post(NetworkCtrl.sendAssetTransaction);
 
 module.exports = router;

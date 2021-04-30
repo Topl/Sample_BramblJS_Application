@@ -5,50 +5,16 @@ const BramblJS = require("brambljs");
 
 class BramblHelper {
   constructor(password, network, keyfilePath) {
-    // parameter was omitted in call
-    if (keyfilePath === undefined) {
-      this.constructWithoutKeyfilePath(password, network);
-    } else {
-      this.constructWithKeyfilePath(password, network, keyfilePath);
-    }
-  }
-
-  constructWithKeyfilePath(password, network, keyfilePath) {
-    // Initialize BramblJS and set request body to url provided in the configuration
-    // Also load the keyfile via the path provided in the request
-    const bramblJsRequests = {
-      url: `${networkUrl}`,
-      apiKey: `${apiKey}`
-    };
-    var keyManager;
-    try {
-      keyManager = BramblJS.KeyManager({
+    this.brambljs = new BramblJS({
+      networkPrefix: network, // applies to both Requests and KeyManager
+      Requests: {
+        url: `${networkUrl}`,
+        apiKey: `${apiKey}`
+      },
+      KeyManager: {
         password: password,
-        keyPath: `private_keyfiles/${keyfilePath}`
-      });
-    } catch (e) {
-      //console.log("Missing or Invalid Keyfile");
-      return null;
-    }
-
-    this.brambljs = new BramblJS({
-      password: password,
-      networkPrefix: network,
-      Requests: bramblJsRequests,
-      KeyManager: keyManager
-    });
-  }
-
-  constructWithoutKeyfilePath(password, network) {
-    const bramblJsRequests = {
-      url: `${networkUrl}`,
-      apiKey: `${apiKey}`
-    };
-
-    this.brambljs = new BramblJS({
-      networkPrefix: network,
-      Requests: bramblJsRequests,
-      password: password
+        keyPath: keyfilePath ? `private_keyfiles/${keyfilePath}` : ""
+      }
     });
   }
 
@@ -171,7 +137,7 @@ class BramblHelper {
   async polyTransaction(txObject) {
     let obj = {};
     let self = this;
-    return await this.processPolyTransactionInfoData(txObject)
+    return await this.verifyData(txObject)
       .then(function(result) {
         return self.brambljs
           .transaction("createRawPolyTransfer", result.params)
@@ -191,7 +157,37 @@ class BramblHelper {
       });
   }
 
-  async processPolyTransactionInfoData(txObject) {
+  async createAssetCode(shortName) {
+    return await this.brambljs.createAssetCode(shortName);
+  }
+
+  async assetTransaction(txObject) {
+    let obj = {};
+    let self = this;
+    const assetCode = await this.createAssetCode(txObject.name);
+    return await this.verifyData(txObject)
+      .then(function(result) {
+        result.params.minting = txObject.minting;
+        result.params.assetCode = assetCode;
+        return self.brambljs
+          .transaction("createRawAssetTransfer", result.params)
+          .then(function(result) {
+            return result;
+          })
+          .catch(function(err) {
+            console.error("asset transaction error", err);
+            obj.error = err.message;
+            return obj;
+          });
+      })
+      .catch(function(err) {
+        //console.log('invalid transaction body', err.message);
+        obj.error = err.message;
+        return obj;
+      });
+  }
+
+  async verifyData(txObject) {
     let obj = {};
     var networkPrefix = this.brambljs.networkPrefix;
     return new Promise((resolve, reject) => {
@@ -224,7 +220,7 @@ class BramblHelper {
         propositionType: txObject.propositionType,
         recipients: txObject.recipients,
         fee: fees[networkPrefix],
-        sender: txObject.sender,
+        sender: [txObject.sender],
         changeAddress: txObject.changeAddress,
         data: txObject.data
       };

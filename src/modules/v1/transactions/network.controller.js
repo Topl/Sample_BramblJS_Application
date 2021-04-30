@@ -1,4 +1,5 @@
 const PolyTransactionService = require("./polys.transactions.service");
+const AssetTransactionService = require("./assets.transaction.service");
 const stdRoute = require(`../../../core/standardRoute`);
 
 class NetworkController {
@@ -88,6 +89,15 @@ class NetworkController {
     const args = req.body;
     const responseMsg = {
       success: "Sent poly transaction"
+    };
+    stdRoute(req, res, next, handler, args, responseMsg);
+  }
+
+  static async sendAssetTransaction(req, res, next) {
+    const handler = AssetTransactionService.sendAssetTransaction;
+    const args = req.body;
+    const responseMsg = {
+      success: "Sent asset transaction"
     };
     stdRoute(req, res, next, handler, args, responseMsg);
   }
