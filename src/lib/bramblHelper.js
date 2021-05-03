@@ -169,7 +169,6 @@ class BramblHelper {
       });
   }
 
-<<<<<<< HEAD
   createAssetValue(shortName) {
     return this.brambljs.createAssetCode(shortName);
   }
@@ -184,10 +183,6 @@ class BramblHelper {
       }
     }
     return newRecipients;
-=======
-  createAssetCode(shortName) {
-    return BramblJS.createAssetCode(shortName);
->>>>>>> f1defc7bc769cc864eef12b8dcbdfb6128afbb3f
   }
 
   async assetTransaction(txObject) {
