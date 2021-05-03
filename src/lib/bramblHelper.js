@@ -157,18 +157,33 @@ class BramblHelper {
       });
   }
 
-  async createAssetCode(shortName) {
-    return await this.brambljs.createAssetCode(shortName);
+  createAssetValue(shortName) {
+    return this.brambljs.createAssetCode(shortName);
+  }
+
+  appendMetadata(recipients, metadata) {
+    const newRecipients = recipients;
+    if (Array.isArray(recipients)) {
+      for (var i = 0; i < recipients.length; i++) {
+        // TODO: Implment Security Root Reference to Asset Box
+        recipients[i].push("3ViC8TJ32EHYFTXhBKSqqsPTQWyTSToNPxnBCkn4eRSe");
+        recipients[i].push(metadata);
+      }
+    }
+    return newRecipients;
   }
 
   async assetTransaction(txObject) {
     let obj = {};
     let self = this;
-    const assetCode = await this.createAssetCode(txObject.name);
     return await this.verifyData(txObject)
       .then(function(result) {
         result.params.minting = txObject.minting;
-        result.params.assetCode = assetCode;
+        result.params.assetCode = txObject.assetCode;
+        result.params.recipients = self.appendMetadata(
+          result.params.recipients,
+          txObject.metadata
+        );
         return self.brambljs
           .transaction("createRawAssetTransfer", result.params)
           .then(function(result) {
