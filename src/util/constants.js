@@ -1,0 +1,6 @@
+const BN = require("bn.js");
+
+const MAX_INTEGER = new BN("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF", 16);
+const MAX_METADATA_LENGTH = 127;
+
+module.export = { MAX_INTEGER, MAX_METADATA_LENGTH };
