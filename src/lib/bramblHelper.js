@@ -4,18 +4,22 @@ const apiKey = connections.networkApiKey;
 const BramblJS = require("brambljs");
 
 class BramblHelper {
-  constructor(password, network, keyfilePath) {
-    this.brambljs = new BramblJS({
-      networkPrefix: network, // applies to both Requests and KeyManager
-      Requests: {
-        url: `${networkUrl}`,
-        apiKey: `${apiKey}`
-      },
-      KeyManager: {
-        password: password,
-        keyPath: keyfilePath ? `private_keyfiles/${keyfilePath}` : ""
-      }
-    });
+  constructor(readOnly, password, network, keyfilePath) {
+    if (!readOnly) {
+      this.brambljs = new BramblJS({
+        networkPrefix: network, // applies to both Requests and KeyManager
+        Requests: {
+          url: `${networkUrl}`,
+          apiKey: `${apiKey}`
+        },
+        KeyManager: {
+          password: password,
+          keyPath: keyfilePath ? `private_keyfiles/${keyfilePath}` : ""
+        }
+      });
+    } else {
+      this.requests = BramblJS.Requests(network, networkUrl, apiKey);
+    }
   }
 
   /**
@@ -39,8 +43,10 @@ class BramblHelper {
 
   async getBalance(address) {
     let obj = {};
-    let e = await this.brambljs.requests
-      .lookupBalancesByAddresses({ addresses: [address] })
+    let e = await this.requests
+      .lookupBalancesByAddresses({
+        addresses: [address]
+      })
       .then(function(result) {
         obj.polyBalance = result.result[address].Balances.Polys;
         obj.arbitsBalance = result.result[address].Balances.Arbits;
@@ -56,7 +62,7 @@ class BramblHelper {
 
   async getBlockNumber() {
     let obj = {};
-    let e = await this.brambljs.requests
+    let e = await this.requests
       .getLatestBlock()
       .then(function(result) {
         obj.blockHeight = result.result.height;
@@ -71,8 +77,10 @@ class BramblHelper {
 
   async getTransactionFromMempool(transactionId) {
     let obj = {};
-    return await this.brambljs.requests
-      .getTransactionFromMempool({ transactionId: transactionId })
+    return await this.requests
+      .getTransactionFromMempool({
+        transactionId: transactionId
+      })
       .then(function(result) {
         obj = result;
         return obj;
@@ -86,8 +94,10 @@ class BramblHelper {
 
   async getTransactionFromBlock(transactionId) {
     let obj = {};
-    return await this.brambljs.requests
-      .getTransactionById({ transactionId: transactionId })
+    return await this.requests
+      .getTransactionById({
+        transactionId: transactionId
+      })
       .then(function(result) {
         obj.transaction = result;
         return obj;
@@ -105,8 +115,10 @@ class BramblHelper {
       obj.error = `'${blockNumber} is an invalid block number`;
       return obj;
     }
-    return await this.brambljs.requests
-      .getBlockByHeight({ height: parseInt(blockNumber) })
+    return await this.requests
+      .getBlockByHeight({
+        height: parseInt(blockNumber)
+      })
       .then(function(result) {
         obj = result;
         return obj;
@@ -120,10 +132,10 @@ class BramblHelper {
 
   async sendRawPolyTransaction(txObject) {
     let obj = {};
-    var self = this;
-    return await this.processPolyTransactionInfoData(txObject)
+    const self = this;
+    return await this.verifyData(txObject)
       .then(function(result) {
-        return self.brambljs.requests.createRawPolyTransfer(result.params);
+        return self.requests.createRawPolyTransfer(result.params);
       })
       .then(function(result) {
         return result;
@@ -157,6 +169,7 @@ class BramblHelper {
       });
   }
 
+<<<<<<< HEAD
   createAssetValue(shortName) {
     return this.brambljs.createAssetCode(shortName);
   }
@@ -171,6 +184,10 @@ class BramblHelper {
       }
     }
     return newRecipients;
+=======
+  createAssetCode(shortName) {
+    return BramblJS.createAssetCode(shortName);
+>>>>>>> f1defc7bc769cc864eef12b8dcbdfb6128afbb3f
   }
 
   async assetTransaction(txObject) {
@@ -204,7 +221,7 @@ class BramblHelper {
 
   async verifyData(txObject) {
     let obj = {};
-    var networkPrefix = this.brambljs.networkPrefix;
+    var networkPrefix = txObject.network;
     return new Promise((resolve, reject) => {
       // check that all recipients have a valid number of Topl assets
       if (Array.isArray(txObject.recipients)) {

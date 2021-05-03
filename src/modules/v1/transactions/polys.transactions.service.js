@@ -9,7 +9,7 @@ const MAX_INTEGER = new BN("7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF", 16);
 
 class PolyTransactionService {
   static async getBalance(args) {
-    const bramblHelper = new BramblHelper(args.password, args.network);
+    const bramblHelper = new BramblHelper(true, args.password, args.network);
     let address = "";
     address =
       args.address != null &&
@@ -24,27 +24,27 @@ class PolyTransactionService {
   }
 
   static async getBlockNumber(args) {
-    const bramblHelper = new BramblHelper(args.password, args.network);
+    const bramblHelper = new BramblHelper(true, args.password, args.network);
     return await bramblHelper.getBlockNumber();
   }
 
   static async getBlock(args) {
-    const bramblHelper = new BramblHelper(args.password, args.network);
+    const bramblHelper = new BramblHelper(true, args.password, args.network);
     return await bramblHelper.getBlock(args.blockNumber);
   }
 
   static async getTransactionFromMempool(args) {
-    const bramblHelper = new BramblHelper(args.password, args.network);
+    const bramblHelper = new BramblHelper(true, args.password, args.network);
     return await bramblHelper.getTransactionFromMempool(args.transactionId);
   }
 
   static async getTransactionFromBlock(args) {
-    const bramblHelper = new BramblHelper(args.password, args.network);
+    const bramblHelper = new BramblHelper(true, args.password, args.network);
     return await bramblHelper.getTransactionFromBlock(args.transactionId);
   }
 
   static async rawPolyTransaction(args) {
-    const bramblHelper = new BramblHelper(args.password, args.network);
+    const bramblHelper = new BramblHelper(true, args.password, args.network);
     const e = await RequestValidator.validateBody(args).then(obj => {
       return bramblHelper.sendRawPolyTransaction(obj);
     });

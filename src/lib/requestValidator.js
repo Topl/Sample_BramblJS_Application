@@ -50,6 +50,11 @@ class RequestValidator {
         })
           ? body.propositionType
           : null;
+        obj.network = body.network;
+        const isNetworkValid = RequestValidator.validateNetwork(obj.network);
+        if (!isNetworkValid) {
+          obj.error = "Network Invalid";
+        }
         obj.sender = body.sender;
         const isSenderValid = RequestValidator.validateAddress(
           obj.sender,
