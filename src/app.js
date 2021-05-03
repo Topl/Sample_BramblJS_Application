@@ -14,6 +14,7 @@ var rfs = require("rotating-file-stream");
 // Internal Dependencies
 const addresses = require("./core/routes/addresses.route");
 const users = require("./core/routes/users.route");
+const network = require("./core/routes/network.route");
 const settings = require("./lib/mongoDBSettings");
 const connectDB = require("./lib/mongodb");
 
@@ -70,6 +71,7 @@ app.set("view engine", "ejs");
 // Register api routes
 app.use("/api/v1/addresses", addresses);
 app.use("/api/v1/user", users);
+app.use("/api/v2/", network);
 app.use("/status", express.static("build"));
 app.use("/", express.static("build"));
 app.use("*", (req, res) => res.send("Server is working")); // test route - fall through
