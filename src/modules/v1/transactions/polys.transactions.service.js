@@ -1,11 +1,9 @@
-const BN = require("bn.js");
 const BramblHelper = require("../../../lib/bramblHelper");
 const RequestValidator = require("../../../lib/requestValidator");
 const stdError = require("../../../core/standardError");
+const { MAX_INTEGER } = require("../../../util/constants");
 
 const serviceName = "polyTransaction";
-
-const MAX_INTEGER = new BN("7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF", 16);
 
 class PolyTransactionService {
   static async getBalance(args) {

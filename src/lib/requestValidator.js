@@ -35,7 +35,7 @@ class RequestValidator {
     return Promise.resolve();
   }
 
-  static async validateBody(body) {
+  static async validateBody(body, requestType) {
     return new Promise((resolve, reject) => {
       if (typeof body === "object" && Object.keys(body).length != 0) {
         let obj = {};
@@ -49,6 +49,7 @@ class RequestValidator {
         if (!isNetworkValid) {
           obj.error = "Network Invalid";
         }
+        obj.quantity = body.quantity;
         obj.sender = body.sender;
         const isSenderValid = RequestValidator.validateAddress(
           obj.sender,
@@ -57,7 +58,7 @@ class RequestValidator {
         if (!isSenderValid) {
           obj.error = "Sender Address Invalid";
         }
-        if (Array.isArray(body.recipients)) {
+        if (Array.isArray(body.recipients) && requestType !== "burn") {
           for (var i = 0; i < body.recipients.length; i++) {
             if (body.recipients[i][0] == null) {
               obj.error = "recipient address missing";
@@ -77,7 +78,7 @@ class RequestValidator {
               obj.recipients = body.recipients;
             }
           }
-        } else {
+        } else if (requestType !== "burn") {
           obj.error = "recipients is not an array of [String, String]";
         }
         obj.changeAddress = body.changeAddress;

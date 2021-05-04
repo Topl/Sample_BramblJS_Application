@@ -1,6 +1,7 @@
 const Router = require("express").Router;
 const NetworkCtrl = require("../../modules/v1/transactions/network.controller");
 const { checkSchema } = require("express-validator");
+const NetworkController = require("../../modules/v1/transactions/network.controller");
 const router = new Router();
 
 router.route("/").get(NetworkCtrl.getTest);
@@ -28,5 +29,6 @@ router.route("/send-raw-poly-tx").post(NetworkCtrl.sendRawPolyTransaction);
 router.route("/send-poly-tx").post(NetworkCtrl.sendPolyTransaction);
 router.route("/send-asset-tx").post(NetworkCtrl.sendAssetTransaction);
 router.route("/send-asset-tx").patch(NetworkCtrl.updateAsset);
+router.route("/send-asset-tx").delete(NetworkCtrl.burnAsset);
 
 module.exports = router;
