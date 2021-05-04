@@ -7,6 +7,7 @@ const serviceName = "AssetTransaction";
 class AssetTransactionService {
   static async createAsset(args) {
     const bramblHelper = new BramblHelper(
+      false,
       args.password,
       args.network,
       args.keyFilePath
@@ -31,6 +32,7 @@ class AssetTransactionService {
 
   static async updateAsset(args) {
     const bramblHelper = new BramblHelper(
+      false,
       args.password,
       args.network,
       args.keyFilePath

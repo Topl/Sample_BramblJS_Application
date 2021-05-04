@@ -249,6 +249,7 @@ class BramblHelper {
         fee: fees[networkPrefix],
         sender: [txObject.sender],
         changeAddress: txObject.changeAddress,
+        consolidationAddress: txObject.consolidationAddress,
         data: txObject.data
       };
 
