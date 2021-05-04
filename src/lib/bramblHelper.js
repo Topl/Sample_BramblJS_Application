@@ -2,6 +2,7 @@ const connections = require(`./connections`);
 const networkUrl = connections.networkUrl;
 const apiKey = connections.networkApiKey;
 const BramblJS = require("brambljs");
+const Constants = require("../util/constants");
 
 class BramblHelper {
   constructor(readOnly, password, network, keyfilePath) {
@@ -178,7 +179,7 @@ class BramblHelper {
     if (Array.isArray(recipients)) {
       for (var i = 0; i < recipients.length; i++) {
         // TODO: Implment Security Root Reference to Asset Box
-        recipients[i].push("3ViC8TJ32EHYFTXhBKSqqsPTQWyTSToNPxnBCkn4eRSe");
+        recipients[i].push(Constants.SAMPLE_SECURITY_ROOT);
         recipients[i].push(metadata);
       }
     }

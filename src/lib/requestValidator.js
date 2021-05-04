@@ -24,13 +24,7 @@ class RequestValidator {
   }
 
   static validateAsset(value) {
-    if (value != null) {
-      if (BramblJS.utils.isValidAssetCode(value)) {
-        return true;
-      }
-      return false;
-    }
-    return false;
+    return value && BramblJS.utils.isValidAssetCode(value);
   }
 
   static async validateNetwork(value) {
