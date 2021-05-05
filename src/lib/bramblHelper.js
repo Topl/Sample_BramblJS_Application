@@ -165,12 +165,18 @@ class BramblHelper {
   async sendRawPolyTransaction(txObject) {
     let obj = {};
     const self = this;
-    return await this.verifyData(txObject)
+    return await this.verifyRawTransactionData(txObject)
       .then(function(result) {
-        return self.requests.createRawPolyTransfer(result.params);
-      })
-      .then(function(result) {
-        return result;
+        obj.keys = self.getSenderKeyManagers(
+          txObject.senders,
+          txObject.network
+        );
+        return self.brambljs.requests
+          .createRawPolyTransfer(result.params)
+          .then(function(result) {
+            obj.messageToSign = result;
+            return obj;
+          });
       })
       .catch(function(err) {
         obj.error = err.message;
@@ -187,15 +193,23 @@ class BramblHelper {
   async sendRawAssetTransaction(txObject) {
     let obj = {};
     const self = this;
-    return await this.verifyData(txObject)
+    return await this.verifyRawTransactionData(txObject)
       .then(function(result) {
+        obj.keys = self.getSenderKeyManagers(
+          txObject.senders,
+          txObject.network
+        );
         result.params.minting = txObject.minting;
         result.params.assetCode = txObject.assetCode;
         result.params.recipients = self.appendMetadata(
-          result.params.recipients,
-          txObject.metadata
+          result.params.recipients
         );
-        return self.brambljs.createRawPolyTransfer(result.params);
+        return self.brambljs.requests
+          .createRawAssetTransfer(result.params)
+          .then(function(result) {
+            obj.messageToSign = result;
+            return obj;
+          });
       })
       .catch(function(err) {
         obj.error = err.message;
@@ -210,22 +224,13 @@ class BramblHelper {
   async signTransaction(txObject) {
     let obj = {};
     let self = this;
-    const e = await this.verifyData(txObject)
-      .then(function(result) {
-        return self.brambljs
-          .addSigToTx(result.paramsToSign, result.keys)
-          .catch(function(err) {
-            //console.log('signing error', err.message);
-            obj.error = err.message;
-            return obj;
-          });
-      })
+    return await self.brambljs
+      .addSigToTx(txObject.messageToSign.result, txObject.keys)
       .catch(function(err) {
-        // console.log('tx formatting error', err.message)
+        console.error(err);
         obj.error = err.message;
         return obj;
       });
-    return e;
   }
 
   async sendSignedTransaction(signedTransactionData) {
@@ -236,7 +241,7 @@ class BramblHelper {
         .broadcastTx({ tx: signedTransactionData })
         .then(function(result) {
           //console.log("sent transaction")
-          obj.txId = result.data.result.txId;
+          obj.txId = result.result.txId;
           resolve(obj);
         })
         .catch(function(err) {
@@ -264,14 +269,15 @@ class BramblHelper {
     return newRecipients;
   }
 
-  getSenderKeyManagers(senders) {
+  getSenderKeyManagers(senders, networkPrefix) {
     let keyManagers = [];
     if (Array.isArray(senders)) {
       for (var i = 0; i < senders.length; i++) {
         keyManagers.push(
-          new BramblJS.KeyManager({
-            password: senders[i].password,
-            keyPath: senders[i].address
+          BramblJS.KeyManager({
+            networkPrefix: networkPrefix,
+            password: senders[i][1],
+            keyPath: `private_keyfiles/${senders[i][0]}.json`
           })
         );
       }
@@ -279,7 +285,7 @@ class BramblHelper {
     return keyManagers;
   }
 
-  async verifyData(txObject) {
+  async verifyRawTransactionData(txObject) {
     let obj = {};
     var networkPrefix = txObject.network;
     return new Promise((resolve, reject) => {
@@ -312,12 +318,13 @@ class BramblHelper {
         propositionType: txObject.propositionType,
         recipients: txObject.recipients,
         fee: fees[networkPrefix],
-        sender: [txObject.sender],
+        sender: txObject.senders.map(function(item) {
+          return item[0];
+        }),
         changeAddress: txObject.changeAddress,
         consolidationAddress: txObject.consolidationAddress,
         data: txObject.data
       };
-
       obj.fee = fees[networkPrefix];
       obj.params = params;
       resolve(obj);

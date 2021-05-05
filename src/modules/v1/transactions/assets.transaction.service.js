@@ -18,25 +18,34 @@ class AssetTransactionService {
         result.assetCode = assetCode;
         result.name = args.name;
         result.minting = args.minting;
-        bramblHelper.sendRawAssetTransaction(result).then(value => {
-          if (value.error != null) {
-            throw stdError(500, value.error, serviceName, serviceName);
-          } else {
-            bramblHelper.signTransaction(value).then(value => {
-              if (value.error != null) {
-                throw stdError(500, value.error, serviceName, serviceName);
-              } else {
-                bramblHelper.sendSignedTransaction(value).then(function(value) {
-                  if (value.error != null) {
-                    throw stdError(500, value.error, serviceName, serviceName);
-                  } else {
-                    value;
-                  }
-                });
-              }
-            });
-          }
-        });
+        return bramblHelper
+          .sendRawAssetTransaction(result)
+          .then(function(value) {
+            if (value.error != null) {
+              throw stdError(500, value.error, serviceName, serviceName);
+            } else {
+              return bramblHelper.signTransaction(value).then(function(value) {
+                if (value.error != null) {
+                  throw stdError(500, value.error, serviceName, serviceName);
+                } else {
+                  return bramblHelper
+                    .sendSignedTransaction(value)
+                    .then(function(value) {
+                      if (value.error != null) {
+                        throw stdError(
+                          500,
+                          value.error,
+                          serviceName,
+                          serviceName
+                        );
+                      } else {
+                        return value;
+                      }
+                    });
+                }
+              });
+            }
+          });
       } else {
         throw stdError(
           400,
@@ -49,17 +58,51 @@ class AssetTransactionService {
   }
 
   static async updateAsset(args) {
-    const bramblHelper = new BramblHelper(
-      false,
-      args.password,
-      args.network,
-      args.keyFilePath
-    );
-    if (bramblHelper) {
-      return await RequestValidator.validateBody(args).then(function(result) {
+    return await RequestValidator.validateBody(args).then(function(result) {
+      const bramblHelper = new BramblHelper(
+        false,
+        args.password,
+        args.network,
+        args.keyFilePath
+      );
+      if (bramblHelper) {
         if (result.assetCode != null) {
           result.minting = false;
-          return bramblHelper.assetTransaction(result);
+          return bramblHelper
+            .sendRawAssetTransaction(result)
+            .then(function(value) {
+              if (value.error != null) {
+                throw stdError(500, value.error, serviceName, serviceName);
+              } else {
+                return bramblHelper
+                  .signTransaction(value)
+                  .then(function(value) {
+                    if (value.error != null) {
+                      throw stdError(
+                        500,
+                        value.error,
+                        serviceName,
+                        serviceName
+                      );
+                    } else {
+                      return bramblHelper
+                        .sendSignedTransaction(value)
+                        .then(function(value) {
+                          if (value.error != null) {
+                            throw stdError(
+                              500,
+                              value.error,
+                              serviceName,
+                              serviceName
+                            );
+                          } else {
+                            return value;
+                          }
+                        });
+                    }
+                  });
+              }
+            });
         } else {
           throw stdError(
             404,
@@ -68,15 +111,15 @@ class AssetTransactionService {
             serviceName
           );
         }
-      });
-    } else {
-      throw stdError(
-        400,
-        "Unable to create transaction, please double check your request.",
-        serviceName,
-        serviceName
-      );
-    }
+      } else {
+        throw stdError(
+          400,
+          "Unable to create transaction, please double check your request.",
+          serviceName,
+          serviceName
+        );
+      }
+    });
   }
 }
 

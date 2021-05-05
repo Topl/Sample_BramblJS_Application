@@ -49,14 +49,24 @@ class RequestValidator {
         if (!isNetworkValid) {
           obj.error = "Network Invalid";
         }
-        obj.sender = body.sender;
-        const isSenderValid = RequestValidator.validateAddress(
-          obj.sender,
-          body.network
-        );
-        if (!isSenderValid) {
-          obj.error = "Sender Address Invalid";
+        if (Array.isArray(body.senders)) {
+          for (var i = 0; i < body.senders.length; i++) {
+            if (body.senders[i] == null) {
+              obj.error = "sender address is null or empty";
+            } else if (
+              !RequestValidator.validateAddress(
+                body.senders[i][0],
+                body.network
+              )
+            ) {
+              obj.error = "invalid address for given network";
+            }
+          }
+          obj.senders = body.senders;
+        } else {
+          obj.error = "sender is not a nested array of [String, String]";
         }
+
         if (Array.isArray(body.recipients)) {
           for (var i = 0; i < body.recipients.length; i++) {
             if (body.recipients[i][0] == null) {
@@ -73,10 +83,9 @@ class RequestValidator {
               body.recipients[i][1] > MAX_INTEGER
             ) {
               obj.error = "invalid quantity";
-            } else {
-              obj.recipients = body.recipients;
             }
           }
+          obj.recipients = body.recipients;
         } else {
           obj.error = "recipients is not an array of [String, String]";
         }
