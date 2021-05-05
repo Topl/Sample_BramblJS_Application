@@ -3,7 +3,6 @@ const networkUrl = connections.networkUrl;
 const apiKey = connections.networkApiKey;
 const BramblJS = require("brambljs");
 const Constants = require("../util/constants");
-const e = require("express");
 
 class BramblHelper {
   constructor(readOnly, password, network, keyfilePath) {
