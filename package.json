@@ -26,10 +26,8 @@
   "dependencies": {
     "@babel/eslint-parser": "^7.13.14",
     "@babel/eslint-plugin": "^7.13.16",
-    "base-58": "^0.0.1",
     "bcryptjs": "^2.4.3",
     "bignumber": "^1.1.0",
-    "blake2": "^4.0.2",
     "bluebird": "^3.5.1",
     "body-parser": "^1.18.3",
     "brambljs": "^1.2.2",
