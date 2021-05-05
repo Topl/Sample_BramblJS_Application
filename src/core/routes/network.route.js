@@ -27,5 +27,6 @@ router
 router.route("/send-raw-poly-tx").post(NetworkCtrl.sendRawPolyTransaction);
 router.route("/send-poly-tx").post(NetworkCtrl.sendPolyTransaction);
 router.route("/send-asset-tx").post(NetworkCtrl.sendAssetTransaction);
+router.route("/send-asset-tx").patch(NetworkCtrl.updateAsset);
 
 module.exports = router;

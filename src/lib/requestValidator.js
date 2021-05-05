@@ -1,4 +1,5 @@
 const BramblJS = require("brambljs");
+const { MAX_INTEGER, MAX_METADATA_LENGTH } = require("../util/constants");
 
 const PROPOSITION_TYPES = ["PublicKeyCurve25519", "ThresholdCurve25519"];
 
@@ -20,6 +21,10 @@ class RequestValidator {
       //console.log(err);
       return Promise.reject("Address must be base58 encoded");
     }
+  }
+
+  static validateAsset(value) {
+    return value && BramblJS.utils.isValidAssetCode(value);
   }
 
   static async validateNetwork(value) {
@@ -63,6 +68,11 @@ class RequestValidator {
               )
             ) {
               obj.error = "invalid address";
+            } else if (
+              body.recipients[i][1] < 0 ||
+              body.recipients[i][1] > MAX_INTEGER
+            ) {
+              obj.error = "invalid quantity";
             } else {
               obj.recipients = body.recipients;
             }
@@ -87,6 +97,19 @@ class RequestValidator {
             )
           ) {
             obj.error = "Consolidation Address Invalid";
+          }
+        }
+        obj.assetCode = body.assetCode;
+        if (obj.assetCode != null) {
+          if (!RequestValidator.validateAsset(obj.assetCode)) {
+            obj.error = "Asset Code Invalid";
+          }
+        }
+        obj.metadata = body.metadata;
+        if (obj.metadata != null) {
+          if (obj.metadata > MAX_METADATA_LENGTH) {
+            obj.error =
+              "Attached data is greater than the maximum character length. Please include shorter data";
           }
         }
         if (obj.error) {

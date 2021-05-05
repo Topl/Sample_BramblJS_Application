@@ -94,10 +94,19 @@ class NetworkController {
   }
 
   static async sendAssetTransaction(req, res, next) {
-    const handler = AssetTransactionService.sendAssetTransaction;
+    const handler = AssetTransactionService.createAsset;
     const args = req.body;
     const responseMsg = {
       success: "Sent asset transaction"
+    };
+    stdRoute(req, res, next, handler, args, responseMsg);
+  }
+
+  static async updateAsset(req, res, next) {
+    const handler = AssetTransactionService.updateAsset;
+    const args = req.body;
+    const responseMsg = {
+      success: "Updated asset"
     };
     stdRoute(req, res, next, handler, args, responseMsg);
   }

@@ -53,6 +53,7 @@ class PolyTransactionService {
 
   static async polyTransaction(args) {
     const bramblHelper = new BramblHelper(
+      false,
       args.password,
       args.network,
       args.keyFilePath

@@ -2,6 +2,7 @@ const connections = require(`./connections`);
 const networkUrl = connections.networkUrl;
 const apiKey = connections.networkApiKey;
 const BramblJS = require("brambljs");
+const Constants = require("../util/constants");
 
 class BramblHelper {
   constructor(readOnly, password, network, keyfilePath) {
@@ -169,18 +170,33 @@ class BramblHelper {
       });
   }
 
-  createAssetCode(shortName) {
-    return BramblJS.createAssetCode(shortName);
+  createAssetValue(shortName) {
+    return this.brambljs.createAssetCode(shortName);
+  }
+
+  appendMetadata(recipients, metadata) {
+    const newRecipients = recipients;
+    if (Array.isArray(recipients)) {
+      for (var i = 0; i < recipients.length; i++) {
+        // TODO: Implment Security Root Reference to Asset Box
+        recipients[i].push(Constants.SAMPLE_SECURITY_ROOT);
+        recipients[i].push(metadata);
+      }
+    }
+    return newRecipients;
   }
 
   async assetTransaction(txObject) {
     let obj = {};
     let self = this;
-    const assetCode = await this.createAssetCode(txObject.name);
     return await this.verifyData(txObject)
       .then(function(result) {
         result.params.minting = txObject.minting;
-        result.params.assetCode = assetCode;
+        result.params.assetCode = txObject.assetCode;
+        result.params.recipients = self.appendMetadata(
+          result.params.recipients,
+          txObject.metadata
+        );
         return self.brambljs
           .transaction("createRawAssetTransfer", result.params)
           .then(function(result) {
@@ -234,6 +250,7 @@ class BramblHelper {
         fee: fees[networkPrefix],
         sender: [txObject.sender],
         changeAddress: txObject.changeAddress,
+        consolidationAddress: txObject.consolidationAddress,
         data: txObject.data
       };
 
