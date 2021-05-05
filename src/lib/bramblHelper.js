@@ -321,8 +321,8 @@ class BramblHelper {
           return item[0];
         }),
         changeAddress: txObject.changeAddress,
-        consolidationAddress: txObject.consolidationAddress,
-        data: txObject.data
+        data: txObject.data,
+        consolidationAddress: txObject.consolidationAddress
       };
       obj.fee = fees[networkPrefix];
       obj.params = params;

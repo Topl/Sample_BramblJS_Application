@@ -61,7 +61,9 @@ class AssetTransactionService {
   }
 
   static async updateAsset(args) {
-    return await RequestValidator.validateBody(args).then(function(result) {
+    return await RequestValidator.validateBody(args, "transfer").then(function(
+      result
+    ) {
       const bramblHelper = new BramblHelper(
         false,
         args.password,
@@ -70,18 +72,6 @@ class AssetTransactionService {
       );
       if (bramblHelper) {
         if (result.assetCode != null) {
-          const concatEvidence = Buffer.from(Constants.CONCAT_EVIDENCE);
-          const hashChecksumBuffer = blake
-            .createHash("blake2b", { digestLength: 32 })
-            .update(concatEvidence)
-            .end()
-            .read()
-            .slice(0, 4);
-          const address = Buffer.concat(
-            [concatEvidence, hashChecksumBuffer],
-            38
-          );
-          result.recipients = [[Base58.encode(address), args.quantity]];
           result.minting = false;
           return bramblHelper
             .sendRawAssetTransaction(result)
@@ -147,7 +137,7 @@ class AssetTransactionService {
       );
       if (bramblHelper) {
         if (result.assetCode != null) {
-          result.recipients = [[Base58.encode(address), args.quantity]];
+          result.recipients = [[Constants.BURNER_ADDRESS, args.quantity]];
           result.minting = false;
           return bramblHelper
             .sendRawAssetTransaction(result)
@@ -202,7 +192,6 @@ class AssetTransactionService {
       }
     });
   }
-}
 }
 
 module.exports = AssetTransactionService;
