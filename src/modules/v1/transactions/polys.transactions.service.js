@@ -63,29 +63,10 @@ class PolyTransactionService {
         return bramblHelper
           .sendRawPolyTransaction(result)
           .then(function(value) {
-            if (value.error != null) {
+            if (value.error) {
               throw stdError(500, value.error, serviceName, serviceName);
             } else {
-              return bramblHelper.signTransaction(value).then(function(value) {
-                if (value.error != null) {
-                  throw stdError(500, value.error, serviceName, serviceName);
-                } else {
-                  return bramblHelper
-                    .sendSignedTransaction(value)
-                    .then(function(value) {
-                      if (value.error != null) {
-                        throw stdError(
-                          500,
-                          value.error,
-                          serviceName,
-                          serviceName
-                        );
-                      } else {
-                        return value;
-                      }
-                    });
-                }
-              });
+              return bramblHelper.signAndSendTransaction(value);
             }
           });
       } else {

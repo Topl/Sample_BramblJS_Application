@@ -21,29 +21,10 @@ class AssetTransactionService {
         return bramblHelper
           .sendRawAssetTransaction(result)
           .then(function(value) {
-            if (value.error != null) {
+            if (value.error) {
               throw stdError(500, value.error, serviceName, serviceName);
             } else {
-              return bramblHelper.signTransaction(value).then(function(value) {
-                if (value.error != null) {
-                  throw stdError(500, value.error, serviceName, serviceName);
-                } else {
-                  return bramblHelper
-                    .sendSignedTransaction(value)
-                    .then(function(value) {
-                      if (value.error != null) {
-                        throw stdError(
-                          500,
-                          value.error,
-                          serviceName,
-                          serviceName
-                        );
-                      } else {
-                        return value;
-                      }
-                    });
-                }
-              });
+              return bramblHelper.signAndSendTransaction(value);
             }
           });
       } else {
@@ -66,41 +47,15 @@ class AssetTransactionService {
         args.keyFilePath
       );
       if (bramblHelper) {
-        if (result.assetCode != null) {
+        if (result.assetCode) {
           result.minting = false;
           return bramblHelper
             .sendRawAssetTransaction(result)
             .then(function(value) {
-              if (value.error != null) {
+              if (value.error) {
                 throw stdError(500, value.error, serviceName, serviceName);
               } else {
-                return bramblHelper
-                  .signTransaction(value)
-                  .then(function(value) {
-                    if (value.error != null) {
-                      throw stdError(
-                        500,
-                        value.error,
-                        serviceName,
-                        serviceName
-                      );
-                    } else {
-                      return bramblHelper
-                        .sendSignedTransaction(value)
-                        .then(function(value) {
-                          if (value.error != null) {
-                            throw stdError(
-                              500,
-                              value.error,
-                              serviceName,
-                              serviceName
-                            );
-                          } else {
-                            return value;
-                          }
-                        });
-                    }
-                  });
+                return bramblHelper.signAndSendTransaction(value);
               }
             });
         } else {

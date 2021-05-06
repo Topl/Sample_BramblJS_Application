@@ -36,8 +36,6 @@ class BramblHelper {
         address: a,
         keyfile: kf
       };
-
-      //console.log("new address", a);
       resolve(Address);
     });
   }
@@ -56,11 +54,9 @@ class BramblHelper {
       .then(function(result) {
         obj.polyBalance = result.result[address].Balances.Polys;
         obj.arbitsBalance = result.result[address].Balances.Arbits;
-        //console.log("obj", obj);
         return obj;
       })
       .catch(function(err) {
-        //console.log(err.message);
         return (obj.error = err.message);
       });
     return e;
@@ -79,7 +75,6 @@ class BramblHelper {
         return obj;
       })
       .catch(function(err) {
-        //console.log(err.message);
         return (obj.error = err.message);
       });
     return e;
@@ -149,7 +144,6 @@ class BramblHelper {
         return obj;
       })
       .catch(err => {
-        //console.log('getBlock error:', err.message);
         obj.error = err.message;
         return obj;
       });
@@ -185,7 +179,7 @@ class BramblHelper {
 
   /**
    * Gets the raw transaction object on the asset transaction you plan on signing before sending.
-   * Allows verification of the asset transaction is correct as well as pproviding the message to sign
+   * Allows verification of the asset transaction is correct as well as providing the message to sign
    * @param {Object} txObject is the req.body from the service that has passed validation
    * @return {Object} is the completed object that contains data about poly transactions and the message to sign.
    */
@@ -216,6 +210,27 @@ class BramblHelper {
         return obj;
       });
   }
+
+  async signAndSendTransaction(txObject) {
+    let obj = {};
+    let self = this;
+    return this.signTransaction(txObject).then(function(value) {
+      if (value.error) {
+        obj.error = value.error;
+        return obj;
+      } else {
+        return self.sendSignedTransaction(value).then(function(value) {
+          if (value.error) {
+            obj.error = value.error;
+            return obj;
+          } else {
+            return value;
+          }
+        });
+      }
+    });
+  }
+
   /**
    * Sign transaction with tx object and private key
    * @param {Object} txObject is the transaction object
@@ -240,7 +255,6 @@ class BramblHelper {
       let e = self.brambljs.requests
         .broadcastTx({ tx: signedTransactionData })
         .then(function(result) {
-          //console.log("sent transaction")
           obj.txId = result.result.txId;
           resolve(obj);
         })
