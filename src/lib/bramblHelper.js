@@ -211,6 +211,7 @@ class BramblHelper {
           });
       })
       .catch(function(err) {
+        console.error(err);
         obj.error = err.message;
         return obj;
       });
@@ -244,7 +245,7 @@ class BramblHelper {
           resolve(obj);
         })
         .catch(function(err) {
-          //console.log('sent error', error.message);
+          console.error(err);
           obj.error = err.message;
           reject(err);
         });
