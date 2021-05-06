@@ -58,7 +58,6 @@ class UsersService {
 
   static async deleteUser(userObj) {
     try {
-      //console.log("Backend Delete Route");
       const [isAdmin, fetchedUser] = await Promise.all([
         UsersService.checkAdmin(userObj.userEmail),
         checkExists(UserModel, userObj.requestedEmail, { serviceName })

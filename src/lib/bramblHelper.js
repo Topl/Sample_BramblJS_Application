@@ -36,12 +36,15 @@ class BramblHelper {
         address: a,
         keyfile: kf
       };
-
-      //console.log("new address", a);
       resolve(Address);
     });
   }
 
+  /**
+   * Get Poly and Arbit balances for a valid address
+   * @param {string} address
+   * @return {Promise} Promise obj with data or error
+   */
   async getBalance(address) {
     let obj = {};
     let e = await this.requests
@@ -51,16 +54,18 @@ class BramblHelper {
       .then(function(result) {
         obj.polyBalance = result.result[address].Balances.Polys;
         obj.arbitsBalance = result.result[address].Balances.Arbits;
-        //console.log("obj", obj);
         return obj;
       })
       .catch(function(err) {
-        //console.log(err.message);
         return (obj.error = err.message);
       });
     return e;
   }
 
+  /**
+   * Get latest block
+   * @return {(Promise| Object)}
+   */
   async getBlockNumber() {
     let obj = {};
     let e = await this.requests
@@ -70,12 +75,16 @@ class BramblHelper {
         return obj;
       })
       .catch(function(err) {
-        //console.log(err.message);
         return (obj.error = err.message);
       });
     return e;
   }
 
+  /**
+   * Get transaction details from the mempool
+   * @param {string} transactionId id for transaction
+   * @return {(Promise|Object)}
+   */
   async getTransactionFromMempool(transactionId) {
     let obj = {};
     return await this.requests
@@ -93,6 +102,11 @@ class BramblHelper {
       });
   }
 
+  /**
+   * Get transaction details from the block
+   * @param {string} transactionId id for transaction
+   * @return {(Promise|Object)}
+   */
   async getTransactionFromBlock(transactionId) {
     let obj = {};
     return await this.requests
@@ -110,6 +124,11 @@ class BramblHelper {
       });
   }
 
+  /**
+   * Get the block data for provided block number
+   * @param {number} blockNumber is the block number
+   * @return {(Promise|Object)} either error or block data
+   */
   async getBlock(blockNumber) {
     let obj = {};
     if (isNaN(blockNumber)) {
@@ -125,49 +144,127 @@ class BramblHelper {
         return obj;
       })
       .catch(err => {
-        //console.log('getBlock error:', err.message);
         obj.error = err.message;
         return obj;
       });
   }
 
+  /**
+   * Gets the raw transaction object on the poly transaction you plan on signing before sending.
+   * Allows verification of the poly transaction is correct as well as providing the message to sign
+   * @param {Object} txObject is the req.body from the service that has passed validation
+   * @return {Object} is the completed object that contains data about the poly transaction and the message to sign
+   */
   async sendRawPolyTransaction(txObject) {
     let obj = {};
     const self = this;
-    return await this.verifyData(txObject)
+    return await this.verifyRawTransactionData(txObject)
       .then(function(result) {
-        return self.requests.createRawPolyTransfer(result.params);
-      })
-      .then(function(result) {
-        return result;
-      })
-      .catch(function(err) {
-        obj.error = err.message;
-        return obj;
-      });
-  }
-
-  async polyTransaction(txObject) {
-    let obj = {};
-    let self = this;
-    return await this.verifyData(txObject)
-      .then(function(result) {
-        return self.brambljs
-          .transaction("createRawPolyTransfer", result.params)
+        obj.keys = self.getSenderKeyManagers(
+          txObject.senders,
+          txObject.network
+        );
+        return self.brambljs.requests
+          .createRawPolyTransfer(result.params)
           .then(function(result) {
-            return result;
-          })
-          .catch(function(err) {
-            //console.log("transaction error", err.message);
-            obj.error = err.message;
+            obj.messageToSign = result;
             return obj;
           });
       })
       .catch(function(err) {
-        //console.log('invalid transaction body', err.messsage);
         obj.error = err.message;
         return obj;
       });
+  }
+
+  /**
+   * Gets the raw transaction object on the asset transaction you plan on signing before sending.
+   * Allows verification of the asset transaction is correct as well as providing the message to sign
+   * @param {Object} txObject is the req.body from the service that has passed validation
+   * @return {Object} is the completed object that contains data about poly transactions and the message to sign.
+   */
+  async sendRawAssetTransaction(txObject) {
+    let obj = {};
+    const self = this;
+    return await this.verifyRawTransactionData(txObject)
+      .then(function(result) {
+        obj.keys = self.getSenderKeyManagers(
+          txObject.senders,
+          txObject.network
+        );
+        result.params.minting = txObject.minting;
+        result.params.assetCode = txObject.assetCode;
+        result.params.recipients = self.appendMetadata(
+          result.params.recipients
+        );
+        return self.brambljs.requests
+          .createRawAssetTransfer(result.params)
+          .then(function(result) {
+            obj.messageToSign = result;
+            return obj;
+          });
+      })
+      .catch(function(err) {
+        console.error(err);
+        obj.error = err.message;
+        return obj;
+      });
+  }
+
+  async signAndSendTransaction(txObject) {
+    let obj = {};
+    let self = this;
+    return this.signTransaction(txObject).then(function(value) {
+      if (value.error) {
+        obj.error = value.error;
+        return obj;
+      } else {
+        return self.sendSignedTransaction(value).then(function(value) {
+          if (value.error) {
+            obj.error = value.error;
+            return obj;
+          } else {
+            return value;
+          }
+        });
+      }
+    });
+  }
+
+  /**
+   * Sign transaction with tx object and private key
+   * @param {Object} txObject is the transaction object
+   * @return {(Promise|Object)} signed object with rawTransaction data to be uused for sending transaction
+   */
+  async signTransaction(txObject) {
+    let obj = {};
+    let self = this;
+    return await self.brambljs
+      .addSigToTx(txObject.messageToSign.result, txObject.keys)
+      .catch(function(err) {
+        console.error(err);
+        obj.error = err.message;
+        return obj;
+      });
+  }
+
+  async sendSignedTransaction(signedTransactionData) {
+    let obj = {};
+    let self = this;
+    return new Promise((resolve, reject) => {
+      let e = self.brambljs.requests
+        .broadcastTx({ tx: signedTransactionData })
+        .then(function(result) {
+          obj.txId = result.result.txId;
+          resolve(obj);
+        })
+        .catch(function(err) {
+          console.error(err);
+          obj.error = err.message;
+          reject(err);
+        });
+      return e;
+    });
   }
 
   createAssetValue(shortName) {
@@ -179,43 +276,30 @@ class BramblHelper {
     if (Array.isArray(recipients)) {
       for (var i = 0; i < recipients.length; i++) {
         // TODO: Implment Security Root Reference to Asset Box
-        recipients[i].push(Constants.SAMPLE_SECURITY_ROOT);
-        recipients[i].push(metadata);
+        newRecipients[i].push(Constants.SAMPLE_SECURITY_ROOT);
+        newRecipients[i].push(metadata);
       }
     }
     return newRecipients;
   }
 
-  async assetTransaction(txObject) {
-    let obj = {};
-    let self = this;
-    return await this.verifyData(txObject)
-      .then(function(result) {
-        result.params.minting = txObject.minting;
-        result.params.assetCode = txObject.assetCode;
-        result.params.recipients = self.appendMetadata(
-          result.params.recipients,
-          txObject.metadata
-        );
-        return self.brambljs
-          .transaction("createRawAssetTransfer", result.params)
-          .then(function(result) {
-            return result;
+  getSenderKeyManagers(senders, networkPrefix) {
+    let keyManagers = [];
+    if (Array.isArray(senders)) {
+      for (var i = 0; i < senders.length; i++) {
+        keyManagers.push(
+          BramblJS.KeyManager({
+            networkPrefix: networkPrefix,
+            password: senders[i][1],
+            keyPath: `private_keyfiles/${senders[i][0]}.json`
           })
-          .catch(function(err) {
-            console.error("asset transaction error", err);
-            obj.error = err.message;
-            return obj;
-          });
-      })
-      .catch(function(err) {
-        //console.log('invalid transaction body', err.message);
-        obj.error = err.message;
-        return obj;
-      });
+        );
+      }
+    }
+    return keyManagers;
   }
 
-  async verifyData(txObject) {
+  async verifyRawTransactionData(txObject) {
     let obj = {};
     var networkPrefix = txObject.network;
     return new Promise((resolve, reject) => {
@@ -248,12 +332,13 @@ class BramblHelper {
         propositionType: txObject.propositionType,
         recipients: txObject.recipients,
         fee: fees[networkPrefix],
-        sender: [txObject.sender],
+        sender: txObject.senders.map(function(item) {
+          return item[0];
+        }),
         changeAddress: txObject.changeAddress,
         consolidationAddress: txObject.consolidationAddress,
         data: txObject.data
       };
-
       obj.fee = fees[networkPrefix];
       obj.params = params;
       resolve(obj);

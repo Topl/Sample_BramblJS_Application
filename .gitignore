@@ -26,7 +26,6 @@ valhalla_key_file.json
 .history/
 data/db/
 .env
-config/connections.json
 *.log
 logs/
 node_modules

@@ -58,9 +58,13 @@ class PolyTransactionService {
       args.network,
       args.keyFilePath
     );
-    if (bramblHelper != null) {
-      return await RequestValidator.validateBody(args).then(function(result) {
-        return bramblHelper.polyTransaction(result);
+    if (bramblHelper) {
+      return bramblHelper.sendRawPolyTransaction(args).then(function(value) {
+        if (value.error) {
+          throw stdError(500, value.error, serviceName, serviceName);
+        } else {
+          return bramblHelper.signAndSendTransaction(value);
+        }
       });
     } else {
       throw stdError(
