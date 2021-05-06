@@ -50,51 +50,28 @@ class PolyTransactionService {
   }
 
   static async polyTransaction(args) {
-    return await RequestValidator.validateBody(args).then(function(result) {
-      const bramblHelper = new BramblHelper(
-        false,
-        args.password,
-        args.network,
-        args.keyFilePath
+    const bramblHelper = new BramblHelper(
+      false,
+      args.password,
+      args.network,
+      args.keyFilePath
+    );
+    if (bramblHelper) {
+      return bramblHelper.sendRawPolyTransaction(args).then(function(value) {
+        if (value.error) {
+          throw stdError(500, value.error, serviceName, serviceName);
+        } else {
+          return bramblHelper.signAndSendTransaction(value);
+        }
+      });
+    } else {
+      throw stdError(
+        404,
+        "Missing or Invalid Private Key",
+        serviceName,
+        serviceName
       );
-      if (bramblHelper) {
-        return bramblHelper
-          .sendRawPolyTransaction(result)
-          .then(function(value) {
-            if (value.error != null) {
-              throw stdError(500, value.error, serviceName, serviceName);
-            } else {
-              return bramblHelper.signTransaction(value).then(function(value) {
-                if (value.error != null) {
-                  throw stdError(500, value.error, serviceName, serviceName);
-                } else {
-                  return bramblHelper
-                    .sendSignedTransaction(value)
-                    .then(function(value) {
-                      if (value.error != null) {
-                        throw stdError(
-                          500,
-                          value.error,
-                          serviceName,
-                          serviceName
-                        );
-                      } else {
-                        return value;
-                      }
-                    });
-                }
-              });
-            }
-          });
-      } else {
-        throw stdError(
-          404,
-          "Missing or Invalid Private Key",
-          serviceName,
-          serviceName
-        );
-      }
-    });
+    }
   }
 
   _validateCannotExceedMaxInteger(values) {

@@ -1,0 +1,10 @@
+{
+  "networks": {
+    "connectApi": "private",
+    "private":  {
+      "url": "http://localhost:9085",
+      "apiKey": "topl_the_world!",
+      "projectId": "N/A"
+    }
+  }
+}
