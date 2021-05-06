@@ -255,12 +255,10 @@ class BramblHelper {
       let e = self.brambljs.requests
         .broadcastTx({ tx: signedTransactionData })
         .then(function(result) {
-          //console.log("sent transaction")
           obj.txId = result.result.txId;
           resolve(obj);
         })
         .catch(function(err) {
-          //console.log('sent error', error.message);
           obj.error = err.message;
           reject(err);
         });
