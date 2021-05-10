@@ -1,7 +1,6 @@
 const BramblHelper = require("../../../lib/bramblHelper");
 const RequestValidator = require("../../../lib/requestValidator");
 const stdError = require("../../../core/standardError");
-const { MAX_INTEGER } = require("../../../util/constants");
 
 const serviceName = "polyTransaction";
 
@@ -71,14 +70,6 @@ class PolyTransactionService {
         serviceName,
         serviceName
       );
-    }
-  }
-
-  _validateCannotExceedMaxInteger(values) {
-    for (const [key, value] of Object.entries(values)) {
-      if (value?.get(MAX_INTEGER)) {
-        throw new Error(`${key} cannot exceed MAX_INTEGER given ${value}`);
-      }
     }
   }
 }
