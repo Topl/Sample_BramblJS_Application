@@ -1,6 +1,7 @@
 const BramblHelper = require("../../../lib/bramblHelper");
 const stdError = require("../../../core/standardError");
 const Constants = require("../../../util/constants");
+const Base58 = require("base-58");
 
 const serviceName = "AssetTransaction";
 
