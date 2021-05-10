@@ -110,6 +110,15 @@ class NetworkController {
     };
     stdRoute(req, res, next, handler, args, responseMsg);
   }
+
+  static async burnAsset(req, res, next) {
+    const handler = AssetTransactionService.burnAsset;
+    const args = req.body;
+    const responseMsg = {
+      success: "Burnt asset"
+    };
+    stdRoute(req, res, next, handler, args, responseMsg);
+  }
 }
 
 module.exports = NetworkController;
