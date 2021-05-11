@@ -73,14 +73,6 @@ class PolyTransactionService {
       );
     }
   }
-
-  _validateCannotExceedMaxInteger(values) {
-    for (const [key, value] of Object.entries(values)) {
-      if (value?.get(MAX_INTEGER)) {
-        throw new Error(`${key} cannot exceed MAX_INTEGER given ${value}`);
-      }
-    }
-  }
 }
 
 module.exports = PolyTransactionService;

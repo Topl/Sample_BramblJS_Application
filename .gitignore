@@ -28,5 +28,9 @@ data/db/
 .env
 *.log
 logs/
+<<<<<<< HEAD
 node_modules
 package-lock.json
+=======
+node_modules
+>>>>>>> 613cc9365808967bf923ed66a8c61a65fb26f047
