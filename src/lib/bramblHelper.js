@@ -2,7 +2,6 @@ const connections = require(`./connections`);
 const networkUrl = connections.networkUrl;
 const apiKey = connections.networkApiKey;
 const BramblJS = require("brambljs");
-const Constants = require("../util/constants");
 
 class BramblHelper {
   constructor(readOnly, password, network, keyfilePath) {
@@ -185,6 +184,7 @@ class BramblHelper {
    */
   async sendRawAssetTransaction(txObject) {
     let obj = {};
+    const formattedRecipients = [];
     const self = this;
     return await this.verifyRawTransactionData(txObject)
       .then(function(result) {
@@ -194,9 +194,23 @@ class BramblHelper {
         );
         result.params.minting = txObject.minting;
         result.params.assetCode = txObject.assetCode;
-        result.params.recipients = self.appendMetadata(
-          result.params.recipients
-        );
+        for (let i = 0; i < result.params.recipients.length; i++) {
+          const [address, quantity, data, metadata] = result.params.recipients[
+            i
+          ];
+          if (data) {
+            const securityRoot = BramblJS.Hash("string", data);
+            formattedRecipients.push([
+              address,
+              quantity,
+              securityRoot,
+              metadata
+            ]);
+          } else {
+            formattedRecipients.push([address, quantity]);
+          }
+        }
+        result.params.recipients = formattedRecipients;
         return self.brambljs.requests
           .createRawAssetTransfer(result.params)
           .then(function(result) {
@@ -268,18 +282,6 @@ class BramblHelper {
 
   createAssetValue(shortName) {
     return this.brambljs.createAssetCode(shortName);
-  }
-
-  appendMetadata(recipients, metadata) {
-    const newRecipients = recipients;
-    if (Array.isArray(recipients)) {
-      for (var i = 0; i < recipients.length; i++) {
-        // TODO: Implment Security Root Reference to Asset Box
-        newRecipients[i].push(Constants.SAMPLE_SECURITY_ROOT);
-        newRecipients[i].push(metadata);
-      }
-    }
-    return newRecipients;
   }
 
   getSenderKeyManagers(senders, networkPrefix) {
