@@ -98,7 +98,7 @@ router.patch(
       errorMessage: "Please provide a valid Project name"
     }
   }),
-  AddressesCtrl.apiUpdateAddress
+  AddressesCtrl.apiUpdateAddressById
 );
 router.delete(
   `/:_id`,

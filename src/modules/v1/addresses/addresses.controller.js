@@ -2,7 +2,7 @@ const stdRoute = require(`../../../core/standardRoute`);
 const AddressesService = require("./addresses.service");
 
 class AddressesController {
-  static async create(req, res) {
+  static async create(req, res, next) {
     const handler = AddressesService.create;
     const network = req.body.network;
     const password = req.body.password;
@@ -17,23 +17,24 @@ class AddressesController {
     const responseMsg = {
       success: "Address Created!"
     };
-    stdRoute(req, res, handler, args, responseMsg);
+    stdRoute(req, res, next, handler, args, responseMsg);
   }
 
-  static async apiUpdateAddress(req, res) {
+  static async apiUpdateAddressById(req, res, next) {
     const name = req.body.name;
-    const handler = AddressesService.updateAddress;
+    const handler = AddressesService.updateAddressById;
     const args = {
       name: name,
-      addressId: req.params._id
+      addressId: req.params._id,
+      polyBalance: req.body.polyBalance
     };
     const responseMsg = {
       success: "Address Updated!"
     };
-    stdRoute(req, res, handler, args, responseMsg);
+    stdRoute(req, res, next, handler, args, responseMsg);
   }
 
-  static async apiDeleteAddress(req, res) {
+  static async apiDeleteAddress(req, res, next) {
     const addressId = req.params._id;
     const userEmail = req.body.user_id;
 
@@ -46,10 +47,10 @@ class AddressesController {
     const responseMsg = {
       success: "Address Deleted!"
     };
-    stdRoute(req, res, handler, args, responseMsg);
+    stdRoute(req, res, next, handler, args, responseMsg);
   }
 
-  static async apiGetAddresses(req, res) {
+  static async apiGetAddresses(req, res, next) {
     const handler = AddressesService.getAddresses;
     const args = {
       user_id: req.body.user_id,
@@ -59,10 +60,10 @@ class AddressesController {
     const responseMsg = {
       success: "Addresses retrieved!"
     };
-    stdRoute(req, res, handler, args, responseMsg);
+    stdRoute(req, res, next, handler, args, responseMsg);
   }
 
-  static async apiGetAddressesByUser(req, res) {
+  static async apiGetAddressesByUser(req, res, next) {
     const handler = AddressesService.getAddressesByUser;
     const args = {
       user_id: req.params.email,
@@ -72,10 +73,10 @@ class AddressesController {
     const responseMsg = {
       success: "Successfully retrieved Addresses!"
     };
-    stdRoute(req, res, handler, args, responseMsg);
+    stdRoute(req, res, next, handler, args, responseMsg);
   }
 
-  static async apiGetAddressById(req, res) {
+  static async apiGetAddressById(req, res, next) {
     let id = req.params.id || {};
     const handler = AddressesService.getAddressById;
     const args = {
@@ -84,7 +85,7 @@ class AddressesController {
     const responseMsg = {
       success: "Successfully retrieved Address!"
     };
-    stdRoute(req, res, handler, args, responseMsg);
+    stdRoute(req, res, next, handler, args, responseMsg);
   }
 }
 

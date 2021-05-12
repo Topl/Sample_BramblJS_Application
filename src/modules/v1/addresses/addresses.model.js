@@ -11,15 +11,19 @@ const AddressSchema = new mongoose.Schema({
   },
   user_id: {
     type: String,
-    required: true
+    required: false
   },
   network: {
     type: String,
     required: true
   },
+  polyBalance: {
+    type: String,
+    required: true
+  },
   keyfile: {
     type: mongoose.Schema.Types.Mixed,
-    required: true,
+    required: false,
     address: {
       type: String,
       required: true

@@ -27,9 +27,10 @@ class BramblHelper {
    * @return {Promise} object with address and keyfile
    */
   async createAddress() {
+    const self = this;
     return new Promise(resolve => {
-      const a = this.brambljs.keyManager.address;
-      const kf = this.brambljs.keyManager.getKeyStorage();
+      const a = self.brambljs.keyManager.address;
+      const kf = self.brambljs.keyManager.getKeyStorage();
 
       const Address = {
         address: a,
@@ -175,6 +176,56 @@ class BramblHelper {
         return obj;
       });
   }
+
+  // async getBoxes(addresses) {
+  //   let obj = {};
+  //   let e = await this.requests
+  //     .lookupBalancesByAddresses({addresses: addresses})
+  //     .then(function(result) {
+  //       obj.result = result.result;
+  //       return obj;
+  //     })
+  //     .catch(function (err) {
+  //       return (obj.error = err.message);
+  //     });
+  //   return e;
+  // }
+
+  // async getSenderBoxesForTx(senders, txType, assetCode) {
+
+  // }
+
+  async checkPolyBalances(senders, fee) {
+    let obj = {};
+    obj.polyBalance = senders
+      .map(s => {
+        this.getBalance(s);
+      })
+      .reduce((a, b) => a + b, 0);
+
+    if (obj.polyBalance < fee) {
+      obj.error = "Insufficient funds available to pay transaction fee.";
+    }
+
+    return obj;
+  }
+
+  // async generateRawAssetTransfer(txObject) {
+  //   let obj = {};
+  //   const assetCode = txObject.assetCode;
+
+  //   if (Array.isArray(assetCode)) {
+  //     obj.error = "Found multiple asset codes when only one was expected";
+  //   }
+
+  //   const polyBalance = this.checkPolyBalances(txObject.senders, txObject.fee);
+
+  //   // compute the number of tokens to be sent to the recipients
+  //   // will branch depending on if we are minting or not
+
+  // }
+
+  // ioMint()
 
   /**
    * Gets the raw transaction object on the asset transaction you plan on signing before sending.
