@@ -68,11 +68,7 @@ class AssetTransactionService {
       args.keyFilePath
     );
     if (bramblHelper) {
-<<<<<<< HEAD
-      if (args.assetCode != null) {
-=======
       if (args.assetCode) {
->>>>>>> 613cc9365808967bf923ed66a8c61a65fb26f047
         args.recipients = [[Constants.BURNER_ADDRESS, args.quantity]];
         args.minting = false;
         return bramblHelper.sendRawAssetTransaction(args).then(function(value) {

@@ -6,8 +6,13 @@ const mongoose = require("mongoose");
 const stdErr = require("../../../core/standardError");
 const BramblHelper = require("../../../lib/bramblHelper");
 const save2db = require("../../../lib/saveToDatabase");
-const { checkExists, checkExistsById } = require("../../../lib/validation");
+const {
+  checkExists,
+  checkExistsById,
+  checkExistsByAddress
+} = require("../../../lib/validation");
 const paginateAddresses = require(`../../../lib/paginateAddresses`);
+const standardError = require("../../../core/standardError");
 
 const serviceName = "Address";
 
@@ -23,18 +28,48 @@ class AddressesService {
 
       // fetch information of user
       let fetchedUser = await UserModel.findOne({ email: args.userEmail });
+      let address;
+      let keyfile;
+      let brambl;
+      // if address is not provided.
+      if (!args.address) {
+        // create address
+        brambl = new BramblHelper(false, args.password, args.network);
 
-      // create address
-      const brambl = new BramblHelper(args.password, args.network);
+        const generatedAddress = await brambl.createAddress();
+        address = generatedAddress.address;
+        keyfile = address.keyfile;
+      } else {
+        brambl = new BramblHelper(true, args.network);
+        address = args.address;
+      }
 
-      const address = await brambl.createAddress();
+      //retrieve the polyBalance for the address that has been imported
+      const balances = await brambl.getBalance(address);
+
+      if (!balances) {
+        stdErr(
+          500,
+          "Unable to retrieve balance for address from network",
+          serviceName,
+          serviceName
+        );
+      } else if (balances.polyBalance < 0) {
+        stdErr(
+          500,
+          "polyBalance for address must be greater than 0.",
+          serviceName,
+          serviceName
+        );
+      }
 
       let addressDoc = {
         name: args.name,
         user_id: args.userEmail,
-        address: address.address,
-        keyfile: address.keyfile,
-        network: args.network
+        address: address,
+        keyfile: keyfile,
+        network: args.network,
+        polyBalance: balances.polyBalance
       };
 
       addressDoc.isActive = {
@@ -44,12 +79,16 @@ class AddressesService {
       let newAddress = new Address(addressDoc);
 
       // Save Address and User in transaction
-      fetchedUser.addresses.push(newAddress._id);
-      await save2db([fetchedUser, newAddress], {
-        timestamp,
-        serviceName,
-        session
-      });
+      if (fetchedUser) {
+        fetchedUser.addresses.push(newAddress._id);
+        await save2db([fetchedUser, newAddress], {
+          timestamp,
+          serviceName,
+          session
+        });
+      } else {
+        await save2db(newAddress, { timestamp, serviceName, session });
+      }
       return newAddress;
     } catch (err) {
       throw err;
@@ -58,28 +97,62 @@ class AddressesService {
     }
   }
 
-  static async updateAddress(args) {
+  static async updateAddressByAddress(args) {
+    // check if the address already exists
+    const self = this;
+    return await checkExistsByAddress(Address, args.addressId).then(function(result) {
+      if (result.error) {
+        throw stdErr(
+          500,
+          "Unable to update address by address",
+          serviceName,
+          serviceName
+        );
+      }
+      if (!result.isActive.status) {
+        throw stdErr(404, "No Active Address", serviceName, serviceName);
+      }
+      return self.updateAddress(args, result).then(function(result) {
+        return result;
+      });
+    });
+  }
+
+  static async updateAddressById(args) {
+    // check if the address exists in the db
+    const fetchedAddress = await checkExistsById(Address, args.addressId, {
+      serviceName
+    })
+      .then(function(result) {
+        if (!result.isActive.status) {
+          throw stdErr(404, "No Active Address", serviceName, serviceName);
+        }
+      })
+      // eslint-disable-next-line no-unused-vars
+      .catch(function(err) {
+        throw stdErr(
+          500,
+          "Unable to update address by ID",
+          serviceName,
+          serviceName
+        );
+      });
+    return this.updateAddress(args, fetchedAddress);
+  }
+
+  static async updateAddress(args, fetchedAddress) {
     const session = await mongoose.startSession();
     try {
       const timestamp = new Date();
       // check if the address exists
-      const [fetchedAddress, hasAdminAccess] = await Promise.all([
-        checkExistsById(Address, args.addressId, { serviceName }),
-        UsersService.checkAdmin(args.user_id)
-      ]);
-
-      if (!fetchedAddress.isActive.status) {
-        throw stdErr(404, "No Active Address", serviceName, serviceName);
-      }
-
-      // access control
-      if (!hasAdminAccess && !(fetchedAddress.user_id === args.user_id)) {
-        throw stdErr(403, "Not Authorized", serviceName, serviceName);
-      }
 
       // update fields
       if (args.name) {
         fetchedAddress.name = args.name;
+      }
+
+      if (args.polyBalance) {
+        fetchedAddress.polyBalance = args.polyBalance;
       }
 
       // save

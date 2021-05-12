@@ -2,7 +2,7 @@ const stdRoute = require("../../../core/standardRoute");
 const UserService = require(`./users.service`);
 
 class UserController {
-  static async register(req, res) {
+  static async register(req, res, next) {
     const handler = UserService.addUser;
 
     const args = {
@@ -12,10 +12,10 @@ class UserController {
     };
 
     const responseMsg = { success: "User Created!" };
-    stdRoute(req, res, handler, args, responseMsg);
+    stdRoute(req, res, next, handler, args, responseMsg);
   }
 
-  static async getUser(req, res) {
+  static async getUser(req, res, next) {
     const handler = UserService.getUser;
     const args = {
       requestedEmail: req.body.requestedEmail,
@@ -23,20 +23,20 @@ class UserController {
     };
 
     const responseMsg = { success: "User Retrieved" };
-    stdRoute(req, res, handler, args, responseMsg);
+    stdRoute(req, res, next, handler, args, responseMsg);
   }
 
-  static async delete(req, res) {
+  static async delete(req, res, next) {
     const handler = UserService.deleteUser;
     const args = {
       requestedEmail: req.body.requestedEmail,
       userEmail: req.query.user_id
     };
     const responseMsg = { success: "User Deleted!" };
-    stdRoute(req, res, handler, args, responseMsg);
+    stdRoute(req, res, next, handler, args, responseMsg);
   }
 
-  static async save(req, res) {
+  static async save(req, res, next) {
     const handler = UserService.updateUser;
 
     const args = {
@@ -48,7 +48,7 @@ class UserController {
     };
 
     const responseMsg = { success: "Updated User Information!" };
-    stdRoute(req, res, handler, args, responseMsg);
+    stdRoute(req, res, next, handler, args, responseMsg);
   }
 }
 

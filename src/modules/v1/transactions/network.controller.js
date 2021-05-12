@@ -15,7 +15,9 @@ class NetworkController {
     const args = {
       network: network,
       password: password,
-      address: address
+      address: address,
+      name: req.body.name,
+      userEmail: req.body.userEmail
     };
     const responseMsg = {
       success: "Retrieved balance for address"

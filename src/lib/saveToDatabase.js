@@ -45,6 +45,10 @@ module.exports = async (models, opts = {}) => {
     models = [models];
   }
 
+  models.filter(function(el) {
+    return el != null;
+  });
+
   // update last modified date
   models.map(model => (model.lastUpdated = timestamp));
 
