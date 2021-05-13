@@ -17,7 +17,6 @@ const users = require("./core/routes/users.route");
 const network = require("./core/routes/network.route");
 const settings = require("./lib/mongoDBSettings");
 const connectDB = require("./lib/mongodb");
-const { appendFile } = require("fs");
 
 // Initialization
 //-------------------------------------------------------------------------------------//
