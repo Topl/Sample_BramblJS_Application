@@ -152,6 +152,7 @@ class PolyTransactionService {
       args.network,
       args.keyFilePath
     );
+    args.address = bramblHelper.brambljs.keyManager.address;
     if (bramblHelper) {
       // iterate through all sender, recipient, and change addresses, checking whether or not they are in the DB
       let addresses;

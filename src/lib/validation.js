@@ -1,14 +1,19 @@
 const stdErr = require("../core/standardError");
 const { connectionIsUp, doesCollectionExist } = require("../lib/mongodb");
 
+const serviceName = "validation";
+
 const checkExists = async (model, email, { session }) => {
-  let obj = {};
   try {
     // prettier-ignore
-    const doc = session ? await model.find({"email": email}).session(session) : await model.find({"email": email})
+    const doc = session ? await model.findOne({"email": email}).session(session) : await model.findOne({"email": email})
     if (!doc) {
-      obj.error = "A document could not be found with the given email";
-      return obj;
+      throw stdErr(
+        404,
+        "No document found",
+        "A document could not be found with the given email",
+        serviceName
+      );
     } else {
       return doc;
     }
