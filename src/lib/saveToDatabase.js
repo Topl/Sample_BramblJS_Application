@@ -1,44 +1,62 @@
-const mongoose = require("mongoose");
 const stdErr = require("../core/standardError");
 
+async function commitWithRetry(session, _serviceName) {
+  // eslint-disable-next-line no-constant-condition
+  while (true) {
+    try {
+      session.commitTransaction();
+      break;
+    } catch (error) {
+      // Can retry commit
+      if (
+        // eslint-disable-next-line no-prototype-builtins
+        error.hasOwnProperty("errorLabels") &&
+        error.errorLabels.includes("UnknownTransactionCommitResult")
+      ) {
+        continue;
+      } else {
+        // pass the error up
+        throw stdErr(400, "Error saving to the database", error, _serviceName);
+      }
+    }
+  }
+}
+
 const runTransactionWithRetry = async (_models, _session, _serviceName) => {
-  try {
-    // create an array of the data to be saved in the same session.
-    const docs = await Promise.all(
-      _models.map(model => model.save({ _session }))
-    );
-
-    //commit the changes if everything was successful
-    await _session.commitTransaction();
-
-    return docs;
-  } catch (error) {
-    // If transient error, retry the whole transaction
-    if (
-      error.errorLabels &&
-      error.errorLabels.indexOf("TransientTransactionError") >= 0
-    ) {
-      // eslint-disable-next-line no-console
-      console.log(
-        "\x1b[33m%s\x1b[0m",
-        "TransientTransactionError, retrying transaction ..."
+  // create an array of the data to be saved in the same session.
+  // eslint-disable-next-line no-constant-condition
+  while (true) {
+    try {
+      const result = await Promise.all(
+        _models.map(model => model.save({ _session }))
       );
-      const docs = await runTransactionWithRetry(_models, _session);
-      return docs;
-    } else {
-      // this will rollback any changes made in the database
-      await _session.abortTransaction();
-
-      // pass the error up
-      throw stdErr(400, "Error saving to the database", error, _serviceName);
+      await commitWithRetry(_session, _serviceName);
+      return result;
+    } catch (error) {
+      // If transient error, retry the whole transaction
+      if (
+        // eslint-disable-next-line no-prototype-builtins
+        error.hasOwnProperty("errorLabels") &&
+        error.errorLabels.includes("TransientTransactionError")
+      ) {
+        continue;
+      } else {
+        // pass the error up
+        await _session.abortTransaction();
+        throw stdErr(400, "Error saving to the database", error, _serviceName);
+      }
     }
   }
 };
 
 module.exports = async (models, opts = {}) => {
+  let obj = {};
   const timestamp = opts.timestamp || Date.now();
   const serviceName = opts.serviceName || "";
-  const session = opts.session || (await mongoose.startSession());
+  // start a transaction for the session that uses:
+  // - read concern "snapshot"
+  // - write concern "majority"
+  const session = opts.session;
 
   // if given a single instance, convert to an array for standard handling
   if (!Array.isArray(models)) {
@@ -53,16 +71,16 @@ module.exports = async (models, opts = {}) => {
   models.map(model => (model.lastUpdated = timestamp));
 
   //transaction allows for atomic updates
-  session.startTransaction();
-
+  session.startTransaction({
+    readConcern: { level: "snapshot" },
+    writeConcern: { w: "majority" }
+  });
+  //attempt to save to db, retrying on Transient transaction errors
   try {
-    //attempt to save to db, retrying on Transient transaction errors
-    const docs = await runTransactionWithRetry(models, session, serviceName);
-    return docs;
+    return runTransactionWithRetry(models, session, serviceName);
   } catch (error) {
-    throw error;
-  } finally {
-    // ending the session
-    session.endSession();
+    console.error(error);
+    obj.error = error;
+    return obj;
   }
 };

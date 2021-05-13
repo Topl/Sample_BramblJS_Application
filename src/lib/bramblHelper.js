@@ -45,9 +45,31 @@ class BramblHelper {
    * @param {string} address
    * @return {Promise} Promise obj with data or error
    */
-  async getBalance(address) {
+  async getBalanceWithRequests(address) {
     let obj = {};
     let e = await this.requests
+      .lookupBalancesByAddresses({
+        addresses: [address]
+      })
+      .then(function(result) {
+        obj.polyBalance = result.result[address].Balances.Polys;
+        obj.arbitsBalance = result.result[address].Balances.Arbits;
+        return obj;
+      })
+      .catch(function(err) {
+        return (obj.error = err.message);
+      });
+    return e;
+  }
+
+  /**
+   * Get Poly and Arbit balances for a valid address
+   * @param {string} address
+   * @return {Promise} Promise obj with data or error
+   */
+  async getBalanceWithBrambl(address) {
+    let obj = {};
+    let e = await this.brambljs.requests
       .lookupBalancesByAddresses({
         addresses: [address]
       })
@@ -199,7 +221,11 @@ class BramblHelper {
     let obj = {};
     obj.polyBalance = senders
       .map(s => {
-        this.getBalance(s);
+        if (this.brambljs) {
+          this.getBalanceWithBrambl(s);
+        } else {
+          this.getBalanceWithRequests(s);
+        }
       })
       .reduce((a, b) => a + b, 0);
 
@@ -267,6 +293,11 @@ class BramblHelper {
           .then(function(result) {
             obj.messageToSign = result;
             return obj;
+          })
+          .catch(function(err) {
+            console.error(err);
+            obj.err = err.message;
+            return obj;
           });
       })
       .catch(function(err) {
@@ -324,6 +355,7 @@ class BramblHelper {
           resolve(obj);
         })
         .catch(function(err) {
+          console.error(err);
           obj.error = err.message;
           reject(err);
         });

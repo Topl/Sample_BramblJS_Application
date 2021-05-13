@@ -1,6 +1,9 @@
 const stdErr = require("../core/standardError");
+const { connectionIsUp, doesCollectionExist } = require("../lib/mongodb");
 
-const checkExists = async (model, email, { serviceName = "", session }) => {
+const serviceName = "validation";
+
+const checkExists = async (model, email, { session }) => {
   try {
     // prettier-ignore
     const doc = session ? await model.findOne({"email": email}).session(session) : await model.findOne({"email": email})
@@ -22,28 +25,41 @@ const checkExists = async (model, email, { serviceName = "", session }) => {
 const checkExistsByAddress = async (model, address, session) => {
   //prettier-ignore
   let obj = {};
-  // eslint-disable-next-line no-unused-vars
-  const doc = session
-    ? await model
-        .findOne({ address: address })
-        .session(session)
-        .catch(function(err) {
-          console.error(err);
-          obj.error = err.message;
+  try {
+    if (await connectionIsUp()) {
+      const collectionExistence = await doesCollectionExist(
+        model.collection.collectionName
+      );
+      if (collectionExistence.result) {
+        const doc = session
+          ? await model.findOne({ address: address }).session(session)
+          : await model.findOne({ address: address });
+        if (!doc) {
+          console.error(`Address: ${address} not found in db`);
+          obj.error = "The given address could not be found in the db";
           return obj;
-          // eslint-disable-next-line no-unused-vars
-        })
-    : await model.findOne({ address: address }).catch(function(err) {
-        console.error(err);
-        obj.error = err.message;
+        } else {
+          obj.doc = doc;
+          return obj;
+        }
+      } else {
+        console.error("Mongoose Collection Does Not Exist");
+        obj.error = "Mongoose Collection Does Not Exist";
         return obj;
-      });
-  if (!doc) {
-    console.error("Unable to find address in DB");
-    obj.error = "Unable to find address in DB";
+      }
+    } else {
+      console.error(
+        "Sample BramblJS Application is not connected to the DB. Please try again later"
+      );
+      obj.error =
+        "Sample BramblJS Application is not connected to the DB. Please try again later";
+      return obj;
+    }
+  } catch (error) {
+    console.error(error);
+    obj.error = error.message;
     return obj;
   }
-  return doc;
 };
 
 const checkExistsById = async (model, id, { serviceName = "", session }) => {
