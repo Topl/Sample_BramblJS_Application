@@ -3,6 +3,7 @@ const save2db = require("../../../lib/saveToDatabase");
 const stdErr = require(`../../../core/standardError`);
 const { checkExists } = require("../../../lib/validation");
 const mongoose = require("mongoose");
+const stdError = require("../../../core/standardError");
 
 const serviceName = "users";
 
@@ -91,7 +92,12 @@ class UsersService {
       fetchedUser.markModified("isActive.status");
       fetchedUser.markModified("isActive.asOf");
 
-      await save2db(fetchedUser, { timestamp, serviceName });
+      await save2db(fetchedUser, { timestamp, serviceName }).catch(function(
+        err
+      ) {
+        console.error(err);
+        throw stdError(500, err, serviceName, serviceName);
+      });
       return {};
     } catch (err) {
       throw err;

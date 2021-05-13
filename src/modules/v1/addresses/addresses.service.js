@@ -2,6 +2,7 @@ const UserModel = require(`../user/user.model`);
 const Address = require("./addresses.model");
 const UsersService = require("../user/users.service");
 const mongoose = require("mongoose");
+const stdError = require("../../../core/standardError");
 
 const stdErr = require("../../../core/standardError");
 const BramblHelper = require("../../../lib/bramblHelper");
@@ -12,7 +13,6 @@ const {
   checkExistsByAddress
 } = require("../../../lib/validation");
 const paginateAddresses = require(`../../../lib/paginateAddresses`);
-const standardError = require("../../../core/standardError");
 
 const serviceName = "Address";
 
@@ -31,21 +31,24 @@ class AddressesService {
       let address;
       let keyfile;
       let brambl;
+      let balances;
       // if address is not provided.
       if (!args.address) {
         // create address
         brambl = new BramblHelper(false, args.password, args.network);
-
         const generatedAddress = await brambl.createAddress();
         address = generatedAddress.address;
         keyfile = address.keyfile;
+        //retrieve the polyBalance for the address that has been imported
+        balances = await brambl.getBalanceWithBrambl(address);
       } else {
         brambl = new BramblHelper(true, args.network);
         address = args.address;
+        //retrieve the polyBalance for the address that has been imported
+        balances = await brambl.getBalanceWithRequests(address);
       }
 
       //retrieve the polyBalance for the address that has been imported
-      const balances = await brambl.getBalance(address);
 
       if (!balances) {
         stdErr(
@@ -85,13 +88,44 @@ class AddressesService {
           timestamp,
           serviceName,
           session
+        }).then(function(result) {
+          if (result.error) {
+            throw stdError(500, result.error, serviceName, serviceName);
+          } else {
+            return result.docs;
+          }
         });
       } else {
-        await save2db(newAddress, { timestamp, serviceName, session });
+        await save2db(newAddress, { timestamp, serviceName, session })
+          .then(function(result) {
+            if (result.error) {
+              throw stdError(500, result.error, serviceName, serviceName);
+            } else {
+              return result.doc;
+            }
+          })
+          .catch(function(err) {
+            console.error(err);
+            throw stdError(
+              400,
+              "Invalid Payload: Unable to update address in DB",
+              serviceName,
+              serviceName
+            );
+          });
       }
       return newAddress;
     } catch (err) {
-      throw err;
+      if (err.name === "MongoError" && err.code === 11000) {
+        throw stdErr(
+          422,
+          "The provided address is already in use",
+          serviceName,
+          serviceName
+        );
+      } else {
+        throw err;
+      }
     } finally {
       session.endSession();
     }
@@ -99,8 +133,11 @@ class AddressesService {
 
   static async updateAddressByAddress(args) {
     // check if the address already exists
+    let obj = {};
     const self = this;
-    return await checkExistsByAddress(Address, args.addressId).then(function(result) {
+    return await checkExistsByAddress(Address, args.addressId).then(function(
+      result
+    ) {
       if (result.error) {
         throw stdErr(
           500,
@@ -109,11 +146,10 @@ class AddressesService {
           serviceName
         );
       }
-      if (!result.isActive.status) {
-        throw stdErr(404, "No Active Address", serviceName, serviceName);
-      }
-      return self.updateAddress(args, result).then(function(result) {
-        return result;
+      return self.updateAddress(args, result.doc).catch(function(err) {
+        console.error(err);
+        obj.err = err.message;
+        return obj;
       });
     });
   }

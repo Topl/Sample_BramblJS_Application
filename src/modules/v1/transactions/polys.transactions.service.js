@@ -3,6 +3,7 @@ const AddressesService = require("../addresses/addresses.service");
 const Address = require("../addresses/addresses.model");
 const RequestValidator = require("../../../lib/requestValidator");
 const { checkExistsByAddress } = require("../../../lib/validation");
+const BramblJS = require("brambljs");
 const stdError = require("../../../core/standardError");
 
 const serviceName = "polyTransaction";
@@ -10,7 +11,7 @@ const serviceName = "polyTransaction";
 class PolyTransactionService {
   static async getBalanceHelper(bramblHelper, args) {
     return bramblHelper
-      .getBalance(args.address)
+      .getBalanceWithRequests(args.address)
       .then(function(polyBalanceResult) {
         return AddressesService.updateAddressByAddress({
           name: args.name,
@@ -38,23 +39,36 @@ class PolyTransactionService {
       throw stdError(404, "Unable to find address", serviceName, serviceName);
     } else {
       // check if address exists in the db
-      return await checkExistsByAddress(Address, address) // eslint-disable-next-line no-unused-vars
+      return checkExistsByAddress(Address, address) // eslint-disable-next-line no-unused-vars
         .then(function(result) {
           // if the address is not in the db, add to the db
           if (result.error) {
-            return AddressesService.create({
-              network: args.network,
-              password: args.password,
-              name: args.name,
-              userEmail: args.userEmail,
-              address: args.address
-              // eslint-disable-next-line no-unused-vars
-            }).then(function(result) {
-              return PolyTransactionService.getBalanceHelper(
-                bramblHelper,
-                args
-              );
-            });
+            return (
+              AddressesService.create({
+                network: args.network,
+                password: args.password,
+                name: args.name,
+                userEmail: args.userEmail,
+                address: args.address
+                // eslint-disable-next-line no-unused-vars
+              })
+                // eslint-disable-next-line no-unused-vars
+                .then(function(result) {
+                  return PolyTransactionService.getBalanceHelper(
+                    bramblHelper,
+                    args
+                  );
+                })
+                .catch(function(err) {
+                  console.error(err);
+                  throw stdError(
+                    400,
+                    "Invalid payload, unable to retrieve balance from address",
+                    serviceName,
+                    serviceName
+                  );
+                })
+            );
           } else {
             return PolyTransactionService.getBalanceHelper(bramblHelper, args);
           }
@@ -91,23 +105,42 @@ class PolyTransactionService {
   }
 
   static async polyTransactionHelper(bramblHelper, args) {
+    const obj = {};
     return bramblHelper.sendRawPolyTransaction(args).then(function(value) {
       if (value.error) {
-        throw stdError(500, value.error, serviceName, serviceName);
+        return value;
       } else {
-        return bramblHelper
-          .signAndSendTransaction(value)
-          .then(function(polyTransactionResult) {
-            PolyTransactionService.getBalance(args);
-            return polyTransactionResult;
-          })
-          .then(function(result) {
-            if (result.error) {
-              throw stdError(500, result.error, serviceName, serviceName);
-            } else {
-              return result;
-            }
-          });
+        return (
+          bramblHelper
+            .signAndSendTransaction(value)
+            // eslint-disable-next-line no-unused-vars
+            .then(function(polyTransactionResult) {
+              return Promise.all(
+                args.addresses.map(address => {
+                  const internalObj = {};
+                  const internalArgs = {
+                    address: address,
+                    network: args.network
+                  };
+                  obj.address = address;
+                  return PolyTransactionService.getBalance(internalArgs)
+                    .then(function(result) {
+                      internalObj.balance = result;
+                      return internalObj;
+                    })
+                    .catch(function(err) {
+                      console.error(err);
+                      internalObj.err = err.message;
+                      return internalObj;
+                    });
+                })
+              ).catch(function(err) {
+                console.error(err);
+                obj.err = err.message;
+                return obj;
+              });
+            })
+        );
       }
     });
   }
@@ -119,28 +152,43 @@ class PolyTransactionService {
       args.network,
       args.keyFilePath
     );
-    args.address = bramblHelper.brambljs.keyManager.address;
     if (bramblHelper) {
-      return checkExistsByAddress(Address, args.address).then(function(result) {
+      // iterate through all sender, recipient, and change addresses, checking whether or not they are in the DB
+      let addresses;
+      try {
+        addresses = BramblJS.utils.extractAddressesFromObj(args);
+        args.addresses = addresses;
+      } catch (err) {
+        console.error(err);
+        throw stdError(
+          400,
+          "Invalid payload: Addresses are unable to be parsed. Please double check your request.",
+          serviceName,
+          serviceName
+        );
+      }
+      await addresses.forEach(address => {
+        checkExistsByAddress(Address, address).then(function(result) {
+          if (result.error) {
+            return AddressesService.create({
+              network: args.network,
+              password: args.password,
+              name: args.name,
+              userEmail: args.userEmail,
+              address: address
+              // eslint-disable-next-line no-unused-vars
+            });
+          }
+        });
+      });
+      return PolyTransactionService.polyTransactionHelper(
+        bramblHelper,
+        args
+      ).then(function(result) {
         if (result.error) {
-          return AddressesService.create({
-            network: args.network,
-            password: args.password,
-            name: args.name,
-            userEmail: args.userEmail,
-            address: args.address
-            // eslint-disable-next-line no-unused-vars
-          }).then(function(result) {
-            return PolyTransactionService.polyTransactionHelper(
-              bramblHelper,
-              args
-            );
-          });
+          throw stdError(500, result.error, serviceName, serviceName);
         } else {
-          return PolyTransactionService.polyTransactionHelper(
-            bramblHelper,
-            args
-          );
+          return result;
         }
       });
     } else {

@@ -3,11 +3,12 @@ const mongoose = require("mongoose");
 const AddressSchema = new mongoose.Schema({
   address: {
     type: String,
-    required: true
+    required: true,
+    unique: true
   },
   name: {
     type: String,
-    required: true
+    required: false
   },
   user_id: {
     type: String,
