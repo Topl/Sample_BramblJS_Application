@@ -64,9 +64,25 @@ app.use(
   })
 );
 
+// Define server status
+const serverStatus = () => {
+  return {
+    state: "up",
+    dbState: mongoose.STATES[mongoose.connection.readyState]
+  };
+};
+
 // view engine setup
 app.set("views", path.join(__dirname, "app/views"));
 app.set("view engine", "ejs");
+
+// health-check middleware
+app.use(
+  "/api/uptime",
+  require("express-healthcheck")({
+    healthy: serverStatus
+  })
+);
 
 // Register api routes
 app.use("/api/v1/addresses", addresses);

@@ -10,7 +10,7 @@ services:
     sample_brambljs_service:
         build: .
         ports: 
-            - "127.0.0.1:8082:8082"
+            - "8082:8082"
         container_name: sample_brambljs_service
         depends_on: 
             - mongodb
