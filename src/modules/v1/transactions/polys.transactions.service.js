@@ -38,7 +38,7 @@ class PolyTransactionService {
     args.address = bramblHelper.brambljs.keyManager.address;
     if (bramblHelper) {
       // iterate through all sender, recipient, and change addresses, checking whether or not they are in the DB
-      args.addresses = transactionsServiceHelper.addAddressesToDBFromTransaction(
+      args.addresses = await transactionsServiceHelper.addAddressesToDBFromTransaction(
         bramblHelper,
         args
       );
