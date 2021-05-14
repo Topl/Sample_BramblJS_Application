@@ -69,7 +69,7 @@ class BramblHelper {
    */
   async getBalanceWithBrambl(address) {
     let obj = {};
-    let e = await this.brambljs.requests
+    return this.brambljs.requests
       .lookupBalancesByAddresses({
         addresses: [address]
       })
@@ -79,9 +79,9 @@ class BramblHelper {
         return obj;
       })
       .catch(function(err) {
-        return (obj.error = err.message);
+        obj.error = err.message;
+        return obj;
       });
-    return e;
   }
 
   /**
