@@ -9,6 +9,7 @@ const serviceName = "users";
 
 class UsersService {
   static async addUser(userInfo) {
+    const session = await mongoose.startSession();
     try {
       const timestamp = new Date();
       userInfo.dateCreated = timestamp;
@@ -20,7 +21,7 @@ class UsersService {
 
       const newUser = new UserModel(userInfo);
 
-      await save2db(newUser, { serviceName: serviceName });
+      await save2db(newUser, { timestamp, serviceName, session });
       return newUser.toJSON();
     } catch (err) {
       if (err.name === "MongoError" && err.code === 11000) {
@@ -47,8 +48,8 @@ class UsersService {
         throw stdErr(403, "Not Authorized", serviceName, serviceName);
       }
 
-      if (fetchedUser.isActive.status) {
-        return fetchedUser.toJSON();
+      if (fetchedUser.doc.isActive.status) {
+        return fetchedUser.doc.toJSON();
       } else {
         throw stdErr(404, "No Active User Found", serviceName, serviceName);
       }
@@ -65,7 +66,7 @@ class UsersService {
       ]);
 
       // check for active user
-      if (!fetchedUser || !fetchedUser.isActive.status) {
+      if (!fetchedUser.doc || !fetchedUser.doc.isActive.status) {
         throw stdErr(404, "No Active User Found", serviceName, serviceName);
       }
 
@@ -75,7 +76,7 @@ class UsersService {
       }
 
       // check if they are the owner of any addresses
-      if (fetchedUser.addresses.length > 0) {
+      if (fetchedUser.doc.addresses.length > 0) {
         throw stdErr(
           400,
           "Please delete or transfer ownership of your keyfiles before deleting your account",
@@ -86,13 +87,13 @@ class UsersService {
 
       // mark user as inactive
       const timestamp = new Date();
-      fetchedUser.isActive.status = false;
-      fetchedUser.isActive.asOf = timestamp;
-      fetchedUser.lastUpdated = timestamp;
+      fetchedUser.doc.isActive.status = false;
+      fetchedUser.doc.isActive.asOf = timestamp;
+      fetchedUser.doc.lastUpdated = timestamp;
       fetchedUser.markModified("isActive.status");
       fetchedUser.markModified("isActive.asOf");
 
-      await save2db(fetchedUser, { timestamp, serviceName }).catch(function(
+      await save2db(fetchedUser.doc, { timestamp, serviceName }).catch(function(
         err
       ) {
         console.error(err);
@@ -119,7 +120,7 @@ class UsersService {
 
       const timestamp = Date.now();
       // check if user is active
-      if (!fetchedUser.isActive.status) {
+      if (!fetchedUser.doc.isActive.status) {
         throw stdErr(404, "No Active User Found", serviceName, serviceName);
       }
 
@@ -148,7 +149,7 @@ class UsersService {
   static async checkAdmin(email) {
     try {
       const { isAdmin } = await checkExists(UserModel, email, { serviceName });
-      return isAdmin.role === "PRIVILIGED" || false;
+      return isAdmin.doc.role === "PRIVILIGED" || false;
     } catch (e) {
       return { error: e };
     }

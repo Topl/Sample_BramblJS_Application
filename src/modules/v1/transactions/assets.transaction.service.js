@@ -1,21 +1,54 @@
 const BramblHelper = require("../../../lib/bramblHelper");
+const RawTransactionHelper = require("../../../modifier/transaction/rawTransactionHelper");
+const TransferTransactionValidator = require("../../../modifier/transaction/transferTransactionValidator");
 const stdError = require("../../../core/standardError");
 const Constants = require("../../../util/constants");
 const transactionsServiceHelper = require("./transactionsServiceHelper");
+const TransferTransaction = require("../../../modifier/transaction/transferTransaction");
 
 const serviceName = "AssetTransaction";
 
 class AssetTransactionService {
-  static async assetTransferHelper(bramblHelper, args) {
-    return bramblHelper.sendRawAssetTransaction(args).then(function(value) {
+
+  static async generateRawAssetTransfer(bramblHelper, args) {
+    return RawTransactionHelper.createRaw(
+      args.recipients,
+      args.senders,
+      args.changeAddress,
+      args.consolidationAddress,
+      args.fee,
+      args.data,
+      args.minting.args.networkPrefix
+    ).then(function(value) {
       if (value.error) {
         return value;
       } else {
-        return transactionsServiceHelper.signAndSendTransactionWithStateManagement(
-          value,
-          bramblHelper,
-          args
-        );
+        // validate tx
+        const txValidator = new TransferTransactionValidator(value);
+        const txValid = txValidator.rawSyntacticValidation();
+        if (txValid.error){
+          return txValid;
+        } else {
+        }
+          return value;
+        }
+      }
+    );
+  }
+
+
+  static async assetTransferHelper(bramblHelper, args) {
+    return bramblHelper.sendRawPolyTransaction(args).then(function(rpcResponse) {
+      return AssetTransactionService.generateRawAssetTransfer(bramblHelper, args).then(function(jsResponse) {
+        const rawTransferTransaction = new TransferTransaction()
+      });
+    })
+          return transactionsServiceHelper.signAndSendTransactionWithStateManagement(
+            value,
+            bramblHelper,
+            args
+          );
+        }
       }
     });
   }

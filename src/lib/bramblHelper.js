@@ -1,7 +1,9 @@
 const connections = require(`./connections`);
 const networkUrl = connections.networkUrl;
 const apiKey = connections.networkApiKey;
+const AddressesService = require("../modules/v1/addresses/addresses.service");
 const BramblJS = require("brambljs");
+const PolyBox = require("./boxes/polyBox");
 
 class BramblHelper {
   constructor(readOnly, password, network, keyfilePath) {
@@ -199,23 +201,170 @@ class BramblHelper {
       });
   }
 
-  // async getBoxes(addresses) {
-  //   let obj = {};
-  //   let e = await this.requests
-  //     .lookupBalancesByAddresses({addresses: addresses})
-  //     .then(function(result) {
-  //       obj.result = result.result;
-  //       return obj;
-  //     })
-  //     .catch(function (err) {
-  //       return (obj.error = err.message);
-  //     });
-  //   return e;
-  // }
+  /**
+   * Get Poly, Asset, and Arbit boxes for a valid set of addresses
+   * @param {String[]} addresses: List of addresses
+   * @return {Promise} Promise obj with data or error
+   */
+  async getBoxesWithBrambl(addresses) {
+    let data = {};
+    return this.brambljs.requests
+      .lookupBalancesByAddresses({
+        addresses: addresses
+      })
+      .catch(function(error) {
+        data.error = error.message;
+        return data;
+      });
+  }
 
-  // async getSenderBoxesForTx(senders, txType, assetCode) {
+  /**
+   * Get Poly, Asset, and Arbit boxes for a valid set of addresses
+   * @param {String[]} addresses: List of addresses
+   * @return {Promise} Promise obj with data or error
+   */
+  async getBoxesWithRequests(addresses) {
+    let data = {};
+    return this.requests
+      .lookupBalancesByAddresses({
+        addresses: addresses
+      })
+      .catch(function(error) {
+        data.error = error.message;
+        return data;
+      });
+  }
 
-  // }
+  returnAssetBoxWithAssetCode(assetBoxes, assetCode) {
+    var result = [];
+    for (var i = 0; i < assetBoxes.length; i++) {
+      if (assetBoxes[i].value.hasOwnProperty("assetCode")) {
+        if (assetBoxes[i].value.assetCode === assetCode) {
+          assetBoxes.push(assetBoxes[i].value);
+        }
+      }
+    }
+    return result;
+  }
+
+  async getSenderBoxesForRawTransaction(
+    addresses,
+    networkPrefix,
+    returnBoxes,
+    fee
+  ) {
+    const self = this;
+    let obj = {};
+    // Lookup boxes for the given sender addresses
+    return self.getBoxesFromDb(addresses).then(function(result) {
+      if (result.error) {
+        obj.error = "No boxes found to fund transaction";
+        return obj;
+      }
+
+      // compute the Poly Balance since it is used often
+      const totalPolyBalance = result
+        .map(value => {
+          value.Balances.Polys;
+        })
+        .reduce((a, b) => a + b, 0);
+
+      // ensure there are enough polys to pay the fee
+      if (totalPolyBalance < fee) {
+        obj.error = "Insufficient fuunds available to pay transaction fee";
+        return obj;
+      }
+
+      const boxes = [];
+
+      return addresses
+        .flatMap(a => {
+          let bxData = {};
+          bxData.senderAddress = a;
+          // always get polys because this is how fees are paid
+          boxes.push(new PolyBox());
+          bxData.polyBox = result.boxes[a].polyBoxes;
+          bxData.polyBalance = result.boxes[a].Balances.Polys;
+          if (returnBoxes == "Arbits") {
+            bxData.arbitBox = result[a].Boxes.arbitBoxes;
+            return bxData;
+          }
+          if (returnBoxes == "Assets") {
+            bxData.assetBox = result[a].Boxes.assetBoxes;
+            return bxData;
+          }
+        })
+        .reduce((acc, value) => {
+          if (!acc["Arbit_Box_Data"]) {
+            acc["Arbit_Box_Data"] = [];
+          }
+          if (!acc["Asset_Box_Data"]) {
+            acc["Asset_Box_Data"] = [];
+          }
+          if (!acc["Poly_Box_Data"]) {
+            acc["Poly_Box_Data"] = [];
+          }
+          // implement grouping
+
+          if (value.polyBox) {
+            acc["Poly_Box_Data"].push(value.polyBox);
+          }
+          if (value.assetBox) {
+            acc["Asset_Box_Data"].push(value.assetBox);
+          }
+
+          if (value.arbitBox) {
+            acc["Arbit_Box_Data"].push(value.arbitBox);
+          }
+        })
+        .then(function(result) {
+          result.polyBalance = totalPolyBalance;
+          return result;
+        });
+    });
+  }
+
+  /**
+   * Accessor method to retrieve a set of boxes from the db (state) that are owned by a particular public key/address. This works by abstracting the db lookup and access.
+   * @param {String[]} addresses: list of addresses
+   * @param {String} networkPrefix: Network on which addresses are located.
+   */
+  async getTokenBoxes(address) {
+    let assets = {};
+    try {
+      const storedAddressState = AddressesService.getAddressByAddress({
+        address: address
+      });
+      assets.arbitBoxes = storedAddressState.arbitBoxes();
+      assets.assetBoxes = storedAddressState.assetBoxes();
+      assets.polyBoxes = storedAddressState.polyBoxes();
+      return assets;
+    } catch (err) {
+      console.error(err);
+      assets.error = err.message;
+      return assets;
+    }
+  }
+
+  async getSenderBoxesAndCheckPolyBalance(senders, txType, assetCode, fee) {
+    // Lookup boxes for the given senders
+    let obj = {};
+    const senderBoxes = this.getSenderBoxesForTx(senders, txType, assetCode);
+
+    // compute the Poly balance since it is used so often
+    let polyBalance;
+    if (senderBoxes.hasOwnProperty("polyBox")) {
+      polyBalance = senderBoxes.polyBox
+        .map(box => box.value.quantity)
+        .reduce((a, b) => a + b);
+    }
+
+    // ensure there are enough polys to pay the fee
+    if (polyBalance < fee) {
+      obj.error = "Insufficient funds available to pay transaction fee.";
+      return obj;
+    }
+  }
 
   async checkPolyBalances(senders, fee) {
     let obj = {};

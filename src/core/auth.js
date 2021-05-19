@@ -7,7 +7,7 @@ module.exports = async (req, res, next) => {
   try {
     const userId = req.body.user_id;
     const fetchedUser = await checkExists(User, userId, { serviceName });
-    if (!fetchedUser || fetchedUser.isActive == false) {
+    if (!fetchedUser.doc || fetchedUser.doc.isActive == false) {
       throw new Error("User not found");
     }
     next();

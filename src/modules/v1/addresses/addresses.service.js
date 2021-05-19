@@ -32,6 +32,9 @@ class AddressesService {
       let keyfile;
       let brambl;
       let balances;
+      let polyBox;
+      let assetBox;
+      let arbitBox;
       // if address is not provided.
       if (!args.address) {
         // create address
@@ -40,12 +43,21 @@ class AddressesService {
         address = generatedAddress.address;
         keyfile = address.keyfile;
         //retrieve the polyBalance for the address that has been imported
-        balances = await brambl.getBalanceWithBrambl(address);
+        balances = "0";
       } else {
         brambl = new BramblHelper(true, args.network);
         address = args.address;
         //retrieve the polyBalance for the address that has been imported
-        balances = await brambl.getBalanceWithRequests(address);
+        brambl.getBoxesWithRequests([args.address]).then(function(result) {
+          if (result.error) {
+            throw stdError(500, result.error, serviceName, serviceName);
+          } else {
+            polyBox = result.result[args.address].Boxes.PolyBox;
+            assetBox = result.result[args.address].Boxes.AssetBox;
+            arbitBox = result.result[args.address].Boxes.ArbitBox;
+            balances = result.result[args.address].Balances.Polys;
+          }
+        });
       }
 
       //retrieve the polyBalance for the address that has been imported
@@ -72,7 +84,10 @@ class AddressesService {
         address: address,
         keyfile: keyfile,
         network: args.network,
-        polyBalance: balances.polyBalance
+        polyBalance: balances.polyBalance,
+        polyBox: polyBox,
+        assetBox: assetBox,
+        arbitBox: arbitBox
       };
 
       addressDoc.isActive = {
@@ -190,6 +205,17 @@ class AddressesService {
       if (args.polyBalance) {
         fetchedAddress.polyBalance = args.polyBalance;
       }
+      if (args.polyBox) {
+        fetchedAddress.polyBox = args.polyBox;
+      }
+
+      if (args.assetBox) {
+        fetchedAddress.assetBox = args.assetBox;
+      }
+
+      if (args.arbitBox) {
+        fetchedAddress.arbitBox = args.arbitBox;
+      }
 
       // save
       await save2db(fetchedAddress, { timestamp, serviceName, session });
@@ -273,11 +299,29 @@ class AddressesService {
         paginateAddresses(args.user_id, args.page, args.limit)
       ]);
 
-      if (!fetchedUser.isActive.status) {
+      if (!fetchedUser.doc.isActive.status) {
         throw stdErr(404, "No Active User Found", serviceName, serviceName);
       }
       return projects;
     } catch (err) {
+      throw err;
+    }
+  }
+
+  static async getAddressByAddress(args) {
+    try {
+      // check if address exists and is active
+      const fetchedAddress = await checkExistsByAddress(Address, args.address, {
+        serviceName
+      });
+
+      if (!fetchedAddress.isActive.status) {
+        throw stdErr(404, "No Active Address", serviceName, serviceName);
+      }
+
+      return fetchedAddress;
+    } catch (err) {
+      console.error(err);
       throw err;
     }
   }
