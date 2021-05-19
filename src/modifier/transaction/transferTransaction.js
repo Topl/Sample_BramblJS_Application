@@ -1,6 +1,4 @@
-
 class TransferTransaction {
-
   constructor(from, to, attestation, fee, timestamp, data, minting) {
     this.from = from;
     this.to = to;

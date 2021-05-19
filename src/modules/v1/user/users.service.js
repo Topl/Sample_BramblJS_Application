@@ -59,6 +59,7 @@ class UsersService {
   }
 
   static async deleteUser(userObj) {
+    const session = await mongoose.startSession();
     try {
       const [isAdmin, fetchedUser] = await Promise.all([
         UsersService.checkAdmin(userObj.userEmail),
@@ -93,12 +94,12 @@ class UsersService {
       fetchedUser.markModified("isActive.status");
       fetchedUser.markModified("isActive.asOf");
 
-      await save2db(fetchedUser.doc, { timestamp, serviceName }).catch(function(
-        err
-      ) {
-        console.error(err);
-        throw stdError(500, err, serviceName, serviceName);
-      });
+      await save2db(fetchedUser, { timestamp, serviceName, session }).catch(
+        function(err) {
+          console.error(err);
+          throw stdError(500, err, serviceName, serviceName);
+        }
+      );
       return {};
     } catch (err) {
       throw err;

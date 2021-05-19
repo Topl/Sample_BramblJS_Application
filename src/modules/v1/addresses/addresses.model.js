@@ -169,7 +169,14 @@ const AddressSchema = new mongoose.Schema({
       type: Date
     },
     required: true
-  }
+  },
+  boxes: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "box",
+      description: "A reference to the boxes owned by this address"
+    }
+  ]
 });
 
 // eslint-disable-next-line no-undef
