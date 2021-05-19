@@ -47,32 +47,43 @@ class BramblHelper {
    */
   async getBalanceWithRequests(address) {
     let obj = {};
+    let self = this;
     let e = await this.requests
       .lookupBalancesByAddresses({
         addresses: [address]
       })
       .then(function(result) {
-        obj.polyBalance = result.result[address].Balances.Polys;
-        obj.arbitsBalance = result.result[address].Balances.Arbits;
-        obj.boxes = [];
-        const polyBoxes = result.result[address].Boxes.PolyBox;
-        const arbitBoxes = result.result[address].Boxes.ArbitBox;
-        const assetBoxes = result.result[address].Boxes.AssetBox;
-        if (polyBoxes) {
-          obj.boxes = polyBoxes;
+        try {
+          return self.generateBoxes(obj, result, address);
+        } catch (err) {
+          console.error(err);
+          obj.error = err.message;
+          return obj;
         }
-        if (arbitBoxes) {
-          obj.boxes = obj.boxes.concat(arbitBoxes);
-        }
-        if (assetBoxes) {
-          obj.boxes = obj.boxes.concat(assetBoxes);
-        }
-        return obj;
       })
       .catch(function(err) {
         return (obj.error = err.message);
       });
     return e;
+  }
+
+  generateBoxes(obj, result, address) {
+    obj.polyBalance = result.result[address].Balances.Polys;
+    obj.arbitsBalance = result.result[address].Balances.Arbits;
+    obj.boxes = [];
+    const polyBoxes = result.result[address].Boxes.PolyBox;
+    const arbitBoxes = result.result[address].Boxes.ArbitBox;
+    const assetBoxes = result.result[address].Boxes.AssetBox;
+    if (polyBoxes) {
+      obj.boxes = polyBoxes;
+    }
+    if (arbitBoxes) {
+      obj.boxes = obj.boxes.concat(arbitBoxes);
+    }
+    if (assetBoxes) {
+      obj.boxes = obj.boxes.concat(assetBoxes);
+    }
+    return obj;
   }
 
   /**
@@ -82,27 +93,13 @@ class BramblHelper {
    */
   async getBalanceWithBrambl(address) {
     let obj = {};
+    let self = this;
     return this.brambljs.requests
       .lookupBalancesByAddresses({
         addresses: [address]
       })
       .then(function(result) {
-        obj.polyBalance = result.result[address].Balances.Polys;
-        obj.arbitsBalance = result.result[address].Balances.Arbits;
-        obj.boxes = [];
-        const polyBoxes = result.result[address].Boxes.PolyBox;
-        const arbitBoxes = result.result[address].Boxes.ArbitBox;
-        const assetBoxes = result.result[address].Boxes.AssetBox;
-        if (polyBoxes) {
-          obj.boxes = polyBoxes;
-        }
-        if (arbitBoxes) {
-          obj.boxes = obj.boxes.concat(arbitBoxes);
-        }
-        if (assetBoxes) {
-          obj.boxes = obj.boxes.concat(assetBoxes);
-        }
-        return obj;
+        return self.generateBoxes(obj, result, address);
       })
       .catch(function(err) {
         obj.error = err.message;
