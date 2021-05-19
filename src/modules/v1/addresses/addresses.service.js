@@ -13,6 +13,7 @@ const {
   checkExistsByAddress
 } = require("../../../lib/validation");
 const paginateAddresses = require(`../../../lib/paginateAddresses`);
+const BoxHelper = require(`../state/boxHelper`);
 
 const serviceName = "Address";
 
@@ -41,6 +42,7 @@ class AddressesService {
         keyfile = address.keyfile;
         //retrieve the polyBalance for the address that has been imported
         balances = await brambl.getBalanceWithBrambl(address);
+        // retrieve and update boxes in db
       } else {
         brambl = new BramblHelper(true, args.network);
         address = args.address;
@@ -51,14 +53,14 @@ class AddressesService {
       //retrieve the polyBalance for the address that has been imported
 
       if (!balances) {
-        stdErr(
+        throw stdErr(
           500,
           "Unable to retrieve balance for address from network",
           serviceName,
           serviceName
         );
       } else if (balances.polyBalance < 0) {
-        stdErr(
+        throw stdErr(
           500,
           "polyBalance for address must be greater than 0.",
           serviceName,
@@ -81,6 +83,11 @@ class AddressesService {
       };
       let newAddress = new Address(addressDoc);
 
+      // iterate through boxes and either add or update them in the DB
+      if (balances.boxes) {
+        BoxHelper.updateBoxes(balances.boxes, address);
+      }
+
       // Save Address and User in transaction
       if (fetchedUser) {
         fetchedUser.addresses.push(newAddress._id);
@@ -92,7 +99,7 @@ class AddressesService {
           if (result.error) {
             throw stdError(500, result.error, serviceName, serviceName);
           } else {
-            return result.docs;
+            return result;
           }
         });
       } else {
@@ -101,7 +108,7 @@ class AddressesService {
             if (result.error) {
               throw stdError(500, result.error, serviceName, serviceName);
             } else {
-              return result.doc;
+              return result;
             }
           })
           .catch(function(err) {
@@ -161,7 +168,12 @@ class AddressesService {
     })
       .then(function(result) {
         if (!result.isActive.status) {
-          throw stdErr(404, "No Active Address", serviceName, serviceName);
+          throw stdErr(
+            404,
+            "No Active Address Found",
+            serviceName,
+            serviceName
+          );
         }
       })
       // eslint-disable-next-line no-unused-vars
@@ -179,10 +191,34 @@ class AddressesService {
   static async updateAddress(args, fetchedAddress) {
     const session = await mongoose.startSession();
     try {
-      const timestamp = new Date();
-      // check if the address exists
+      const brambl = new BramblHelper(true, args.network);
+      const balances = await brambl.getBalanceWithRequests(
+        fetchedAddress.address
+      );
 
-      // update fields
+      if (!balances) {
+        stdErr(
+          500,
+          "Unable to retrieve balance for address from network",
+          serviceName,
+          serviceName
+        );
+      } else if (balances.polyBalance < 0) {
+        stdErr(
+          500,
+          "polyBalance for address must be greater than 0.",
+          serviceName,
+          serviceName
+        );
+      }
+
+      // iterate through boxes and either add or update them in the DB
+      if (balances.boxes) {
+        BoxHelper.updateBoxes(balances.boxes, fetchedAddress.address);
+      }
+
+      const timestamp = new Date();
+      // update fieldsb
       if (args.name) {
         fetchedAddress.name = args.name;
       }
@@ -283,7 +319,6 @@ class AddressesService {
   }
 
   static async getAddressById(args) {
-    const session = await mongoose.startSession();
     try {
       // check if address exists and is active
 
@@ -298,8 +333,6 @@ class AddressesService {
       return fetchedAddress;
     } catch (err) {
       throw err;
-    } finally {
-      session.endSession;
     }
   }
 }

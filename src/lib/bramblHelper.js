@@ -54,6 +54,19 @@ class BramblHelper {
       .then(function(result) {
         obj.polyBalance = result.result[address].Balances.Polys;
         obj.arbitsBalance = result.result[address].Balances.Arbits;
+        obj.boxes = [];
+        const polyBoxes = result.result[address].Boxes.PolyBox;
+        const arbitBoxes = result.result[address].Boxes.ArbitBox;
+        const assetBoxes = result.result[address].Boxes.AssetBox;
+        if (polyBoxes) {
+          obj.boxes = polyBoxes;
+        }
+        if (arbitBoxes) {
+          obj.boxes = obj.boxes.concat(arbitBoxes);
+        }
+        if (assetBoxes) {
+          obj.boxes = obj.boxes.concat(assetBoxes);
+        }
         return obj;
       })
       .catch(function(err) {
@@ -76,6 +89,19 @@ class BramblHelper {
       .then(function(result) {
         obj.polyBalance = result.result[address].Balances.Polys;
         obj.arbitsBalance = result.result[address].Balances.Arbits;
+        obj.boxes = [];
+        const polyBoxes = result.result[address].Boxes.PolyBox;
+        const arbitBoxes = result.result[address].Boxes.ArbitBox;
+        const assetBoxes = result.result[address].Boxes.AssetBox;
+        if (polyBoxes) {
+          obj.boxes = polyBoxes;
+        }
+        if (arbitBoxes) {
+          obj.boxes = obj.boxes.concat(arbitBoxes);
+        }
+        if (assetBoxes) {
+          obj.boxes = obj.boxes.concat(assetBoxes);
+        }
         return obj;
       })
       .catch(function(err) {
@@ -198,24 +224,6 @@ class BramblHelper {
         return obj;
       });
   }
-
-  // async getBoxes(addresses) {
-  //   let obj = {};
-  //   let e = await this.requests
-  //     .lookupBalancesByAddresses({addresses: addresses})
-  //     .then(function(result) {
-  //       obj.result = result.result;
-  //       return obj;
-  //     })
-  //     .catch(function (err) {
-  //       return (obj.error = err.message);
-  //     });
-  //   return e;
-  // }
-
-  // async getSenderBoxesForTx(senders, txType, assetCode) {
-
-  // }
 
   async checkPolyBalances(senders, fee) {
     let obj = {};
