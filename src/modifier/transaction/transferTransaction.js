@@ -10,4 +10,15 @@ class TransferTransaction {
   }
 }
 
+TransferTransaction.prototype.equals = function(o) {
+  return (
+    this.from === o.from &&
+    this.to === o.to &&
+    this.attestation === o.attestation &&
+    this.fee === o.fee &&
+    this.data === o.data &&
+    this.minting === o.minting
+  );
+};
+
 module.exports = TransferTransaction;

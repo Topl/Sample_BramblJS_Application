@@ -44,12 +44,8 @@ class AddressesService {
         address = generatedAddress.address;
         keyfile = address.keyfile;
         //retrieve the polyBalance for the address that has been imported
-<<<<<<< HEAD
-        balances = "0";
-=======
         balances = await brambl.getBalanceWithBrambl(address);
         // retrieve and update boxes in db
->>>>>>> 6ceeb64d7f9b7ae18eec1a17cee925ec5ce3cefd
       } else {
         brambl = new BramblHelper(true, args.network);
         address = args.address;

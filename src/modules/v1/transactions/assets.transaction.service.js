@@ -9,7 +9,6 @@ const TransferTransaction = require("../../../modifier/transaction/transferTrans
 const serviceName = "AssetTransaction";
 
 class AssetTransactionService {
-
   static async generateRawAssetTransfer(bramblHelper, args) {
     return RawTransactionHelper.createRaw(
       args.recipients,
@@ -18,7 +17,8 @@ class AssetTransactionService {
       args.consolidationAddress,
       args.fee,
       args.data,
-      args.minting.args.networkPrefix
+      args.minting,
+      args.networkPrefix
     ).then(function(value) {
       if (value.error) {
         return value;
@@ -26,31 +26,47 @@ class AssetTransactionService {
         // validate tx
         const txValidator = new TransferTransactionValidator(value);
         const txValid = txValidator.rawSyntacticValidation();
-        if (txValid.error){
+        if (txValid.error) {
           return txValid;
         } else {
-        }
           return value;
         }
       }
-    );
+    });
   }
 
-
   static async assetTransferHelper(bramblHelper, args) {
-    return bramblHelper.sendRawPolyTransaction(args).then(function(rpcResponse) {
-      return AssetTransactionService.generateRawAssetTransfer(bramblHelper, args).then(function(jsResponse) {
-        const rawTransferTransaction = new TransferTransaction()
-      });
-    })
-          return transactionsServiceHelper.signAndSendTransactionWithStateManagement(
-            value,
-            bramblHelper,
-            args
+    return bramblHelper
+      .sendRawPolyTransaction(args)
+      .then(function(rpcResponse) {
+        return AssetTransactionService.generateRawAssetTransfer(
+          bramblHelper,
+          args
+        ).then(function(jsResponse) {
+          const rawTransferTransaction = new TransferTransaction(
+            rpcResponse.from,
+            rpcResponse.to,
+            Map(),
+            rpcResponse.fee,
+            rpcResponse.data,
+            rpcResponse.minting
           );
-        }
-      }
-    });
+          if (rawTransferTransaction.equals(jsResponse)) {
+            return transactionsServiceHelper.signAndSendTransactionWithStateManagement(
+              rpcResponse,
+              bramblHelper,
+              args
+            );
+          } else {
+            throw stdError(
+              500,
+              "Invalid RPC Response",
+              serviceName,
+              serviceName
+            );
+          }
+        });
+      });
   }
 
   static async createAsset(args) {
