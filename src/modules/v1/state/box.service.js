@@ -154,38 +154,23 @@ class BoxService {
   }
 
   static async getBoxById(args) {
-    try {
-      // check if box exists and is active
-      const fetchedBox = await checkExistsByBifrostId(BoxModel, args.id, {
-        serviceName
+    // check if box exists and is active
+    return checkExistsByBifrostId(BoxModel, args.id)
+      .then(function(result) {
+        if (!result.doc.isActive.status) {
+          throw stdError(404, "No Active Box Found", serviceName, serviceName);
+        } else {
+          return result.doc;
+        }
       })
-        .then(function(result) {
-          if (!result.isActive.status) {
-            throw stdError(
-              404,
-              "No Active Box Found",
-              serviceName,
-              serviceName
-            );
-          }
-        })
-        .catch(function(err) {
-          throw stdError(
-            500,
-            "Unable to find box by Bifrost Id",
-            serviceName,
-            serviceName
-          );
-        });
-
-      if (!fetchedBox.isActive.status) {
-        throw stdError(404, "No Active Boxes", serviceName, serviceName);
-      }
-
-      return fetchedBox;
-    } catch (err) {
-      throw err;
-    }
+      .catch(function(err) {
+        throw stdError(
+          500,
+          "Unable to find box by Bifrost Id",
+          serviceName,
+          serviceName
+        );
+      });
   }
 }
 

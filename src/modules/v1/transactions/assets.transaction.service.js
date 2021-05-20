@@ -37,7 +37,7 @@ class AssetTransactionService {
 
   static async assetTransferHelper(bramblHelper, args) {
     return bramblHelper
-      .sendRawPolyTransaction(args)
+      .sendRawAssetTransaction(args)
       .then(function(rpcResponse) {
         return AssetTransactionService.generateRawAssetTransfer(
           bramblHelper,

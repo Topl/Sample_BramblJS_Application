@@ -224,6 +224,74 @@ class BramblHelper {
       });
   }
 
+  /**
+   * Get Poly, Asset, and Arbit boxes for a valid set of addresses
+   * @param {String[]} addresses: List of addresses
+   * @return {Promise} Promise obj with data or error
+   */
+  async getBoxesWithBrambl(addresses) {
+    let data = {};
+    return this.brambljs.requests
+      .lookupBalancesByAddresses({
+        addresses: addresses
+      })
+      .catch(function(error) {
+        data.error = error.message;
+        return data;
+      });
+  }
+
+  /**
+   * Get Poly, Asset, and Arbit boxes for a valid set of addresses
+   * @param {String[]} addresses: List of addresses
+   * @return {Promise} Promise obj with data or error
+   */
+  async getBoxesWithRequests(addresses) {
+    let data = {};
+    return this.requests
+      .lookupBalancesByAddresses({
+        addresses: addresses
+      })
+      .catch(function(error) {
+        data.error = error.message;
+        return data;
+      });
+  }
+
+  returnAssetBoxWithAssetCode(assetBoxes, assetCode) {
+    var result = [];
+    for (var i = 0; i < assetBoxes.length; i++) {
+      if (assetBoxes[i].value.hasOwnProperty("assetCode")) {
+        if (assetBoxes[i].value.assetCode === assetCode) {
+          assetBoxes.push(assetBoxes[i].value);
+        }
+      }
+    }
+    return result;
+  }
+
+  /**
+   * Accessor method to retrieve a set of boxes from the db (state) that are owned by a particular public key/address. This works by abstracting the db lookup and access.
+   * @param {String[]} addresses: list of addresses
+   * @param {String} networkPrefix: Network on which addresses are located.
+   */
+  async getTokenBoxes(address) {
+    let assets = {};
+    try {
+      const storedAddressState = AddressesService.getAddressByAddress({
+        address: address
+      });
+      assets.arbitBoxes = storedAddressState.arbitBoxes();
+      assets.assetBoxes = storedAddressState.assetBoxes();
+      assets.polyBoxes = storedAddressState.polyBoxes();
+      return assets;
+    } catch (err) {
+      console.error(err);
+      assets.error = err.message;
+      return assets;
+    }
+  }
+
   async checkPolyBalances(senders, fee) {
     let obj = {};
     obj.polyBalance = senders
@@ -242,23 +310,6 @@ class BramblHelper {
 
     return obj;
   }
-
-  // async generateRawAssetTransfer(txObject) {
-  //   let obj = {};
-  //   const assetCode = txObject.assetCode;
-
-  //   if (Array.isArray(assetCode)) {
-  //     obj.error = "Found multiple asset codes when only one was expected";
-  //   }
-
-  //   const polyBalance = this.checkPolyBalances(txObject.senders, txObject.fee);
-
-  //   // compute the number of tokens to be sent to the recipients
-  //   // will branch depending on if we are minting or not
-
-  // }
-
-  // ioMint()
 
   /**
    * Gets the raw transaction object on the asset transaction you plan on signing before sending.

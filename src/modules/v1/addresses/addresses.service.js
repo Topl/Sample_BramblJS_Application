@@ -28,7 +28,12 @@ class AddressesService {
       const timestamp = new Date();
 
       // fetch information of user
-      let fetchedUser = await UserModel.findOne({ email: args.userEmail });
+      let fetchedUser = await UserModel.findOne({
+        email: args.userEmail
+      }).catch(function(error) {
+        console.error(error);
+        throw error;
+      });
       let address;
       let keyfile;
       let brambl;
@@ -50,16 +55,7 @@ class AddressesService {
         brambl = new BramblHelper(true, args.network);
         address = args.address;
         //retrieve the polyBalance for the address that has been imported
-        brambl.getBoxesWithRequests([args.address]).then(function(result) {
-          if (result.error) {
-            throw stdError(500, result.error, serviceName, serviceName);
-          } else {
-            polyBox = result.result[args.address].Boxes.PolyBox;
-            assetBox = result.result[args.address].Boxes.AssetBox;
-            arbitBox = result.result[args.address].Boxes.ArbitBox;
-            balances = result.result[args.address].Balances.Polys;
-          }
-        });
+        balances = await brambl.getBalanceWithRequests(address);
       }
 
       //retrieve the polyBalance for the address that has been imported
@@ -178,9 +174,7 @@ class AddressesService {
 
   static async updateAddressById(args) {
     // check if the address exists in the db
-    const fetchedAddress = await checkExistsById(Address, args.addressId, {
-      serviceName
-    })
+    const fetchedAddress = await checkExistsById(Address, args.addressId)
       .then(function(result) {
         if (!result.isActive.status) {
           throw stdErr(
@@ -267,9 +261,7 @@ class AddressesService {
     const session = await mongoose.startSession();
     try {
       const timestamp = new Date();
-      const fetchedAddress = await checkExistsById(Address, args.addressId, {
-        serviceName
-      });
+      const fetchedAddress = await checkExistsById(Address, args.addressId);
 
       if (!fetchedAddress.isActive.status) {
         throw stdErr(404, "No Active Address", serviceName, serviceName);
@@ -331,7 +323,7 @@ class AddressesService {
   static async getAddressesByUser(args) {
     try {
       const [fetchedUser, projects] = await Promise.all([
-        checkExists(UserModel, args.user_id, { serviceName }),
+        checkExists(UserModel, args.user_id),
         paginateAddresses(args.user_id, args.page, args.limit)
       ]);
 
@@ -347,15 +339,13 @@ class AddressesService {
   static async getAddressByAddress(args) {
     try {
       // check if address exists and is active
-      const fetchedAddress = await checkExistsByAddress(Address, args.address, {
-        serviceName
-      });
+      const fetchedAddress = await checkExistsByAddress(Address, args.address);
 
-      if (!fetchedAddress.isActive.status) {
+      if (!fetchedAddress.doc.isActive.status) {
         throw stdErr(404, "No Active Address", serviceName, serviceName);
       }
 
-      return fetchedAddress;
+      return fetchedAddress.doc;
     } catch (err) {
       console.error(err);
       throw err;
@@ -366,9 +356,7 @@ class AddressesService {
     try {
       // check if address exists and is active
 
-      const fetchedAddress = await checkExistsById(Address, args.addressId, {
-        serviceName
-      });
+      const fetchedAddress = await checkExistsById(Address, args.addressId);
 
       if (!fetchedAddress.isActive.status) {
         throw stdErr(404, "No Active Address", serviceName, serviceName);

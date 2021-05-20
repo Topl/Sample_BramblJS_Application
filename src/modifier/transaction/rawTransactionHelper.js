@@ -1,5 +1,4 @@
 const MAX_INTEGER_VALUE = require("../../util/constants").MAX_INTEGER_VALUE;
-const BramblHelper = require("../../lib/bramblHelper");
 const TransferTransaction = require("./transferTransaction");
 
 class RawTransactionHelper {
@@ -10,8 +9,7 @@ class RawTransactionHelper {
     consolidationAddress,
     fee,
     data,
-    minting,
-    networkPrefix
+    minting
   ) {
     let obj = {};
     const assetSet = new Set(
@@ -24,47 +22,49 @@ class RawTransactionHelper {
       return obj;
     }
     const assetCode = Array.from(assetSet)[0];
-    const bramblHelper = new BramblHelper(true, networkPrefix);
     let self = this;
-    return bramblHelper
-      .getSenderBoxesForRawTransaction(senders, networkPrefix, "Assets", fee)
-      .then(function(result) {
-        result.map(txState => {
-          // compute the amount of tokens that will be sent to the recipient
-          const amtToSpend = toReceive
-            .map(r => {
-              return r.quantity;
-            })
-            .reduce((a, b) => a + b, 0);
+    return TransferTransaction.getSenderBoxesAndCheckPolyBalance(
+      senders,
+      "Assets",
+      fee,
+      assetCode
+    ).then(function(result) {
+      return result.map(txState => {
+        // compute the amount of tokens that will be sent to the recipient
+        const amtToSpend = toReceive
+          .map(r => {
+            return r.quantity;
+          })
+          .reduce((a, b) => a + b, 0);
 
-          // create the list of inputs and outputs (senderChangeOut and recipientOut)
-          const inputOutputObj = minting
-            ? self.ioMint(txState, toReceive, changeAddress, fee)
-            : self.ioTransfer(
-                txState,
-                toReceive,
-                changeAddress,
-                consolidationAddress,
-                fee,
-                amtToSpend,
-                assetCode
-              );
+        // create the list of inputs and outputs (senderChangeOut and recipientOut)
+        const inputOutputObj = minting
+          ? self.ioMint(txState, toReceive, changeAddress, fee)
+          : self.ioTransfer(
+              txState,
+              toReceive,
+              changeAddress,
+              consolidationAddress,
+              fee,
+              amtToSpend,
+              assetCode
+            );
 
-          // ensure there are sufficient funds from the sender boxes to create all outputs
-          if (inputOutputObj.availableToSpend > amtToSpend) {
-            obj.error = "Insufficient funds available to create transaction.";
-            return obj;
-          }
-          return new TransferTransaction(
-            inputOutputObj.inputs,
-            inputOutputObj.outputs,
-            Map(),
-            fee,
-            Date.now(),
-            data.minting
-          );
-        });
+        // ensure there are sufficient funds from the sender boxes to create all outputs
+        if (inputOutputObj.availableToSpend < amtToSpend) {
+          obj.error = "Insufficient funds available to create transaction.";
+          return obj;
+        }
+        return new TransferTransaction(
+          inputOutputObj.inputs,
+          inputOutputObj.outputs,
+          Map(),
+          fee,
+          Date.now(),
+          data.minting
+        );
       });
+    });
   }
 
   ioTransfer(
