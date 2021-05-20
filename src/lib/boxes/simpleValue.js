@@ -1,6 +1,5 @@
 class SimpleValue {
-  valueTypePrefix = 1;
-  valueTypeString = "Simple";
+  type = "Simple";
 
   constructor(quantity) {
     this.quantity = quantity;

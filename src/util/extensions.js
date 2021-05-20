@@ -7,7 +7,7 @@ class StringOps {
    */
   static getValidBytes(inString, charset) {
     try {
-      return buffer.transcode(Buffer.from(inString), "utf16", charset);
+      return buffer.transcode(Buffer.from(inString), "utf16le", charset);
     } catch (error) {
       console.error(error);
       return;
@@ -19,7 +19,7 @@ class StringOps {
    * @param {String} s: String to encode in Latin1
    */
   static getValidLatin1Bytes(s) {
-    return this.getValidBytes(s, "ISO-8859-1");
+    return this.getValidBytes(s, "latin1");
   }
 
   static getValidUTFBytes(s) {

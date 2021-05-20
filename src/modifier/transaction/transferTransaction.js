@@ -5,9 +5,9 @@ const ArbitBox = require("../../lib/boxes/arbitBox");
 const { asyncFlatMap } = require("../../util/extensions");
 
 class TransferTransaction {
-  constructor(from, to, attestation, fee, timestamp, data, minting) {
+  constructor(from, newBoxes, attestation, fee, timestamp, data, minting) {
     this.from = from;
-    this.to = to;
+    this.newBoxes = newBoxes;
     this.attestation = attestation;
     this.fee = fee;
     this.timestamp = timestamp;

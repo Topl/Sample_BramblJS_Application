@@ -329,9 +329,9 @@ class BramblHelper {
         for (var key in result.params.recipients) {
           const recipientForBramblJS = [
             key,
-            result.params.recipients.key.quantity,
-            result.params.recipients.key.securityRoot,
-            result.params.recipients.key.metadata
+            result.params.recipients[key].quantity,
+            result.params.recipients[key].securityRoot,
+            result.params.recipients[key].metadata
           ];
           formattedRecipients.push(recipientForBramblJS);
         }

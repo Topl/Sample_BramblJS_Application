@@ -1,11 +1,11 @@
 const { StringOps } = require("../../util/extensions");
 const { stdError } = require("../../core/standardError");
-const {MAX_METADATA_LENGTH} = require("../../util/constants");
+const { MAX_METADATA_LENGTH } = require("../../util/constants");
 
 class AssetValue {
   constructor(quantity, assetCode, securityRoot, metadata) {
-    this.quantity = quantity;
     this.assetCode = assetCode;
+    this.quantity = quantity;
     this.securityRoot = securityRoot;
     this.metadata = metadata;
 
@@ -26,3 +26,5 @@ class AssetValue {
     }
   }
 }
+
+module.exports = AssetValue;

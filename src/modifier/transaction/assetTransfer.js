@@ -23,10 +23,12 @@ class AssetTransfer extends TransferTransaction {
 
     this.coinOutput = newBoxes.map(recipient => {
       // grabbing the value of the assets that will be put in the recipient's box
-      return new AssetBox(recipient.value);
+      return new AssetBox(recipient[1].quantity);
     });
 
-    this.feeChangeOutput = new PolyBox(new SimpleValue(newBoxes[0].quantity));
+    this.feeChangeOutput = new PolyBox(
+      new SimpleValue(newBoxes[0][1].quantity)
+    );
   }
 
   generateNewBoxes() {
@@ -141,18 +143,21 @@ class AssetTransfer extends TransferTransaction {
         txInputState.senderBoxes
           .filter(box => box.boxType === "PolyBox")
           .map(bx => {
-            return {
-              value: bx.value,
-              nonce: bx.nonce
-            };
+            return [bx.address, bx.nonce];
           })
       );
 
     const outputs = [
-      [changeAddress, new SimpleValue(txInputState.polyBalance - fee)],
+      [
+        changeAddress,
+        {
+          type: "Simple",
+          quantity: (txInputState.polyBalance - +fee).toString()
+        }
+      ],
       [
         consolidationAddress,
-        new AssetValue(availableToSpend - amtToSpend, assetCode)
+        new AssetValue((availableToSpend - amtToSpend).toString(), assetCode)
       ]
     ].concat(toReceive);
     obj.availableToSpend = availableToSpend;
@@ -167,13 +172,16 @@ class AssetTransfer extends TransferTransaction {
     const inputs = txInputState.senderBoxes
       .filter(box => box.boxType === "PolyBox")
       .map(bx => {
-        let i = {};
-        i.value = bx.value;
-        i.nonce = bx.nonce;
-        return i;
+        return [bx.address, bx.nonce];
       });
     const outputs = [
-      [changeAddress, new SimpleValue(txInputState.polyBalance - +fee)]
+      [
+        changeAddress,
+        {
+          type: "Simple",
+          quantity: (txInputState.polyBalance - +fee).toString()
+        }
+      ]
     ].concat(toReceive);
     retVal.availableToSpend = availableToSpend;
     retVal.inputs = inputs;
