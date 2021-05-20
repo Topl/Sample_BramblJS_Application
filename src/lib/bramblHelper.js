@@ -73,18 +73,15 @@ class BramblHelper {
     obj.polyBalance = result.result[address].Balances.Polys;
     obj.arbitsBalance = result.result[address].Balances.Arbits;
     obj.boxes = [];
-    const polyBoxes = result.result[address].Boxes.PolyBox;
-    const arbitBoxes = result.result[address].Boxes.ArbitBox;
-    const assetBoxes = result.result[address].Boxes.AssetBox;
-    if (polyBoxes) {
-      obj.boxes = polyBoxes;
-    }
-    if (arbitBoxes) {
-      obj.boxes = obj.boxes.concat(arbitBoxes);
-    }
-    if (assetBoxes) {
-      obj.boxes = obj.boxes.concat(assetBoxes);
-    }
+    obj.boxes = result.result[address].Boxes.PolyBox
+      ? result.result[address].Boxes.PolyBox
+      : [];
+    obj.boxes = result.result[address].Boxes.ArbitBox
+      ? obj.boxes.concat(result.result[address].Boxes.ArbitBox)
+      : obj.boxes;
+    obj.boxes = result.result[address].Boxes.AssetBox
+      ? obj.boxes.concat(result.result[address].Boxes.AssetBox)
+      : obj.boxes;
     return obj;
   }
 

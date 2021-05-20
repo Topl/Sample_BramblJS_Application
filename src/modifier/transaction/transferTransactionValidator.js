@@ -6,20 +6,19 @@ class TransferTransactionValidator {
   }
 
   rawSyntacticValidation() {
-    let obj = {};
-    let errors = [];
-    const ttSpecificError = this.validationByTransactionType();
-    if (ttSpecificError) errors.push(ttSpecificError);
-    const negativeFeeError = this.feeValidation();
-    if (negativeFeeError) errors.push(negativeFeeError);
-    const invalidTimestamp = this.feeValidation();
-    if (invalidTimestamp) errors.push(invalidTimestamp);
-    const invalidData = this.dataValidation();
-    if (invalidData) errors.push(invalidData);
-    const nonUniqueNewBoxes = this.inputOutputBoxesUniqueValidation();
-    if (nonUniqueNewBoxes) errors.push(nonUniqueNewBoxes);
-    obj.error = errors;
-    return obj;
+    // this trick works because the spread operator (...) for Array literals does nothing if its operand is an empty array.
+    let errors = [
+      ...(this.validationByTransactionType()
+        ? [this.validationByTransactionType()]
+        : []),
+      ...(this.feeValidation() ? [this.feeValidation()] : []),
+      ...(this.timestampValidation() ? [this.timestampValidation()] : []),
+      ...(this.dataValidation() ? [this.dataValidation()] : []),
+      ...(this.inputOutputBoxesUniqueValidation()
+        ? [this.inputOutputBoxesUniqueValidation()]
+        : [])
+    ];
+    return errors;
   }
 
   inputOutputBoxesUniqueValidation() {
@@ -51,15 +50,15 @@ class TransferTransactionValidator {
   }
 
   validationByTransactionType() {
-    if (this.tx.txType === "Poly") {
-      if (this.tx.from.length == 0) {
+    if (this.tx?.txType === "Poly") {
+      if (this.tx?.from?.length < 0) {
         return "No Input Boxes Specified";
       }
     }
-    if (this.tx.txType === "Asset") {
-      if (this.tx.from.length == 0) {
+    if (this.tx?.txType === "Asset") {
+      if (this.tx?.from?.length < 0) {
         return "No Input Boxes Specified";
-      } else if (this.tx.to.length >= 2) {
+      } else if (this.tx?.to?.length < 2) {
         return "Insufficient Outputs for Asset Transaction";
       }
     }

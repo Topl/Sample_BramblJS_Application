@@ -130,18 +130,10 @@ class BoxService {
       const timestamp = new Date();
 
       // update fields
-      if (args.address) {
-        fetchedBox.address = args.address;
-      }
-      if (args.nonce) {
-        fetchedBox.nonce = args.nonce;
-      }
-      if (args.evidence) {
-        fetchedBox.evidence = args.evidence;
-      }
-      if (args.value) {
-        fetchedBox.value = args.value;
-      }
+      fetchedBox.address = args.address ? args.address : fetchedBox.address;
+      fetchedBox.nonce = args.nonce ? args.nonce : fetchedBox.nonce;
+      fetchedBox.evidence = args.evidence ? args.evidence : fetchedBox.evidence;
+      fetchedBox.value = args.value ? args.value : fetchedBox.value;
       // save
       await save2db(fetchedBox, { timestamp, serviceName, session });
       return fetchedBox;
