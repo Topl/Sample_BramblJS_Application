@@ -5,7 +5,6 @@ const ArbitBox = require("../../lib/boxes/arbitBox");
 const { asyncFlatMap } = require("../../util/extensions");
 
 class TransferTransaction {
-
   constructor(from, to, attestation, fee, timestamp, data, minting) {
     this.from = from;
     this.to = to;
@@ -14,17 +13,8 @@ class TransferTransaction {
     this.timestamp = timestamp;
     this.data = data;
     this.minting = minting;
-
-    this.newBoxes = {
-      // this only creates an output if the value of the output boxes is non-zero
-
-    }
-  }
-
-  calculateBoxNonce(tx, to) {
-    // known input data (similar to messageToSign but without newBoxes since they are not known yet)
-    const txIdPrefix = tx.typePrefix;
-
+    // currently Bifrost deletes all of the input boxes. This can be changed in the future to the customer's preference for box management.
+    this.boxesToRemove = from;
   }
 
   static async getSenderBoxesForRawTransaction(
@@ -37,24 +27,24 @@ class TransferTransaction {
     return asyncFlatMap(addresses, a => {
       return BoxReader.getTokenBoxes(a).then(function(result) {
         // Throw an error if there are no boxes.
+        if (result.error) {
+          obj.error = result.error;
+          return obj;
+        }
         if (result.length < 1) {
           obj.error = "No boxes found to fund transactions";
           return obj;
         }
-        return result.reduce((acc, value) => {
+        return result.filter(value => {
           // implement grouping
           // always get polys since this is how fees are paid
-          if (value.type === "PolyBox") {
-            acc.push(new PolyBox(value.evidence, value.nonce, value.value));
-          } else if (value.type === "ArbitBox" && returnBoxes === "ArbitBox") {
-            acc.push(new ArbitBox(value.evidence, value.nonce, value.value));
-          } else if (
-            value.type === "AssetBox" &&
-            returnBoxes === "AssetBox" &&
-            assetCode === value.value.assetCode
-          ) {
-            acc.push(new AssetBox(value.evidence, value.nonce, value.value));
-          }
+          return (
+            value.boxType === "PolyBox" ||
+            (value.boxType === "ArbitBox" && returnBoxes === "ArbitBox") ||
+            (value.boxType === "AssetBox" &&
+              returnBoxes === "AssetBox" &&
+              assetCode === value.value.assetCode)
+          );
         });
       });
     });
@@ -72,21 +62,38 @@ class TransferTransaction {
       senders,
       txType,
       assetCode
-    );
+    ).then(function(result) {
+      if (result.error) {
+        obj.error = result.error;
+        return obj;
+      } else {
+        return result;
+      }
+    });
+
+    const errors = [];
+
+    senderBoxes.map(box => {
+      if (box.error) errors.push(box.error);
+    });
 
     // compute poly balance since it is used often
+    // make sure there are no errors
+    if (errors.length < 1) {
+      const polyBalance = senderBoxes
+        .filter(s => s.boxType === "PolyBox")
+        .map(s => s.value.quantity)
+        .reduce((a, b) => +a + +b, 0);
 
-    const polyBalance = senderBoxes
-      .filter(s => s.typePrefix == 2)
-      .map(s => s.value.quantity)
-      .reduce((a, b) => a + b, 0);
-
-    // ensure there are enough polys to pay the fee
-    if (polyBalance < fee) {
-      obj.error = "Insufficient funds to pay transaction fee";
+      // ensure there are enough polys to pay the fee
+      if (polyBalance < fee) {
+        obj.error = "Insufficient funds to pay transaction fee";
+      }
+      return { senderBoxes: senderBoxes, polyBalance: polyBalance };
+    } else {
+      obj.error = errors;
+      return obj;
     }
-
-    return { senderBoxes: senderBoxes, polyBalance: polyBalance };
   }
 }
 

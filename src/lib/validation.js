@@ -92,7 +92,7 @@ const checkExistsByBifrostId = async (model, bifrostId, session) => {
           : await model.findOne({ bifrostId: bifrostId });
         if (!doc) {
           console.error(`Box with id: ${bifrostId} not found in db`);
-          obj.error = "The given address could not be found in the db";
+          obj.error = "The given box could not be found in the db";
           return obj;
         } else {
           obj.doc = doc;
@@ -118,20 +118,41 @@ const checkExistsByBifrostId = async (model, bifrostId, session) => {
   }
 };
 
-const checkExistsById = async (model, id, { serviceName = "", session }) => {
+const checkExistsById = async (model, id, session) => {
+  let obj = {};
   try {
     // prettier-ignore
-    const doc = session ? await model.findById(id).session(session) : await model.findById(id)
-    if (!doc)
-      throw stdErr(
-        404,
-        "No document found",
-        "A document could not be found with the given ObjectId",
-        serviceName
+    if (await connectionIsUp()) {
+      const collectionExistence = await doesCollectionExist(
+        model.collection.collectionName
       );
-    return doc;
+      if (collectionExistence.result) {
+        const doc = session ? await model.findById(id).session(session) : await model.findById(id);
+        if (!doc) {
+          console.error(`Element from collection ${model.collection.collectionName} not found in db`);
+          obj.error = `Element from collection ${model.collection.collectionName} not found in db`
+          return obj;
+        } else {
+          obj.doc = doc;
+          return obj;
+        }
+      } else {
+        console.error("MongoDb Collection Does Not Exist");
+        obj.error = "MongoDB Collection Does Not Exist";
+        return obj;
+      }
+    } else {
+      console.error(
+        "Sample BramblJS Application is not connected to the DB. Please try again later"
+      );
+      obj.error =
+        "Sample BramblJS Application is not connected to the DB. Please try again later";
+      return obj;
+    }
   } catch (error) {
-    throw error;
+    console.error(error);
+    obj.error = error.message;
+    return obj;
   }
 };
 

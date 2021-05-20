@@ -326,21 +326,14 @@ class BramblHelper {
         );
         result.params.minting = txObject.minting;
         result.params.assetCode = txObject.assetCode;
-        for (let i = 0; i < result.params.recipients.length; i++) {
-          const [address, quantity, data, metadata] = result.params.recipients[
-            i
+        for (var key in result.params.recipients) {
+          const recipientForBramblJS = [
+            key,
+            result.params.recipients.key.quantity,
+            result.params.recipients.key.securityRoot,
+            result.params.recipients.key.metadata
           ];
-          if (data) {
-            const securityRoot = BramblJS.Hash("string", data);
-            formattedRecipients.push([
-              address,
-              quantity,
-              securityRoot,
-              metadata
-            ]);
-          } else {
-            formattedRecipients.push([address, quantity]);
-          }
+          formattedRecipients.push(recipientForBramblJS);
         }
         result.params.recipients = formattedRecipients;
         return self.brambljs.requests
@@ -441,20 +434,7 @@ class BramblHelper {
   async verifyRawTransactionData(txObject) {
     let obj = {};
     var networkPrefix = txObject.network;
-    return new Promise((resolve, reject) => {
-      // check that all recipients have a valid number of Topl assets
-      if (Array.isArray(txObject.recipients)) {
-        for (var i = 0; i < txObject.recipients.length; i++) {
-          if (isNaN(txObject.recipients[i][1])) {
-            reject(
-              new Error(`value addressed to recipient is not a valid number`)
-            );
-          }
-        }
-      } else {
-        reject(new Error(`recipients is not an array of [String, String]`));
-      }
-
+    return new Promise(resolve => {
       const getCurrentFees = () => {
         let fees = {
           valhalla: 100,

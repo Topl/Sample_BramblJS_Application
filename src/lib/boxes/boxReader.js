@@ -6,9 +6,18 @@ class BoxReader {
   static async getTokenBoxes(key) {
     let self = this;
     let obj = {};
-    return await AddressService.getAddressByAddress({ address: key })
+    return AddressService.getAddressByAddress({ address: key })
       .then(function(result) {
-        return self.getBox(result.address);
+        return asyncFlatMap(result.boxes, box => {
+          return self.getBox(box).then(function(result) {
+            if (result.error) {
+              obj.error = result.error;
+              return obj;
+            } else {
+              return result;
+            }
+          });
+        });
       })
       .catch(function(err) {
         console.error(err);
@@ -20,7 +29,7 @@ class BoxReader {
   static async getBox(id) {
     // need to have the box serializer to make it match up with the JSON-RPC output
     let obj = {};
-    return BoxService.getBoxById({ id: id }).catch(function(err) {
+    return await BoxService.getBoxById({ id: id }).catch(function(err) {
       console.error(err);
       obj.error = err.message;
       return obj;

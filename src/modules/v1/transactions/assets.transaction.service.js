@@ -1,5 +1,5 @@
 const BramblHelper = require("../../../lib/bramblHelper");
-const RawTransactionHelper = require("../../../modifier/transaction/rawTransactionHelper");
+const AssetTransfer = require("../../../modifier/transaction/assetTransfer");
 const TransferTransactionValidator = require("../../../modifier/transaction/transferTransactionValidator");
 const stdError = require("../../../core/standardError");
 const Constants = require("../../../util/constants");
@@ -10,15 +10,14 @@ const serviceName = "AssetTransaction";
 
 class AssetTransactionService {
   static async generateRawAssetTransfer(bramblHelper, args) {
-    return RawTransactionHelper.createRaw(
+    return AssetTransfer.createRaw(
       args.recipients,
       args.senders,
       args.changeAddress,
       args.consolidationAddress,
       args.fee,
       args.data,
-      args.minting,
-      args.networkPrefix
+      args.minting
     ).then(function(value) {
       if (value.error) {
         return value;
@@ -43,6 +42,9 @@ class AssetTransactionService {
           bramblHelper,
           args
         ).then(function(jsResponse) {
+          if (jsResponse.error) {
+            return jsResponse;
+          }
           const rawTransferTransaction = new TransferTransaction(
             rpcResponse.from,
             rpcResponse.to,
@@ -86,7 +88,16 @@ class AssetTransactionService {
       var assetCode = bramblHelper.createAssetValue(args.name);
       args.assetCode = assetCode;
       args.address = bramblHelper.brambljs.keyManager.address;
-      return AssetTransactionService.assetTransferHelper(bramblHelper, args);
+      return AssetTransactionService.assetTransferHelper(
+        bramblHelper,
+        args
+      ).then(function(result) {
+        if (result.error) {
+          throw stdError(500, result.error, serviceName, serviceName);
+        } else {
+          return result;
+        }
+      });
     } else {
       throw stdError(
         404,
@@ -113,7 +124,16 @@ class AssetTransactionService {
           bramblHelper,
           args
         );
-        return AssetTransactionService.assetTransferHelper(bramblHelper, args);
+        return AssetTransactionService.assetTransferHelper(
+          bramblHelper,
+          args
+        ).then(function(result) {
+          if (result.error) {
+            throw stdError(500, result.error, serviceName, serviceName);
+          } else {
+            return result;
+          }
+        });
       } else {
         throw stdError(
           404,
@@ -141,7 +161,16 @@ class AssetTransactionService {
           bramblHelper,
           args
         );
-        return AssetTransactionService.assetTransferHelper(bramblHelper, args);
+        return AssetTransactionService.assetTransferHelper(
+          bramblHelper,
+          args
+        ).then(function(result) {
+          if (result.error) {
+            throw stdError(500, result.error, serviceName, serviceName);
+          } else {
+            return result;
+          }
+        });
       } else {
         throw stdError(
           400,

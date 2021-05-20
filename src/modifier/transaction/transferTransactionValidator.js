@@ -1,4 +1,4 @@
-const StringOps = require("../../util/extensions");
+const { StringOps } = require("../../util/extensions");
 
 class TransferTransactionValidator {
   constructor(tx) {

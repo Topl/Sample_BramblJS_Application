@@ -263,12 +263,12 @@ class AddressesService {
       const timestamp = new Date();
       const fetchedAddress = await checkExistsById(Address, args.addressId);
 
-      if (!fetchedAddress.isActive.status) {
+      if (!fetchedAddress.doc.isActive.status) {
         throw stdErr(404, "No Active Address", serviceName, serviceName);
       }
 
       // fetch user
-      const user_id = fetchedAddress.user_id.toString();
+      const user_id = fetchedAddress.doc.user_id.toString();
       let [hasAdminAccess, fetchedUser] = await Promise.all([
         UsersService.checkAdmin(user_id),
         UserModel.findOne({ email: user_id })
@@ -286,15 +286,15 @@ class AddressesService {
       }
 
       // business logic
-      fetchedAddress.isActive.status = false;
-      fetchedAddress.markModified("isActive.status");
-      fetchedAddress.isActive.asOf = timestamp;
-      fetchedAddress.markModified("isActive.asOf");
+      fetchedAddress.doc.isActive.status = false;
+      fetchedAddress.doc.markModified("isActive.status");
+      fetchedAddress.doc.isActive.asOf = timestamp;
+      fetchedAddress.doc.markModified("isActive.asOf");
       const addressIndex = fetchedUser.addresses.findIndex(elem => {
         elem.equals(mongoose.Types.ObjectId(args.addressId));
       });
       fetchedUser.addresses.splice(addressIndex, 1);
-      await save2db([fetchedUser, fetchedAddress], {
+      await save2db([fetchedUser, fetchedAddress.doc], {
         timestamp,
         serviceName,
         session
