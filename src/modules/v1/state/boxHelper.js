@@ -4,6 +4,7 @@ const { checkExistsByBifrostId } = require("../../../lib/validation");
 
 class BoxHelper {
   static async updateBoxes(boxes, address) {
+    let obj = {};
     return boxes.forEach(box => {
       checkExistsByBifrostId(BoxModel, box.id).then(function(result) {
         if (result.error) {
@@ -14,6 +15,10 @@ class BoxHelper {
             evidence: box.evidence,
             boxType: box.type,
             value: box.value
+          }).catch(function(err) {
+            console.error(err);
+            obj.error = err.message;
+            return obj;
           });
         } else {
           return BoxService.updateBoxById({

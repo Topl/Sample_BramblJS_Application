@@ -35,7 +35,7 @@ class ReadTransactionService {
     const bramblHelper = new BramblHelper(true, args.network);
     let address = "";
     address =
-      args.address != null &&
+      args.address &&
       RequestValidator.validateAddresses([args.address], args.network)
         ? args.address
         : false;
