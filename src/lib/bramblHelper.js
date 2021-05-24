@@ -47,19 +47,40 @@ class BramblHelper {
    */
   async getBalanceWithRequests(address) {
     let obj = {};
+    let self = this;
     let e = await this.requests
       .lookupBalancesByAddresses({
         addresses: [address]
       })
       .then(function(result) {
-        obj.polyBalance = result.result[address].Balances.Polys;
-        obj.arbitsBalance = result.result[address].Balances.Arbits;
-        return obj;
+        try {
+          return self.generateBoxes(obj, result, address);
+        } catch (err) {
+          console.error(err);
+          obj.error = err.message;
+          return obj;
+        }
       })
       .catch(function(err) {
         return (obj.error = err.message);
       });
     return e;
+  }
+
+  generateBoxes(obj, result, address) {
+    obj.polyBalance = result.result[address].Balances.Polys;
+    obj.arbitsBalance = result.result[address].Balances.Arbits;
+    obj.boxes = [];
+    obj.boxes = result.result[address].Boxes.PolyBox
+      ? result.result[address].Boxes.PolyBox
+      : [];
+    obj.boxes = result.result[address].Boxes.ArbitBox
+      ? obj.boxes.concat(result.result[address].Boxes.ArbitBox)
+      : obj.boxes;
+    obj.boxes = result.result[address].Boxes.AssetBox
+      ? obj.boxes.concat(result.result[address].Boxes.AssetBox)
+      : obj.boxes;
+    return obj;
   }
 
   /**
@@ -69,19 +90,18 @@ class BramblHelper {
    */
   async getBalanceWithBrambl(address) {
     let obj = {};
-    let e = await this.brambljs.requests
+    let self = this;
+    return this.brambljs.requests
       .lookupBalancesByAddresses({
         addresses: [address]
       })
       .then(function(result) {
-        obj.polyBalance = result.result[address].Balances.Polys;
-        obj.arbitsBalance = result.result[address].Balances.Arbits;
-        return obj;
+        return self.generateBoxes(obj, result, address);
       })
       .catch(function(err) {
-        return (obj.error = err.message);
+        obj.error = err.message;
+        return obj;
       });
-    return e;
   }
 
   /**
@@ -179,43 +199,29 @@ class BramblHelper {
    */
   async sendRawPolyTransaction(txObject) {
     let obj = {};
+    var formattedRecipients = [];
     const self = this;
-    return await this.verifyRawTransactionData(txObject)
+    obj.keys = self.getSenderKeyManagers(
+      txObject.sender,
+      txObject.senderPasswords,
+      txObject.network
+    );
+    for (let i = 0; i < txObject.recipients.length; i++) {
+      const [address, quantity] = txObject.recipients[i];
+      formattedRecipients.push([address, quantity]);
+    }
+    txObject.recipients = formattedRecipients;
+    return self.brambljs.requests
+      .createRawPolyTransfer(txObject)
       .then(function(result) {
-        obj.keys = self.getSenderKeyManagers(
-          txObject.senders,
-          txObject.network
-        );
-        return self.brambljs.requests
-          .createRawPolyTransfer(result.params)
-          .then(function(result) {
-            obj.messageToSign = result;
-            return obj;
-          });
+        obj.messageToSign = result;
+        return obj;
       })
       .catch(function(err) {
         obj.error = err.message;
         return obj;
       });
   }
-
-  // async getBoxes(addresses) {
-  //   let obj = {};
-  //   let e = await this.requests
-  //     .lookupBalancesByAddresses({addresses: addresses})
-  //     .then(function(result) {
-  //       obj.result = result.result;
-  //       return obj;
-  //     })
-  //     .catch(function (err) {
-  //       return (obj.error = err.message);
-  //     });
-  //   return e;
-  // }
-
-  // async getSenderBoxesForTx(senders, txType, assetCode) {
-
-  // }
 
   async checkPolyBalances(senders, fee) {
     let obj = {};
@@ -263,42 +269,31 @@ class BramblHelper {
     let obj = {};
     const formattedRecipients = [];
     const self = this;
-    return await this.verifyRawTransactionData(txObject)
+    obj.keys = self.getSenderKeyManagers(
+      txObject.sender,
+      txObject.senderPasswords,
+      txObject.network
+    );
+    for (let i = 0; i < txObject.recipients.length; i++) {
+      const [address, quantity, data, metadata] = txObject.recipients[i];
+      if (data) {
+        const securityRoot = BramblJS.Hash("string", data);
+        formattedRecipients.push([address, quantity, securityRoot, metadata]);
+      } else {
+        formattedRecipients.push([address, quantity]);
+      }
+    }
+    txObject.recipients = formattedRecipients;
+    return self.brambljs.requests
+      .createRawAssetTransfer(txObject)
       .then(function(result) {
-        obj.keys = self.getSenderKeyManagers(
-          txObject.senders,
-          txObject.network
-        );
-        result.params.minting = txObject.minting;
-        result.params.assetCode = txObject.assetCode;
-        for (let i = 0; i < result.params.recipients.length; i++) {
-          const [address, quantity, data, metadata] = result.params.recipients[
-            i
-          ];
-          if (data) {
-            const securityRoot = BramblJS.Hash("string", data);
-            formattedRecipients.push([
-              address,
-              quantity,
-              securityRoot,
-              metadata
-            ]);
-          } else {
-            formattedRecipients.push([address, quantity]);
-          }
-        }
-        result.params.recipients = formattedRecipients;
-        return self.brambljs.requests
-          .createRawAssetTransfer(result.params)
-          .then(function(result) {
-            obj.messageToSign = result;
-            return obj;
-          })
-          .catch(function(err) {
-            console.error(err);
-            obj.err = err.message;
-            return obj;
-          });
+        obj.messageToSign = result;
+        return obj;
+      })
+      .catch(function(err) {
+        console.error(err);
+        obj.err = err.message;
+        return obj;
       })
       .catch(function(err) {
         console.error(err);
@@ -367,15 +362,15 @@ class BramblHelper {
     return this.brambljs.createAssetCode(shortName);
   }
 
-  getSenderKeyManagers(senders, networkPrefix) {
+  getSenderKeyManagers(senders, sendersPasswords, networkPrefix) {
     let keyManagers = [];
     if (Array.isArray(senders)) {
       for (var i = 0; i < senders.length; i++) {
         keyManagers.push(
           BramblJS.KeyManager({
             networkPrefix: networkPrefix,
-            password: senders[i][1],
-            keyPath: `private_keyfiles/${senders[i][0]}.json`
+            password: sendersPasswords[i],
+            keyPath: `private_keyfiles/${senders[i]}.json`
           })
         );
       }
@@ -384,7 +379,6 @@ class BramblHelper {
   }
 
   async verifyRawTransactionData(txObject) {
-    let obj = {};
     var networkPrefix = txObject.network;
     return new Promise((resolve, reject) => {
       // check that all recipients have a valid number of Topl assets
@@ -416,16 +410,19 @@ class BramblHelper {
         propositionType: txObject.propositionType,
         recipients: txObject.recipients,
         fee: fees[networkPrefix],
-        sender: txObject.senders.map(function(item) {
+        sender: txObject.sender.map(function(item) {
           return item[0];
+        }),
+        senderPasswords: txObject.sender.map(function(item) {
+          return item[1];
         }),
         changeAddress: txObject.changeAddress,
         data: txObject.data,
-        consolidationAddress: txObject.consolidationAddress
+        consolidationAddress: txObject.consolidationAddress,
+        minting: txObject.minting,
+        assetCode: txObject.assetCode ? txObject.assetCode : null
       };
-      obj.fee = fees[networkPrefix];
-      obj.params = params;
-      resolve(obj);
+      resolve(params);
     });
   }
 }

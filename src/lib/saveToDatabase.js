@@ -42,7 +42,12 @@ const runTransactionWithRetry = async (_models, _session, _serviceName) => {
         continue;
       } else {
         // pass the error up
-        await _session.abortTransaction();
+        try {
+          await _session.abortTransaction();
+        } catch (err) {
+          console.error(err);
+          throw stdErr(500, "Error saving to the database", err, _serviceName);
+        }
         throw stdErr(400, "Error saving to the database", error, _serviceName);
       }
     }
@@ -69,14 +74,12 @@ module.exports = async (models, opts = {}) => {
 
   // update last modified date
   models.map(model => (model.lastUpdated = timestamp));
-
-  //transaction allows for atomic updates
-  session.startTransaction({
-    readConcern: { level: "snapshot" },
-    writeConcern: { w: "majority" }
-  });
   //attempt to save to db, retrying on Transient transaction errors
   try {
+    session.startTransaction({
+      readConcern: { level: "snapshot" },
+      writeConcern: { w: "majority" }
+    });
     return runTransactionWithRetry(models, session, serviceName);
   } catch (error) {
     console.error(error);

@@ -62,6 +62,46 @@ const checkExistsByAddress = async (model, address, session) => {
   }
 };
 
+const checkExistsByBifrostId = async (model, bifrostId, session) => {
+  //prettier-ignore
+  let obj = {};
+  try {
+    if (await connectionIsUp()) {
+      const collectionExistence = await doesCollectionExist(
+        model.collection.collectionName
+      );
+      if (collectionExistence.result) {
+        const doc = session
+          ? await model.findOne({ bifrostId: bifrostId }).session(session)
+          : await model.findOne({ bifrostId: bifrostId });
+        if (!doc) {
+          console.error(`Box with id: ${bifrostId} not found in db`);
+          obj.error = "The given address could not be found in the db";
+          return obj;
+        } else {
+          obj.doc = doc;
+          return obj;
+        }
+      } else {
+        console.error("Mongoose Collection Does Not Exist");
+        obj.error = "Mongoose Collection Does Not Exist";
+        return obj;
+      }
+    } else {
+      console.error(
+        "Sample BramblJS Application is not connected to the DB. Please try again later"
+      );
+      obj.error =
+        "Sample BramblJS Application is not connected to the DB. Please try again later";
+      return obj;
+    }
+  } catch (error) {
+    console.error(error);
+    obj.error = error.message;
+    return obj;
+  }
+};
+
 const checkExistsById = async (model, id, { serviceName = "", session }) => {
   try {
     // prettier-ignore
@@ -79,4 +119,9 @@ const checkExistsById = async (model, id, { serviceName = "", session }) => {
   }
 };
 
-module.exports = { checkExists, checkExistsById, checkExistsByAddress };
+module.exports = {
+  checkExists,
+  checkExistsById,
+  checkExistsByAddress,
+  checkExistsByBifrostId
+};

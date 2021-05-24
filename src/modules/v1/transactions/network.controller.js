@@ -1,5 +1,6 @@
 const PolyTransactionService = require("./polys.transactions.service");
 const AssetTransactionService = require("./assets.transaction.service");
+const ReadTransactionService = require("./read.transactions.service");
 const stdRoute = require(`../../../core/standardRoute`);
 
 class NetworkController {
@@ -8,7 +9,7 @@ class NetworkController {
   }
 
   static async getBalance(req, res, next) {
-    const handler = PolyTransactionService.getBalance;
+    const handler = ReadTransactionService.getBalance;
     const network = req.body.network;
     const password = req.body.password;
     const address = req.params.address;
@@ -26,7 +27,7 @@ class NetworkController {
   }
 
   static async getBlockNumber(req, res, next) {
-    const handler = PolyTransactionService.getBlockNumber;
+    const handler = ReadTransactionService.getBlockNumber;
     const args = {
       network: req.body.network,
       password: req.body.password
@@ -38,7 +39,7 @@ class NetworkController {
   }
 
   static async getBlock(req, res, next) {
-    const handler = PolyTransactionService.getBlock;
+    const handler = ReadTransactionService.getBlock;
     const args = {
       password: req.body.password,
       network: req.body.network,
@@ -52,7 +53,7 @@ class NetworkController {
   }
 
   static async getTransactionFromMempool(req, res, next) {
-    const handler = PolyTransactionService.getTransactionFromMempool;
+    const handler = ReadTransactionService.getTransactionFromMempool;
     const args = {
       password: req.body.password,
       network: req.body.network,
@@ -65,7 +66,7 @@ class NetworkController {
   }
 
   static async getTransactionFromBlock(req, res, next) {
-    const handler = PolyTransactionService.getTransactionFromBlock;
+    const handler = ReadTransactionService.getTransactionFromBlock;
     const args = {
       password: req.body.password,
       network: req.body.network,
