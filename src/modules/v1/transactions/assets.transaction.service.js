@@ -4,12 +4,13 @@ const TransferTransactionValidator = require("../../../modifier/transaction/tran
 const stdError = require("../../../core/standardError");
 const Constants = require("../../../util/constants");
 const transactionsServiceHelper = require("./transactionsServiceHelper");
-const _ = require("lodash");
+
+const { getObjectDiff } = require("../../../util/extensions");
 
 const serviceName = "AssetTransaction";
 
 class AssetTransactionService {
-  static async generateRawAssetTransfer(bramblHelper, args) {
+  static async generateRawAssetTransfer(args) {
     return AssetTransfer.createRaw(
       Object.entries(args.recipients),
       args.senders,
@@ -38,37 +39,36 @@ class AssetTransactionService {
     return bramblHelper
       .sendRawAssetTransaction(args)
       .then(function(rpcResponse) {
-        return AssetTransactionService.generateRawAssetTransfer(
-          bramblHelper,
-          args
-        ).then(function(jsResponse) {
-          if (jsResponse.error) {
-            return jsResponse;
-          }
-          const rawTransferTransaction = new AssetTransfer(
-            rpcResponse.messageToSign.result.rawTx.from,
-            rpcResponse.messageToSign.result.rawTx.to,
-            new Map(),
-            rpcResponse.messageToSign.result.rawTx.fee,
-            jsResponse.timestamp,
-            rpcResponse.messageToSign.result.rawTx.data,
-            rpcResponse.messageToSign.result.rawTx.minting
-          );
-          if (getObjectDiff(jsResponse, rawTransferTransaction)) {
-            return transactionsServiceHelper.signAndSendTransactionWithStateManagement(
-              rpcResponse,
-              bramblHelper,
-              args
+        return AssetTransactionService.generateRawAssetTransfer(args).then(
+          function(jsResponse) {
+            if (jsResponse.error) {
+              return jsResponse;
+            }
+            const rawTransferTransaction = new AssetTransfer(
+              rpcResponse.messageToSign.result.rawTx.from,
+              rpcResponse.messageToSign.result.rawTx.to,
+              new Map(),
+              rpcResponse.messageToSign.result.rawTx.fee,
+              jsResponse.timestamp,
+              rpcResponse.messageToSign.result.rawTx.data,
+              rpcResponse.messageToSign.result.rawTx.minting
             );
-          } else {
-            throw stdError(
-              500,
-              "Invalid RPC Response",
-              serviceName,
-              serviceName
-            );
+            if (getObjectDiff(jsResponse, rawTransferTransaction)) {
+              return transactionsServiceHelper.signAndSendTransactionWithStateManagement(
+                rpcResponse,
+                bramblHelper,
+                args
+              );
+            } else {
+              throw stdError(
+                500,
+                "Invalid RPC Response",
+                serviceName,
+                serviceName
+              );
+            }
           }
-        });
+        );
       });
   }
 
@@ -191,32 +191,6 @@ class AssetTransactionService {
       }
     }
   }
-}
-
-/*
- * Compare two objects by reducing an array of keys in obj1, having the
- * keys in obj2 as the intial value of the result. Key points:
- *
- * - All keys of obj2 are initially in the result.
- *
- * - If the loop finds a key (from obj1, remember) not in obj2, it adds
- *   it to the result.
- *
- * - If the loop finds a key that are both in obj1 and obj2, it compares
- *   the value. If it's the same value, the key is removed from the result.
- */
-function getObjectDiff(obj1, obj2) {
-  const diff = Object.keys(obj1).reduce((result, key) => {
-    if (!obj2.hasOwnProperty(key)) {
-      result.push(key);
-    } else if (_.isEqual(obj1[key], obj2[key])) {
-      const resultKeyIndex = result.indexOf(key);
-      result.splice(resultKeyIndex, 1);
-    }
-    return result;
-  }, Object.keys(obj2));
-
-  return diff;
 }
 
 module.exports = AssetTransactionService;

@@ -208,10 +208,23 @@ class BramblHelper {
           txObject.senders,
           txObject.network
         );
+        const formattedRecipients = [];
+        for (var key in result.params.recipients) {
+          const recipientForBramblJS = [
+            key,
+            result.params.recipients[key].quantity
+          ];
+          formattedRecipients.push(recipientForBramblJS);
+        }
+        result.params.recipients = formattedRecipients;
         return self.brambljs.requests
           .createRawPolyTransfer(result.params)
           .then(function(result) {
             obj.messageToSign = result;
+            return obj;
+          })
+          .catch(function(err) {
+            obj.error = err.message;
             return obj;
           });
       })
@@ -433,24 +446,12 @@ class BramblHelper {
 
   async verifyRawTransactionData(txObject) {
     let obj = {};
-    var networkPrefix = txObject.network;
     return new Promise(resolve => {
-      const getCurrentFees = () => {
-        let fees = {
-          valhalla: 100,
-          toplnet: 1000000000,
-          local: 0,
-          private: 100
-        };
-        return fees;
-      };
-
-      let fees = getCurrentFees();
       // set transaction object
       let params = {
         propositionType: txObject.propositionType,
         recipients: txObject.recipients,
-        fee: fees[networkPrefix],
+        fee: txObject.fee,
         sender: txObject.senders.map(function(item) {
           return item[0];
         }),
@@ -458,7 +459,7 @@ class BramblHelper {
         data: txObject.data,
         consolidationAddress: txObject.consolidationAddress
       };
-      obj.fee = fees[networkPrefix];
+      obj.fee = txObject.fee;
       obj.params = params;
       resolve(obj);
     });

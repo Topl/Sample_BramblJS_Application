@@ -1,31 +1,74 @@
 const BramblHelper = require("../../../lib/bramblHelper");
-const RequestValidator = require("../../../lib/requestValidator");
 const stdError = require("../../../core/standardError");
 const transactionsServiceHelper = require("./transactionsServiceHelper");
+const PolyTransfer = require("../../../modifier/transaction/polyTransfer");
+const TransferTransactionValidator = require("../../../modifier/transaction/transferTransactionValidator");
+const { getObjectDiff } = require("../../../util/extensions");
 
 const serviceName = "polyTransaction";
 
 class PolyTransactionService {
-  static async rawPolyTransaction(args) {
-    const bramblHelper = new BramblHelper(true, args.password, args.network);
-    const e = await RequestValidator.validateBody(args).then(obj => {
-      return bramblHelper.sendRawPolyTransaction(obj);
-    });
-    return e;
-  }
-
-  static async polyTransactionHelper(bramblHelper, args) {
-    return bramblHelper.sendRawPolyTransaction(args).then(function(value) {
+  static async generateRawPolyTransfer(args) {
+    return PolyTransfer.createRaw(
+      Object.entries(args.recipients),
+      args.senders,
+      args.changeAddress,
+      args.fee,
+      args.data
+    ).then(function(value) {
       if (value.error) {
         return value;
       } else {
-        return transactionsServiceHelper.signAndSendTransactionWithStateManagement(
-          value,
-          bramblHelper,
-          args
-        );
+        // validate tx
+        const txValidator = new TransferTransactionValidator(value);
+        const txValid = txValidator.rawSyntacticValidation();
+        if (txValid.error) {
+          return txValid;
+        } else {
+          return value;
+        }
       }
     });
+  }
+
+  static async polyTransactionHelper(bramblHelper, args) {
+    return bramblHelper
+      .sendRawPolyTransaction(args)
+      .then(function(rpcResponse) {
+        if (rpcResponse.error) {
+          return rpcResponse;
+        } else {
+          return PolyTransactionService.generateRawPolyTransfer(args).then(
+            function(jsResponse) {
+              if (jsResponse.error) {
+                return jsResponse;
+              }
+              const rawTransferTransaction = new PolyTransfer(
+                rpcResponse.messageToSign.result.rawTx.from,
+                rpcResponse.messageToSign.result.rawTx.to,
+                new Map(),
+                rpcResponse.messageToSign.result.rawTx.fee,
+                jsResponse.timestamp,
+                rpcResponse.messageToSign.result.rawTx.data
+              );
+              if (getObjectDiff(jsResponse, rawTransferTransaction)) {
+                return transactionsServiceHelper.signAndSendTransactionWithStateManagement(
+                  rpcResponse,
+                  bramblHelper,
+                  args
+                );
+              } else {
+                throw stdError(
+                  500,
+                  "Invalid RPC Response",
+                  serviceName,
+                  serviceName
+                );
+              }
+            }
+          );
+        }
+      });
   }
 
   static async polyTransaction(args) {

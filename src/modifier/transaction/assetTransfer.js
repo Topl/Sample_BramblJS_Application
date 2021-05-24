@@ -163,6 +163,7 @@ class AssetTransfer extends TransferTransaction {
     obj.availableToSpend = availableToSpend;
     obj.inputs = inputs;
     obj.outputs = outputs;
+    return obj;
   }
 
   static ioMint(txInputState, toReceive, changeAddress, fee) {
