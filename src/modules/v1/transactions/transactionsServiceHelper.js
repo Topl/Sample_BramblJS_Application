@@ -1,23 +1,15 @@
 const { checkExistsByAddress } = require("../../../lib/validation");
-const extractAddressesFromObj = require("../../../lib/address-utils");
 const Address = require("../addresses/addresses.model");
 const AddressesService = require("../addresses/addresses.service");
 const ReadTransactionService = require("./read.transactions.service");
+const stdError = require("../../../core/standardError");
+const BramblJS = require("brambljs");
 
 class TransactionServiceHelper {
   static async addAddressesToDBFromTransaction(bramblHelper, args) {
     // iterate through all sender, recipient, and change addresses, checking whether or not they are in the DB
-    let obj = {};
     if (bramblHelper) {
-      let addresses;
-      try {
-        addresses = extractAddressesFromObj(args);
-      } catch (err) {
-        console.error(err);
-        obj.error = err.message;
-        return obj;
-      }
-      await addresses.forEach(address => {
+      await args.addresses.forEach(address => {
         checkExistsByAddress(Address, address).then(function(result) {
           if (result.error) {
             return AddressesService.create({
@@ -30,8 +22,29 @@ class TransactionServiceHelper {
           }
         });
       });
-      return addresses;
+      return args.addresses;
     }
+  }
+
+  static async extractParamsAndAddAddressesToDb(
+    bramblHelper,
+    args,
+    serviceName
+  ) {
+    const bramblParams = await bramblHelper.verifyRawTransactionData(args);
+    const addresses = BramblJS.utils.extractAddressesFromObj(bramblParams);
+    bramblParams.addresses = addresses;
+    await TransactionServiceHelper.addAddressesToDBFromTransaction(
+      bramblHelper,
+      bramblParams
+    ).then(function(result) {
+      if (result.error) {
+        throw stdError(500, result.error, serviceName, serviceName);
+      } else {
+        return result;
+      }
+    });
+    return bramblParams;
   }
 
   static async signAndSendTransactionWithStateManagement(

@@ -199,19 +199,23 @@ class BramblHelper {
    */
   async sendRawPolyTransaction(txObject) {
     let obj = {};
+    var formattedRecipients = [];
     const self = this;
-    return await this.verifyRawTransactionData(txObject)
+    obj.keys = self.getSenderKeyManagers(
+      txObject.sender,
+      txObject.senderPasswords,
+      txObject.network
+    );
+    for (let i = 0; i < txObject.recipients.length; i++) {
+      const [address, quantity] = txObject.recipients[i];
+      formattedRecipients.push([address, quantity]);
+    }
+    txObject.recipients = formattedRecipients;
+    return self.brambljs.requests
+      .createRawPolyTransfer(txObject)
       .then(function(result) {
-        obj.keys = self.getSenderKeyManagers(
-          txObject.senders,
-          txObject.network
-        );
-        return self.brambljs.requests
-          .createRawPolyTransfer(result.params)
-          .then(function(result) {
-            obj.messageToSign = result;
-            return obj;
-          });
+        obj.messageToSign = result;
+        return obj;
       })
       .catch(function(err) {
         obj.error = err.message;
@@ -265,42 +269,31 @@ class BramblHelper {
     let obj = {};
     const formattedRecipients = [];
     const self = this;
-    return await this.verifyRawTransactionData(txObject)
+    obj.keys = self.getSenderKeyManagers(
+      txObject.sender,
+      txObject.senderPasswords,
+      txObject.network
+    );
+    for (let i = 0; i < txObject.recipients.length; i++) {
+      const [address, quantity, data, metadata] = txObject.recipients[i];
+      if (data) {
+        const securityRoot = BramblJS.Hash("string", data);
+        formattedRecipients.push([address, quantity, securityRoot, metadata]);
+      } else {
+        formattedRecipients.push([address, quantity]);
+      }
+    }
+    txObject.recipients = formattedRecipients;
+    return self.brambljs.requests
+      .createRawAssetTransfer(txObject)
       .then(function(result) {
-        obj.keys = self.getSenderKeyManagers(
-          txObject.senders,
-          txObject.network
-        );
-        result.params.minting = txObject.minting;
-        result.params.assetCode = txObject.assetCode;
-        for (let i = 0; i < result.params.recipients.length; i++) {
-          const [address, quantity, data, metadata] = result.params.recipients[
-            i
-          ];
-          if (data) {
-            const securityRoot = BramblJS.Hash("string", data);
-            formattedRecipients.push([
-              address,
-              quantity,
-              securityRoot,
-              metadata
-            ]);
-          } else {
-            formattedRecipients.push([address, quantity]);
-          }
-        }
-        result.params.recipients = formattedRecipients;
-        return self.brambljs.requests
-          .createRawAssetTransfer(result.params)
-          .then(function(result) {
-            obj.messageToSign = result;
-            return obj;
-          })
-          .catch(function(err) {
-            console.error(err);
-            obj.err = err.message;
-            return obj;
-          });
+        obj.messageToSign = result;
+        return obj;
+      })
+      .catch(function(err) {
+        console.error(err);
+        obj.err = err.message;
+        return obj;
       })
       .catch(function(err) {
         console.error(err);
@@ -369,15 +362,15 @@ class BramblHelper {
     return this.brambljs.createAssetCode(shortName);
   }
 
-  getSenderKeyManagers(senders, networkPrefix) {
+  getSenderKeyManagers(senders, sendersPasswords, networkPrefix) {
     let keyManagers = [];
     if (Array.isArray(senders)) {
       for (var i = 0; i < senders.length; i++) {
         keyManagers.push(
           BramblJS.KeyManager({
             networkPrefix: networkPrefix,
-            password: senders[i][1],
-            keyPath: `private_keyfiles/${senders[i][0]}.json`
+            password: sendersPasswords[i],
+            keyPath: `private_keyfiles/${senders[i]}.json`
           })
         );
       }
@@ -386,7 +379,6 @@ class BramblHelper {
   }
 
   async verifyRawTransactionData(txObject) {
-    let obj = {};
     var networkPrefix = txObject.network;
     return new Promise((resolve, reject) => {
       // check that all recipients have a valid number of Topl assets
@@ -418,16 +410,19 @@ class BramblHelper {
         propositionType: txObject.propositionType,
         recipients: txObject.recipients,
         fee: fees[networkPrefix],
-        sender: txObject.senders.map(function(item) {
+        sender: txObject.sender.map(function(item) {
           return item[0];
+        }),
+        senderPasswords: txObject.sender.map(function(item) {
+          return item[1];
         }),
         changeAddress: txObject.changeAddress,
         data: txObject.data,
-        consolidationAddress: txObject.consolidationAddress
+        consolidationAddress: txObject.consolidationAddress,
+        minting: txObject.minting,
+        assetCode: txObject.assetCode ? txObject.assetCode : null
       };
-      obj.fee = fees[networkPrefix];
-      obj.params = params;
-      resolve(obj);
+      resolve(params);
     });
   }
 }

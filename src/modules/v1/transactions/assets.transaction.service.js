@@ -1,7 +1,7 @@
 const BramblHelper = require("../../../lib/bramblHelper");
 const stdError = require("../../../core/standardError");
 const Constants = require("../../../util/constants");
-const transactionsServiceHelper = require("./transactionsServiceHelper");
+const TransactionsServiceHelper = require("./transactionsServiceHelper");
 
 const serviceName = "AssetTransaction";
 
@@ -11,7 +11,7 @@ class AssetTransactionService {
       if (value.error) {
         return value;
       } else {
-        return transactionsServiceHelper.signAndSendTransactionWithStateManagement(
+        return TransactionsServiceHelper.signAndSendTransactionWithStateManagement(
           value,
           bramblHelper,
           args
@@ -30,14 +30,15 @@ class AssetTransactionService {
     args.address = bramblHelper.brambljs.keyManager.address;
     if (bramblHelper) {
       // iterate through all sender, recipient, and change addresses checking whether or not they are in the DB
-      args.addresses = await transactionsServiceHelper.addAddressesToDBFromTransaction(
+      args.assetCode = bramblHelper.createAssetValue(args.name);
+      const bramblParams = await TransactionsServiceHelper.extractParamsAndAddAddressesToDb(
         bramblHelper,
         args
       );
-      var assetCode = bramblHelper.createAssetValue(args.name);
-      args.assetCode = assetCode;
-      args.address = bramblHelper.brambljs.keyManager.address;
-      return AssetTransactionService.assetTransferHelper(bramblHelper, args);
+      return AssetTransactionService.assetTransferHelper(
+        bramblHelper,
+        bramblParams
+      );
     } else {
       throw stdError(
         404,
@@ -58,13 +59,14 @@ class AssetTransactionService {
     if (bramblHelper) {
       if (args.assetCode) {
         args.minting = false;
-        args.address = bramblHelper.brambljs.keyManager.address;
-        // iterate through all sender, recipient, and change addresses checking whether or not they are in the db
-        args.addresses = await transactionsServiceHelper.addAddressesToDBFromTransaction(
+        const bramblParams = await TransactionsServiceHelper.extractParamsAndAddAddressesToDb(
           bramblHelper,
           args
         );
-        return AssetTransactionService.assetTransferHelper(bramblHelper, args);
+        return AssetTransactionService.assetTransferHelper(
+          bramblHelper,
+          bramblParams
+        );
       } else {
         throw stdError(
           404,
@@ -87,12 +89,14 @@ class AssetTransactionService {
       if (args.assetCode) {
         args.recipients = [[Constants.BURNER_ADDRESS, args.quantity]];
         args.minting = false;
-        args.address = bramblHelper.brambljs.keyManager.address;
-        args.addresses = await transactionsServiceHelper.addAddressesToDBFromTransaction(
+        const bramblParams = await TransactionsServiceHelper.extractParamsAndAddAddressesToDb(
           bramblHelper,
           args
         );
-        return AssetTransactionService.assetTransferHelper(bramblHelper, args);
+        return AssetTransactionService.assetTransferHelper(
+          bramblHelper,
+          bramblParams
+        );
       } else {
         throw stdError(
           400,
