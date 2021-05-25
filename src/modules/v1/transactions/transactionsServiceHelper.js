@@ -77,39 +77,40 @@ class TransactionServiceHelper {
     args
   ) {
     let obj = {};
-    return (
-      bramblHelper
-        .signAndSendTransaction(rawTransaction)
-        // eslint-disable-next-line no-unused-vars
-        .then(function(assetTransactionResult) {
-          return Promise.all(
-            args.addresses.map(function(address) {
-              const internalObj = {};
-              const internalArgs = {
-                address: address,
-                network: args.network
-              };
-              return ReadTransactionService.getBalanceHelper(
-                bramblHelper,
-                internalArgs
-              )
-                .then(function(result) {
-                  internalObj.balance = result;
-                  return internalObj;
-                })
-                .catch(function(err) {
-                  console.error(err);
-                  internalObj.err = err.message;
-                  return internalObj;
-                });
-            })
-          ).catch(function(err) {
-            console.error(err);
-            obj.err = err.message;
-            return obj;
-          });
-        })
-    );
+    obj.result = await bramblHelper
+      .signAndSendTransaction(rawTransaction)
+      // eslint-disable-next-line no-unused-vars
+      .then(function(assetTransactionResult) {
+        obj.txId = assetTransactionResult.txId;
+        return Promise.all(
+          args.addresses.map(function(address) {
+            const internalObj = {};
+            const internalArgs = {
+              address: address,
+              network: args.network
+            };
+            return ReadTransactionService.getBalanceHelper(
+              bramblHelper,
+              internalArgs
+            )
+              .then(function(result) {
+                internalObj.balance = result;
+                return internalObj;
+              })
+              .catch(function(err) {
+                console.error(err);
+                internalObj.err = err.message;
+                return internalObj;
+              });
+          })
+        ).catch(function(err) {
+          console.error(err);
+          obj.err = err.message;
+          return obj;
+        });
+      });
+
+    return obj;
   }
 }
 
