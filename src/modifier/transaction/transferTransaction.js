@@ -1,7 +1,4 @@
 const BoxReader = require("../../lib/boxes/boxReader");
-const PolyBox = require("../../lib/boxes/polyBox");
-const AssetBox = require("../../lib/boxes/assetBox");
-const ArbitBox = require("../../lib/boxes/arbitBox");
 const { asyncFlatMap } = require("../../util/extensions");
 
 class TransferTransaction {

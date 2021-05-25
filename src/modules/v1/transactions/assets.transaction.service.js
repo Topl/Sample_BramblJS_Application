@@ -3,16 +3,16 @@ const AssetTransfer = require("../../../modifier/transaction/assetTransfer");
 const TransferTransactionValidator = require("../../../modifier/transaction/transferTransactionValidator");
 const stdError = require("../../../core/standardError");
 const Constants = require("../../../util/constants");
-const transactionsServiceHelper = require("./transactionsServiceHelper");
+const TransactionsServiceHelper = require("./transactionsServiceHelper");
 const _ = require("lodash");
 
 const serviceName = "AssetTransaction";
 
 class AssetTransactionService {
-  static async generateRawAssetTransfer(bramblHelper, args) {
+  static async generateRawAssetTransfer(args) {
     return AssetTransfer.createRaw(
       Object.entries(args.recipients),
-      args.senders,
+      args.sender,
       args.changeAddress,
       args.consolidationAddress,
       args.fee,
@@ -38,37 +38,36 @@ class AssetTransactionService {
     return bramblHelper
       .sendRawAssetTransaction(args)
       .then(function(rpcResponse) {
-        return AssetTransactionService.generateRawAssetTransfer(
-          bramblHelper,
-          args
-        ).then(function(jsResponse) {
-          if (jsResponse.error) {
-            return jsResponse;
-          }
-          const rawTransferTransaction = new AssetTransfer(
-            rpcResponse.messageToSign.result.rawTx.from,
-            rpcResponse.messageToSign.result.rawTx.to,
-            new Map(),
-            rpcResponse.messageToSign.result.rawTx.fee,
-            jsResponse.timestamp,
-            rpcResponse.messageToSign.result.rawTx.data,
-            rpcResponse.messageToSign.result.rawTx.minting
-          );
-          if (getObjectDiff(jsResponse, rawTransferTransaction)) {
-            return transactionsServiceHelper.signAndSendTransactionWithStateManagement(
-              rpcResponse,
-              bramblHelper,
-              args
+        return AssetTransactionService.generateRawAssetTransfer(args).then(
+          function(jsResponse) {
+            if (jsResponse.error) {
+              return jsResponse;
+            }
+            const rawTransferTransaction = new AssetTransfer(
+              rpcResponse.messageToSign.result.rawTx.from,
+              rpcResponse.messageToSign.result.rawTx.to,
+              new Map(),
+              rpcResponse.messageToSign.result.rawTx.fee,
+              jsResponse.timestamp,
+              rpcResponse.messageToSign.result.rawTx.data,
+              rpcResponse.messageToSign.result.rawTx.minting
             );
-          } else {
-            throw stdError(
-              500,
-              "Invalid RPC Response",
-              serviceName,
-              serviceName
-            );
+            if (getObjectDiff(jsResponse, rawTransferTransaction)) {
+              return TransactionsServiceHelper.signAndSendTransactionWithStateManagement(
+                rpcResponse,
+                bramblHelper,
+                args
+              );
+            } else {
+              throw stdError(
+                500,
+                "Invalid RPC Response",
+                serviceName,
+                serviceName
+              );
+            }
           }
-        });
+        );
       });
   }
 
@@ -82,19 +81,14 @@ class AssetTransactionService {
     args.address = bramblHelper.brambljs.keyManager.address;
     if (bramblHelper) {
       // iterate through all sender, recipient, and change addresses checking whether or not they are in the DB
-      args.addresses = await transactionsServiceHelper.addAddressesToDBFromTransaction(
+      const bramblParams = await TransactionsServiceHelper.extractParamsAndAddAddressesToDb(
         bramblHelper,
         args
       );
-      var assetCode = bramblHelper.createAssetValue(args.name);
-      args.assetCode = assetCode;
-      args.address = bramblHelper.brambljs.keyManager.address;
-      for (var key in args.recipients) {
-        args.recipients[key].assetCode = assetCode;
-      }
+      bramblParams.assetCode = bramblHelper.createAssetValue(args.name);
       return AssetTransactionService.assetTransferHelper(
         bramblHelper,
-        args
+        bramblParams
       ).then(function(result) {
         if (result.error) {
           throw stdError(500, result.error, serviceName, serviceName);
@@ -122,25 +116,14 @@ class AssetTransactionService {
     if (bramblHelper) {
       if (args.assetCode) {
         args.minting = false;
-        args.address = bramblHelper.brambljs.keyManager.address;
-        // iterate through all sender, recipient, and change addresses checking whether or not they are in the db
-        args.addresses = await transactionsServiceHelper.addAddressesToDBFromTransaction(
+        const bramblParams = await TransactionsServiceHelper.extractParamsAndAddAddressesToDb(
           bramblHelper,
           args
         );
-        for (var key in args.recipients) {
-          args.recipients[key].assetCode = args.assetCode;
-        }
         return AssetTransactionService.assetTransferHelper(
           bramblHelper,
-          args
-        ).then(function(result) {
-          if (result.error) {
-            throw stdError(500, result.error, serviceName, serviceName);
-          } else {
-            return result;
-          }
-        });
+          bramblParams
+        );
       } else {
         throw stdError(
           404,
@@ -163,24 +146,14 @@ class AssetTransactionService {
       if (args.assetCode) {
         args.recipients = [[Constants.BURNER_ADDRESS, args.quantity]];
         args.minting = false;
-        args.address = bramblHelper.brambljs.keyManager.address;
-        args.addresses = await transactionsServiceHelper.addAddressesToDBFromTransaction(
+        const bramblParams = await TransactionsServiceHelper.extractParamsAndAddAddressesToDb(
           bramblHelper,
           args
         );
-        for (var key in args.recipients) {
-          args.recipients[key].assetCode = args.assetCode;
-        }
         return AssetTransactionService.assetTransferHelper(
           bramblHelper,
-          args
-        ).then(function(result) {
-          if (result.error) {
-            throw stdError(500, result.error, serviceName, serviceName);
-          } else {
-            return result;
-          }
-        });
+          bramblParams
+        );
       } else {
         throw stdError(
           400,
