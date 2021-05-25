@@ -94,11 +94,6 @@ class AddressesService {
       };
       let newAddress = new Address(addressDoc);
 
-      // iterate through boxes and either add or update them in the DB
-      if (balances.boxes) {
-        BoxHelper.updateBoxes(balances.boxes, address);
-      }
-
       // Save Address and User in transaction
       if (fetchedUser) {
         fetchedUser.addresses.push(newAddress._id);
@@ -110,6 +105,10 @@ class AddressesService {
           if (result.error) {
             throw stdError(500, result.error, serviceName, serviceName);
           } else {
+            // iterate through boxes and either add or update them in the DB
+            if (balances.boxes) {
+              BoxHelper.updateBoxes(balances.boxes, address);
+            }
             return result;
           }
         });
@@ -119,6 +118,10 @@ class AddressesService {
             if (result.error) {
               throw stdError(500, result.error, serviceName, serviceName);
             } else {
+              // iterate through boxes and either add or update them in the DB
+              if (balances.boxes) {
+                BoxHelper.updateBoxes(balances.boxes, address);
+              }
               return result;
             }
           })
@@ -337,19 +340,33 @@ class AddressesService {
   }
 
   static async getAddressByAddress(args) {
-    try {
-      // check if address exists and is active
-      const fetchedAddress = await checkExistsByAddress(Address, args.address);
+    // check if address exists and is active
+    return await checkExistsByAddress(Address, args.address)
+      .then(function(result) {
+        if (result.error) {
+          throw stdErr(
+            500,
+            "Unable to retrieve address by address",
+            serviceName,
+            serviceName
+          );
+        }
 
-      if (!fetchedAddress.doc.isActive.status) {
-        throw stdErr(404, "No Active Address", serviceName, serviceName);
-      }
+        if (!result.doc.isActive.status) {
+          throw stdErr(404, "No Active Address", serviceName, serviceName);
+        }
 
-      return fetchedAddress.doc;
-    } catch (err) {
-      console.error(err);
-      throw err;
-    }
+        return result.doc;
+      })
+      // eslint-disable-next-line no-unused-vars
+      .catch(function(err) {
+        throw stdErr(
+          500,
+          "Unable to retrieve address by address",
+          serviceName,
+          serviceName
+        );
+      });
   }
 
   static async getAddressById(args) {

@@ -5,24 +5,45 @@ const ReadTransactionService = require("./read.transactions.service");
 const stdError = require("../../../core/standardError");
 const BramblJS = require("brambljs");
 
+const serviceName = "TransactionServiceHelper";
+
 class TransactionServiceHelper {
   static async addAddressesToDBFromTransaction(bramblHelper, args) {
     // iterate through all sender, recipient, and change addresses, checking whether or not they are in the DB
     if (bramblHelper) {
-      await args.addresses.forEach(address => {
-        checkExistsByAddress(Address, address).then(function(result) {
-          if (result.error) {
-            return AddressesService.create({
-              network: args.network,
-              password: args.password,
-              name: args.name,
-              userEmail: args.userEmail,
-              address: address
-            });
-          }
-        });
-      });
-      return args.addresses;
+      try {
+        for (const address of args.addresses) {
+          await checkExistsByAddress(Address, address).then(function(result) {
+            if (
+              result.error === "The given address could not be found in the db"
+            ) {
+              return AddressesService.create({
+                network: args.network,
+                password: args.password,
+                name: args.name,
+                userEmail: args.userEmail,
+                address: address
+              });
+            }
+          });
+        }
+        return args.addresses;
+      } catch (error) {
+        console.error(error);
+        throw stdError(
+          400,
+          "Error saving new address to the db",
+          error,
+          serviceName
+        );
+      }
+    } else {
+      throw stdError(
+        404,
+        "Missing or Invalid KeyfilePath",
+        serviceName,
+        serviceName
+      );
     }
   }
 
@@ -32,8 +53,11 @@ class TransactionServiceHelper {
     serviceName
   ) {
     const bramblParams = await bramblHelper.verifyRawTransactionData(args);
-    const addresses = BramblJS.utils.extractAddressesFromObj(bramblParams);
-    bramblParams.addresses = addresses;
+    bramblParams.addresses = BramblJS.utils
+      .extractAddressesFromObj(bramblParams)
+      .filter(function(value, index, self) {
+        return self.indexOf(value) === index;
+      }); // uniqueness filter
     await TransactionServiceHelper.addAddressesToDBFromTransaction(
       bramblHelper,
       bramblParams

@@ -3,7 +3,7 @@ const networkUrl = connections.networkUrl;
 const apiKey = connections.networkApiKey;
 const AddressesService = require("../modules/v1/addresses/addresses.service");
 const BramblJS = require("brambljs");
-const PolyBox = require("./boxes/polyBox");
+const { flatten } = require("../util/extensions");
 
 class BramblHelper {
   constructor(readOnly, password, network, keyfilePath) {
@@ -271,28 +271,6 @@ class BramblHelper {
     return result;
   }
 
-  /**
-   * Accessor method to retrieve a set of boxes from the db (state) that are owned by a particular public key/address. This works by abstracting the db lookup and access.
-   * @param {String[]} addresses: list of addresses
-   * @param {String} networkPrefix: Network on which addresses are located.
-   */
-  async getTokenBoxes(address) {
-    let assets = {};
-    try {
-      const storedAddressState = AddressesService.getAddressByAddress({
-        address: address
-      });
-      assets.arbitBoxes = storedAddressState.arbitBoxes();
-      assets.assetBoxes = storedAddressState.assetBoxes();
-      assets.polyBoxes = storedAddressState.polyBoxes();
-      return assets;
-    } catch (err) {
-      console.error(err);
-      assets.error = err.message;
-      return assets;
-    }
-  }
-
   async checkPolyBalances(senders, fee) {
     let obj = {};
     obj.polyBalance = senders
@@ -327,30 +305,30 @@ class BramblHelper {
       txObject.senderPasswords,
       txObject.network
     );
-    for (let i = 0; i < txObject.recipients.length; i++) {
-      const [address, quantity, data, metadata] = txObject.recipients[i];
-      if (data) {
-        const securityRoot = BramblJS.Hash("string", data);
-        formattedRecipients.push([address, quantity, securityRoot, metadata]);
-      } else {
-        formattedRecipients.push([address, quantity]);
+    txObject.rawRecipients.forEach(address => {
+      for (var key in address) {
+        const recipientForBramblJS = [
+          key,
+          address[key].quantity,
+          address[key].securityRoot,
+          address[key].metadata
+        ];
+        formattedRecipients.push(recipientForBramblJS);
       }
-    }
+    });
+    const temp = txObject.recipients;
     txObject.recipients = formattedRecipients;
     return self.brambljs.requests
       .createRawAssetTransfer(txObject)
       .then(function(result) {
+        txObject.recipients = temp;
         obj.messageToSign = result;
         return obj;
       })
       .catch(function(err) {
         console.error(err);
+        txObject.recipients = temp;
         obj.err = err.message;
-        return obj;
-      })
-      .catch(function(err) {
-        console.error(err);
-        obj.error = err.message;
         return obj;
       });
   }
@@ -436,9 +414,13 @@ class BramblHelper {
       // set transaction object
       let params = {
         propositionType: txObject.propositionType,
-        recipients: txObject.recipients,
+        rawRecipients: txObject.recipients,
+        recipients: txObject.recipients.map(recipient => {
+          const [key, value] = flatten(Object.entries(recipient));
+          return flatten([key, Object.values(value)]);
+        }),
         fee: txObject.fee,
-        sender: txObject.senders.map(function(item) {
+        sender: txObject.sender.map(function(item) {
           return item[0];
         }),
         senderPasswords: txObject.sender.map(function(item) {
@@ -448,7 +430,8 @@ class BramblHelper {
         data: txObject.data,
         consolidationAddress: txObject.consolidationAddress,
         minting: txObject.minting,
-        assetCode: txObject.assetCode ? txObject.assetCode : null
+        assetCode: txObject.assetCode ? txObject.assetCode : null,
+        network: txObject.network
       };
       resolve(params);
     });

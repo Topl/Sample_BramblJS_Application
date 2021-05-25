@@ -3,27 +3,27 @@ const AssetTransfer = require("../../../modifier/transaction/assetTransfer");
 const TransferTransactionValidator = require("../../../modifier/transaction/transferTransactionValidator");
 const stdError = require("../../../core/standardError");
 const Constants = require("../../../util/constants");
-const TransactionsServiceHelper = require("./transactionsServiceHelper");
-
 const { getObjectDiff } = require("../../../util/extensions");
+const TransactionsServiceHelper = require("./transactionsServiceHelper");
 
 const serviceName = "AssetTransaction";
 
 class AssetTransactionService {
-  static async generateRawAssetTransfer(args) {
+  static async generateRawAssetTransfer(args, bramblHelper) {
     return AssetTransfer.createRaw(
-      Object.entries(args.recipients),
-      args.senders,
+      args.recipients,
+      args.sender,
       args.changeAddress,
       args.consolidationAddress,
       args.fee,
       args.data,
-      args.minting
+      args.minting,
+      args.assetCode,
+      bramblHelper
     ).then(function(value) {
       if (value.error) {
         return value;
       } else {
-<<<<<<< HEAD
         // validate tx
         const txValidator = new TransferTransactionValidator(value);
         const txValid = txValidator.rawSyntacticValidation();
@@ -32,13 +32,6 @@ class AssetTransactionService {
         } else {
           return value;
         }
-=======
-        return TransactionsServiceHelper.signAndSendTransactionWithStateManagement(
-          value,
-          bramblHelper,
-          args
-        );
->>>>>>> bb64addcdb249958915f1bd8c40be6051024202f
       }
     });
   }
@@ -47,36 +40,37 @@ class AssetTransactionService {
     return bramblHelper
       .sendRawAssetTransaction(args)
       .then(function(rpcResponse) {
-        return AssetTransactionService.generateRawAssetTransfer(args).then(
-          function(jsResponse) {
-            if (jsResponse.error) {
-              return jsResponse;
-            }
-            const rawTransferTransaction = new AssetTransfer(
-              rpcResponse.messageToSign.result.rawTx.from,
-              rpcResponse.messageToSign.result.rawTx.to,
-              new Map(),
-              rpcResponse.messageToSign.result.rawTx.fee,
-              jsResponse.timestamp,
-              rpcResponse.messageToSign.result.rawTx.data,
-              rpcResponse.messageToSign.result.rawTx.minting
-            );
-            if (getObjectDiff(jsResponse, rawTransferTransaction)) {
-              return transactionsServiceHelper.signAndSendTransactionWithStateManagement(
-                rpcResponse,
-                bramblHelper,
-                args
-              );
-            } else {
-              throw stdError(
-                500,
-                "Invalid RPC Response",
-                serviceName,
-                serviceName
-              );
-            }
+        return AssetTransactionService.generateRawAssetTransfer(
+          args,
+          bramblHelper
+        ).then(function(jsResponse) {
+          if (jsResponse.error) {
+            return jsResponse;
           }
-        );
+          const rawTransferTransaction = new AssetTransfer(
+            rpcResponse.messageToSign.result.rawTx.from,
+            rpcResponse.messageToSign.result.rawTx.to,
+            new Map(),
+            rpcResponse.messageToSign.result.rawTx.fee,
+            jsResponse.timestamp,
+            rpcResponse.messageToSign.result.rawTx.data,
+            rpcResponse.messageToSign.result.rawTx.minting
+          );
+          if (getObjectDiff(jsResponse, rawTransferTransaction)) {
+            return TransactionsServiceHelper.signAndSendTransactionWithStateManagement(
+              rpcResponse,
+              bramblHelper,
+              args
+            );
+          } else {
+            throw stdError(
+              500,
+              "Invalid RPC Response",
+              serviceName,
+              serviceName
+            );
+          }
+        });
       });
   }
 
@@ -90,21 +84,14 @@ class AssetTransactionService {
     args.address = bramblHelper.brambljs.keyManager.address;
     if (bramblHelper) {
       // iterate through all sender, recipient, and change addresses checking whether or not they are in the DB
-      args.assetCode = bramblHelper.createAssetValue(args.name);
       const bramblParams = await TransactionsServiceHelper.extractParamsAndAddAddressesToDb(
         bramblHelper,
         args
       );
-<<<<<<< HEAD
-      var assetCode = bramblHelper.createAssetValue(args.name);
-      args.assetCode = assetCode;
-      args.address = bramblHelper.brambljs.keyManager.address;
-      for (var key in args.recipients) {
-        args.recipients[key].assetCode = assetCode;
-      }
+      bramblParams.assetCode = bramblHelper.createAssetValue(args.name);
       return AssetTransactionService.assetTransferHelper(
         bramblHelper,
-        args
+        bramblParams
       ).then(function(result) {
         if (result.error) {
           throw stdError(500, result.error, serviceName, serviceName);
@@ -112,12 +99,6 @@ class AssetTransactionService {
           return result;
         }
       });
-=======
-      return AssetTransactionService.assetTransferHelper(
-        bramblHelper,
-        bramblParams
-      );
->>>>>>> bb64addcdb249958915f1bd8c40be6051024202f
     } else {
       throw stdError(
         404,
@@ -142,26 +123,11 @@ class AssetTransactionService {
           bramblHelper,
           args
         );
-<<<<<<< HEAD
-        for (var key in args.recipients) {
-          args.recipients[key].assetCode = args.assetCode;
-        }
-        return AssetTransactionService.assetTransferHelper(
-          bramblHelper,
-          args
-        ).then(function(result) {
-          if (result.error) {
-            throw stdError(500, result.error, serviceName, serviceName);
-          } else {
-            return result;
-          }
-        });
-=======
+        bramblParams.assetCode = args.assetCode;
         return AssetTransactionService.assetTransferHelper(
           bramblHelper,
           bramblParams
         );
->>>>>>> bb64addcdb249958915f1bd8c40be6051024202f
       } else {
         throw stdError(
           404,
@@ -188,26 +154,11 @@ class AssetTransactionService {
           bramblHelper,
           args
         );
-<<<<<<< HEAD
-        for (var key in args.recipients) {
-          args.recipients[key].assetCode = args.assetCode;
-        }
-        return AssetTransactionService.assetTransferHelper(
-          bramblHelper,
-          args
-        ).then(function(result) {
-          if (result.error) {
-            throw stdError(500, result.error, serviceName, serviceName);
-          } else {
-            return result;
-          }
-        });
-=======
+        bramblParams.assetCode = args.assetCode;
         return AssetTransactionService.assetTransferHelper(
           bramblHelper,
           bramblParams
         );
->>>>>>> bb64addcdb249958915f1bd8c40be6051024202f
       } else {
         throw stdError(
           400,

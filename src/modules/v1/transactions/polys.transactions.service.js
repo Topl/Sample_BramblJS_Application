@@ -10,8 +10,8 @@ const serviceName = "polyTransaction";
 class PolyTransactionService {
   static async generateRawPolyTransfer(args) {
     return PolyTransfer.createRaw(
-      Object.entries(args.recipients),
-      args.senders,
+      args.recipients,
+      args.sender,
       args.changeAddress,
       args.fee,
       args.data
@@ -78,7 +78,6 @@ class PolyTransactionService {
       args.network,
       args.keyFilePath
     );
-    args.address = bramblHelper.brambljs.keyManager.address;
     if (bramblHelper) {
       // iterate through all sender, recipient, and change addresses, checking whether or not they are in the DB
       const bramblParams = await TransactionsServiceHelper.extractParamsAndAddAddressesToDb(
