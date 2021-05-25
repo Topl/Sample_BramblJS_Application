@@ -101,6 +101,7 @@ class BramblHelper {
         return self.generateBoxes(obj, result, address);
       })
       .catch(function(err) {
+        console.error(err);
         obj.error = err.message;
         return obj;
       });

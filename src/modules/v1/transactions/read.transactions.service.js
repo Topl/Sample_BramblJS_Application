@@ -1,7 +1,7 @@
 const BramblHelper = require("../../../lib/bramblHelper");
 const RequestValidator = require("../../../lib/requestValidator");
 const stdError = require("../../../core/standardError");
-const { checkExistsByAddress } = require("../../../lib/validation");
+const { checkExists } = require("../../../lib/validation");
 const AddressesService = require("../addresses/addresses.service");
 const Address = require("../addresses/addresses.model");
 
@@ -46,7 +46,7 @@ class ReadTransactionService {
       throw stdError(404, "Unable to find address", serviceName, serviceName);
     } else {
       // check if address exists in the db
-      return checkExistsByAddress(Address, address) // eslint-disable-next-line no-unused-vars
+      return checkExists(Address, address, "address") // eslint-disable-next-line no-unused-vars
         .then(function(result) {
           // if the address is not in the db, add to the db
           if (result.error) {

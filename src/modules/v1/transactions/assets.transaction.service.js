@@ -5,6 +5,7 @@ const stdError = require("../../../core/standardError");
 const Constants = require("../../../util/constants");
 const { getObjectDiff } = require("../../../util/extensions");
 const TransactionsServiceHelper = require("./transactionsServiceHelper");
+const BoxService = require("../state/box.service");
 
 const serviceName = "AssetTransaction";
 
@@ -61,7 +62,12 @@ class AssetTransactionService {
               rpcResponse,
               bramblHelper,
               args
-            );
+            ).then(function(result) {
+              // delete boxes via the jsResponse
+              for (const box of jsResponse.boxesToRemove) {
+                await 
+              }
+            });
           } else {
             throw stdError(
               500,

@@ -1,12 +1,10 @@
 const User = require("../modules/v1/user/user.model");
 const { checkExists } = require("../lib/validation");
 
-const serviceName = "auth";
-
 module.exports = async (req, res, next) => {
   try {
     const userId = req.body.user_id;
-    const fetchedUser = await checkExists(User, userId, { serviceName });
+    const fetchedUser = await checkExists(User, userId, "email");
     if (!fetchedUser.doc || fetchedUser.doc.isActive == false) {
       throw new Error("User not found");
     }

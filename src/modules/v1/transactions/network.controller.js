@@ -9,7 +9,7 @@ class NetworkController {
   }
 
   static async getBalance(req, res, next) {
-    const handler = ReadTransactionService.getBalance;
+    const handler = ReadTransactionService.getBalances;
     const network = req.body.network;
     const password = req.body.password;
     const address = req.params.address;

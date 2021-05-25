@@ -1,12 +1,12 @@
 const BoxService = require("./box.service");
 const BoxModel = require("./box.model");
-const { checkExistsByBifrostId } = require("../../../lib/validation");
+const { checkExists } = require("../../../lib/validation");
 
 class BoxHelper {
   static async updateBoxes(boxes, address) {
     let obj = {};
     return boxes.forEach(box => {
-      checkExistsByBifrostId(BoxModel, box.id).then(function(result) {
+      checkExists(BoxModel, box.id, "bifrostId").then(function(result) {
         if (result.error) {
           return BoxService.saveToDb({
             address: address,

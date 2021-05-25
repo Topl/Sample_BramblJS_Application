@@ -3,11 +3,7 @@ const mongoose = require("mongoose");
 const stdError = require("../../../core/standardError");
 const BoxModel = require("./box.model");
 const save2db = require("../../../lib/saveToDatabase");
-const {
-  checkExistsByAddress,
-  checkExistsByBifrostId,
-  checkExistsById
-} = require("../../../lib/validation");
+const { checkExistsById, checkExists } = require("../../../lib/validation");
 const Address = require("../addresses/addresses.model");
 
 const serviceName = "Box";
@@ -17,9 +13,10 @@ class BoxService {
     const session = await mongoose.startSession();
     try {
       // fetch information of address for box
-      let fetchedAddress = await checkExistsByAddress(
+      let fetchedAddress = await checkExists(
         Address,
-        args.address
+        args.address,
+        "address"
       ).then(function(result) {
         if (result.error) {
           throw stdError(
@@ -107,7 +104,7 @@ class BoxService {
   static async updateBoxById(args) {
     // check if the box exists in the db
     let self = this;
-    await checkExistsByBifrostId(BoxModel, args.id)
+    await checkExists(BoxModel, args.id, "bifrostId")
       .then(function(result) {
         if (!result.doc.isActive.status) {
           throw stdError(404, "No Active Box Found", serviceName, serviceName);
@@ -171,18 +168,20 @@ class BoxService {
       });
   }
 
-  static async deleteBox(args) {
+  static async deleteBoxByNonce(args) {
     const session = await mongoose.startSession();
     try {
       const timestamp = new Date();
-      const fetchedBox = await checkExistsByBifrostId(BoxModel, args.id).doc;
+      const fetchedBox = await checkExists(BoxModel, args.nonce, "nonce").doc;
       if (!fetchedBox.isActive.status) {
         throw stdError(404, "No Active Box", serviceName, serviceName);
       }
 
       // fetch address
       const addressId = fetchedBox.address.toString();
-      let fetchedAddress = await (await checkExistsByAddress(addressId)).doc;
+      let fetchedAddress = await (
+        await checkExists(Address, addressId, "address")
+      ).doc;
 
       if (!fetchedAddress) {
         throw stdError(

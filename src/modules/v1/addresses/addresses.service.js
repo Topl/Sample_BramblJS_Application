@@ -7,11 +7,7 @@ const stdError = require("../../../core/standardError");
 const stdErr = require("../../../core/standardError");
 const BramblHelper = require("../../../lib/bramblHelper");
 const save2db = require("../../../lib/saveToDatabase");
-const {
-  checkExists,
-  checkExistsById,
-  checkExistsByAddress
-} = require("../../../lib/validation");
+const { checkExists, checkExistsById } = require("../../../lib/validation");
 const paginateAddresses = require(`../../../lib/paginateAddresses`);
 const BoxHelper = require(`../state/boxHelper`);
 
@@ -156,7 +152,7 @@ class AddressesService {
     // check if the address already exists
     let obj = {};
     const self = this;
-    return await checkExistsByAddress(Address, args.addressId).then(function(
+    return await checkExists(Address, args.addressId, "address").then(function(
       result
     ) {
       if (result.error) {
@@ -179,7 +175,7 @@ class AddressesService {
     // check if the address exists in the db
     const fetchedAddress = await checkExistsById(Address, args.addressId)
       .then(function(result) {
-        if (!result.isActive.status) {
+        if (!result.doc.isActive.status) {
           throw stdErr(
             404,
             "No Active Address Found",
@@ -187,9 +183,11 @@ class AddressesService {
             serviceName
           );
         }
+        return result.doc;
       })
       // eslint-disable-next-line no-unused-vars
       .catch(function(err) {
+        console.error(err);
         throw stdErr(
           500,
           "Unable to update address by ID",
@@ -197,7 +195,7 @@ class AddressesService {
           serviceName
         );
       });
-    return this.updateAddress(args, fetchedAddress);
+    return AddressesService.updateAddress(args, fetchedAddress);
   }
 
   static async updateAddress(args, fetchedAddress) {
@@ -341,7 +339,7 @@ class AddressesService {
 
   static async getAddressByAddress(args) {
     // check if address exists and is active
-    return await checkExistsByAddress(Address, args.address)
+    return await checkExists(Address, args.address, "address")
       .then(function(result) {
         if (result.error) {
           throw stdErr(
@@ -375,11 +373,11 @@ class AddressesService {
 
       const fetchedAddress = await checkExistsById(Address, args.addressId);
 
-      if (!fetchedAddress.isActive.status) {
+      if (!fetchedAddress.doc.isActive.status) {
         throw stdErr(404, "No Active Address", serviceName, serviceName);
       }
 
-      return fetchedAddress;
+      return fetchedAddress.doc;
     } catch (err) {
       throw err;
     }
