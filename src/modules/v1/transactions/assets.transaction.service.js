@@ -3,22 +3,22 @@ const AssetTransfer = require("../../../modifier/transaction/assetTransfer");
 const TransferTransactionValidator = require("../../../modifier/transaction/transferTransactionValidator");
 const stdError = require("../../../core/standardError");
 const Constants = require("../../../util/constants");
-const transactionsServiceHelper = require("./transactionsServiceHelper");
-
 const { getObjectDiff } = require("../../../util/extensions");
+const TransactionsServiceHelper = require("./transactionsServiceHelper");
 
 const serviceName = "AssetTransaction";
 
 class AssetTransactionService {
   static async generateRawAssetTransfer(args) {
     return AssetTransfer.createRaw(
-      Object.entries(args.recipients),
-      args.senders,
+      args.recipients,
+      args.sender,
       args.changeAddress,
       args.consolidationAddress,
       args.fee,
       args.data,
-      args.minting
+      args.minting,
+      args.assetCode
     ).then(function(value) {
       if (value.error) {
         return value;
@@ -54,7 +54,7 @@ class AssetTransactionService {
               rpcResponse.messageToSign.result.rawTx.minting
             );
             if (getObjectDiff(jsResponse, rawTransferTransaction)) {
-              return transactionsServiceHelper.signAndSendTransactionWithStateManagement(
+              return TransactionsServiceHelper.signAndSendTransactionWithStateManagement(
                 rpcResponse,
                 bramblHelper,
                 args
@@ -82,19 +82,14 @@ class AssetTransactionService {
     args.address = bramblHelper.brambljs.keyManager.address;
     if (bramblHelper) {
       // iterate through all sender, recipient, and change addresses checking whether or not they are in the DB
-      args.addresses = await transactionsServiceHelper.addAddressesToDBFromTransaction(
+      const bramblParams = await TransactionsServiceHelper.extractParamsAndAddAddressesToDb(
         bramblHelper,
         args
       );
-      var assetCode = bramblHelper.createAssetValue(args.name);
-      args.assetCode = assetCode;
-      args.address = bramblHelper.brambljs.keyManager.address;
-      for (var key in args.recipients) {
-        args.recipients[key].assetCode = assetCode;
-      }
+      bramblParams.assetCode = bramblHelper.createAssetValue(args.name);
       return AssetTransactionService.assetTransferHelper(
         bramblHelper,
-        args
+        bramblParams
       ).then(function(result) {
         if (result.error) {
           throw stdError(500, result.error, serviceName, serviceName);
@@ -122,25 +117,17 @@ class AssetTransactionService {
     if (bramblHelper) {
       if (args.assetCode) {
         args.minting = false;
-        args.address = bramblHelper.brambljs.keyManager.address;
-        // iterate through all sender, recipient, and change addresses checking whether or not they are in the db
-        args.addresses = await transactionsServiceHelper.addAddressesToDBFromTransaction(
+        const bramblParams = await TransactionsServiceHelper.extractParamsAndAddAddressesToDb(
           bramblHelper,
           args
         );
         for (var key in args.recipients) {
-          args.recipients[key].assetCode = args.assetCode;
+          bramblParams.recipients[key].assetCode = args.assetCode;
         }
         return AssetTransactionService.assetTransferHelper(
           bramblHelper,
-          args
-        ).then(function(result) {
-          if (result.error) {
-            throw stdError(500, result.error, serviceName, serviceName);
-          } else {
-            return result;
-          }
-        });
+          bramblParams
+        );
       } else {
         throw stdError(
           404,
@@ -163,24 +150,17 @@ class AssetTransactionService {
       if (args.assetCode) {
         args.recipients = [[Constants.BURNER_ADDRESS, args.quantity]];
         args.minting = false;
-        args.address = bramblHelper.brambljs.keyManager.address;
-        args.addresses = await transactionsServiceHelper.addAddressesToDBFromTransaction(
+        const bramblParams = await TransactionsServiceHelper.extractParamsAndAddAddressesToDb(
           bramblHelper,
           args
         );
         for (var key in args.recipients) {
-          args.recipients[key].assetCode = args.assetCode;
+          bramblParams.recipients[key].assetCode = args.assetCode;
         }
         return AssetTransactionService.assetTransferHelper(
           bramblHelper,
-          args
-        ).then(function(result) {
-          if (result.error) {
-            throw stdError(500, result.error, serviceName, serviceName);
-          } else {
-            return result;
-          }
-        });
+          bramblParams
+        );
       } else {
         throw stdError(
           400,

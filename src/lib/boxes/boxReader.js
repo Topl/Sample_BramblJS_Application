@@ -3,11 +3,12 @@ const AddressService = require("../../modules/v1/addresses/addresses.service");
 const { asyncFlatMap } = require("../../util/extensions");
 
 class BoxReader {
-  static async getTokenBoxes(key) {
+  static async getTokenBoxes(key, bramblHelper) {
     let self = this;
     let obj = {};
     return AddressService.getAddressByAddress({ address: key })
       .then(function(result) {
+        // if we have already stored the state for the address in the DB
         return asyncFlatMap(result.boxes, box => {
           return self.getBox(box).then(function(result) {
             if (result.error) {
@@ -21,8 +22,12 @@ class BoxReader {
       })
       .catch(function(err) {
         console.error(err);
-        obj.error = err.message;
-        return obj;
+        // fall back to getting the token boxes from the JSON-RPC
+        if (bramblHelper.brambljs) {
+          return bramblHelper.getBoxesWithBrambl([key]);
+        } else {
+          return bramblHelper.getBoxesWithRequests([key]);
+        }
       });
   }
 

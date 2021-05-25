@@ -6,7 +6,7 @@ class PolyTransfer extends TransferTransaction {
   typePrefix = 2;
   typeString = "PolyTransfer";
 
-  constructor(from, newBoxes, attestation, fee, timestamp, data, proposition) {
+  constructor(from, newBoxes, attestation, fee, timestamp, data) {
     super(from, newBoxes, attestation, fee, timestamp, data);
 
     this.coinOutput = newBoxes.map(recipient => {
@@ -34,7 +34,7 @@ class PolyTransfer extends TransferTransaction {
       // compute the amount of tokens to be sent to the recipients
       const amtToSpend = toReceive
         .map(r => {
-          return r[1].quantity;
+          return r[1];
         })
         .reduce((a, b) => +a + +b, 0);
 

@@ -3,7 +3,7 @@ const networkUrl = connections.networkUrl;
 const apiKey = connections.networkApiKey;
 const AddressesService = require("../modules/v1/addresses/addresses.service");
 const BramblJS = require("brambljs");
-const PolyBox = require("./boxes/polyBox");
+const { flatten } = require("../util/extensions");
 
 class BramblHelper {
   constructor(readOnly, password, network, keyfilePath) {
@@ -201,32 +201,23 @@ class BramblHelper {
    */
   async sendRawPolyTransaction(txObject) {
     let obj = {};
+    var formattedRecipients = [];
     const self = this;
-    return await this.verifyRawTransactionData(txObject)
+    obj.keys = self.getSenderKeyManagers(
+      txObject.sender,
+      txObject.senderPasswords,
+      txObject.network
+    );
+    for (let i = 0; i < txObject.recipients.length; i++) {
+      const [address, quantity] = txObject.recipients[i];
+      formattedRecipients.push([address, quantity]);
+    }
+    txObject.recipients = formattedRecipients;
+    return self.brambljs.requests
+      .createRawPolyTransfer(txObject)
       .then(function(result) {
-        obj.keys = self.getSenderKeyManagers(
-          txObject.senders,
-          txObject.network
-        );
-        const formattedRecipients = [];
-        for (var key in result.params.recipients) {
-          const recipientForBramblJS = [
-            key,
-            result.params.recipients[key].quantity
-          ];
-          formattedRecipients.push(recipientForBramblJS);
-        }
-        result.params.recipients = formattedRecipients;
-        return self.brambljs.requests
-          .createRawPolyTransfer(result.params)
-          .then(function(result) {
-            obj.messageToSign = result;
-            return obj;
-          })
-          .catch(function(err) {
-            obj.error = err.message;
-            return obj;
-          });
+        obj.messageToSign = result;
+        return obj;
       })
       .catch(function(err) {
         obj.error = err.message;
@@ -280,28 +271,6 @@ class BramblHelper {
     return result;
   }
 
-  /**
-   * Accessor method to retrieve a set of boxes from the db (state) that are owned by a particular public key/address. This works by abstracting the db lookup and access.
-   * @param {String[]} addresses: list of addresses
-   * @param {String} networkPrefix: Network on which addresses are located.
-   */
-  async getTokenBoxes(address) {
-    let assets = {};
-    try {
-      const storedAddressState = AddressesService.getAddressByAddress({
-        address: address
-      });
-      assets.arbitBoxes = storedAddressState.arbitBoxes();
-      assets.assetBoxes = storedAddressState.assetBoxes();
-      assets.polyBoxes = storedAddressState.polyBoxes();
-      return assets;
-    } catch (err) {
-      console.error(err);
-      assets.error = err.message;
-      return assets;
-    }
-  }
-
   async checkPolyBalances(senders, fee) {
     let obj = {};
     obj.polyBalance = senders
@@ -331,35 +300,31 @@ class BramblHelper {
     let obj = {};
     const formattedRecipients = [];
     const self = this;
-    return await this.verifyRawTransactionData(txObject)
+    obj.keys = self.getSenderKeyManagers(
+      txObject.sender,
+      txObject.senderPasswords,
+      txObject.network
+    );
+    for (var key in txObject.recipients) {
+      const recipientForBramblJS = [
+        key,
+        txObject.recipients[key].quantity,
+        txObject.recipients[key].securityRoot,
+        txObject.recipients[key].metadata
+      ];
+      formattedRecipients.push(recipientForBramblJS);
+    }
+    txObject.recipients = formattedRecipients;
+    return self.brambljs.requests
+      .createRawAssetTransfer(txObject)
       .then(function(result) {
-        obj.keys = self.getSenderKeyManagers(
-          txObject.senders,
-          txObject.network
-        );
-        result.params.minting = txObject.minting;
-        result.params.assetCode = txObject.assetCode;
-        for (var key in result.params.recipients) {
-          const recipientForBramblJS = [
-            key,
-            result.params.recipients[key].quantity,
-            result.params.recipients[key].securityRoot,
-            result.params.recipients[key].metadata
-          ];
-          formattedRecipients.push(recipientForBramblJS);
-        }
-        result.params.recipients = formattedRecipients;
-        return self.brambljs.requests
-          .createRawAssetTransfer(result.params)
-          .then(function(result) {
-            obj.messageToSign = result;
-            return obj;
-          })
-          .catch(function(err) {
-            console.error(err);
-            obj.err = err.message;
-            return obj;
-          });
+        obj.messageToSign = result;
+        return obj;
+      })
+      .catch(function(err) {
+        console.error(err);
+        obj.err = err.message;
+        return obj;
       })
       .catch(function(err) {
         console.error(err);
@@ -428,15 +393,15 @@ class BramblHelper {
     return this.brambljs.createAssetCode(shortName);
   }
 
-  getSenderKeyManagers(senders, networkPrefix) {
+  getSenderKeyManagers(senders, sendersPasswords, networkPrefix) {
     let keyManagers = [];
     if (Array.isArray(senders)) {
       for (var i = 0; i < senders.length; i++) {
         keyManagers.push(
           BramblJS.KeyManager({
             networkPrefix: networkPrefix,
-            password: senders[i][1],
-            keyPath: `private_keyfiles/${senders[i][0]}.json`
+            password: sendersPasswords[i],
+            keyPath: `private_keyfiles/${senders[i]}.json`
           })
         );
       }
@@ -445,23 +410,29 @@ class BramblHelper {
   }
 
   async verifyRawTransactionData(txObject) {
-    let obj = {};
     return new Promise(resolve => {
       // set transaction object
       let params = {
         propositionType: txObject.propositionType,
-        recipients: txObject.recipients,
+        recipients: txObject.recipients.map(recipient => {
+          const [key, value] = flatten(Object.entries(recipient));
+          return flatten([key, Object.values(value)]);
+        }),
         fee: txObject.fee,
-        sender: txObject.senders.map(function(item) {
+        sender: txObject.sender.map(function(item) {
           return item[0];
+        }),
+        senderPasswords: txObject.sender.map(function(item) {
+          return item[1];
         }),
         changeAddress: txObject.changeAddress,
         data: txObject.data,
-        consolidationAddress: txObject.consolidationAddress
+        consolidationAddress: txObject.consolidationAddress,
+        minting: txObject.minting,
+        assetCode: txObject.assetCode ? txObject.assetCode : null,
+        network: txObject.network
       };
-      obj.fee = txObject.fee;
-      obj.params = params;
-      resolve(obj);
+      resolve(params);
     });
   }
 }

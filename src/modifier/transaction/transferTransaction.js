@@ -1,7 +1,4 @@
 const BoxReader = require("../../lib/boxes/boxReader");
-const PolyBox = require("../../lib/boxes/polyBox");
-const AssetBox = require("../../lib/boxes/assetBox");
-const ArbitBox = require("../../lib/boxes/arbitBox");
 const { asyncFlatMap } = require("../../util/extensions");
 
 class TransferTransaction {
@@ -26,7 +23,6 @@ class TransferTransaction {
     // Lookup boxes for the given sender addresses
     return asyncFlatMap(addresses, a => {
       return BoxReader.getTokenBoxes(a).then(function(result) {
-        // Throw an error if there are no boxes.
         if (result.error) {
           obj.error = result.error;
           return obj;

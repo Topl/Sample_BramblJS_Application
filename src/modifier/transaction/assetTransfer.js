@@ -9,16 +9,7 @@ class AssetTransfer extends TransferTransaction {
   typePrefix = 3;
   typeString = "AssetTransfer";
 
-  constructor(
-    from,
-    newBoxes,
-    attestation,
-    fee,
-    timestamp,
-    data,
-    minting,
-    proposition
-  ) {
+  constructor(from, newBoxes, attestation, fee, timestamp, data, minting) {
     super(from, newBoxes, attestation, fee, timestamp, data, minting);
 
     this.coinOutput = newBoxes.map(recipient => {
@@ -50,20 +41,11 @@ class AssetTransfer extends TransferTransaction {
     consolidationAddress,
     fee,
     data,
-    minting
+    minting,
+    assetCode
   ) {
     let obj = {};
     let self = this;
-    const assetSet = new Set(
-      toReceive.map(r => {
-        return r.assetCode;
-      })
-    );
-    if (assetSet.size > 1) {
-      obj.error = "Found multiple asset codes when only one was expected";
-      return obj;
-    }
-    const assetCode = Array.from(assetSet)[0];
     return TransferTransaction.getSenderBoxesAndCheckPolyBalance(
       senders,
       fee,
