@@ -17,12 +17,13 @@ class TransferTransaction {
   static async getSenderBoxesForRawTransaction(
     addresses,
     returnBoxes,
-    assetCode
+    assetCode,
+    bramblHelper
   ) {
     let obj = {};
     // Lookup boxes for the given sender addresses
     return asyncFlatMap(addresses, a => {
-      return BoxReader.getTokenBoxes(a).then(function(result) {
+      return BoxReader.getTokenBoxes(a, bramblHelper).then(function(result) {
         if (result.error) {
           obj.error = result.error;
           return obj;
@@ -50,14 +51,16 @@ class TransferTransaction {
     senders,
     fee,
     txType,
-    assetCode
+    assetCode,
+    bramblHelper
   ) {
     let obj = {};
     // Lookup boxes for the given senders
     const senderBoxes = await TransferTransaction.getSenderBoxesForRawTransaction(
       senders,
       txType,
-      assetCode
+      assetCode,
+      bramblHelper
     ).then(function(result) {
       if (result.error) {
         obj.error = result.error;

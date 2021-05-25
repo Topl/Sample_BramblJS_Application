@@ -305,30 +305,30 @@ class BramblHelper {
       txObject.senderPasswords,
       txObject.network
     );
-    for (var key in txObject.recipients) {
-      const recipientForBramblJS = [
-        key,
-        txObject.recipients[key].quantity,
-        txObject.recipients[key].securityRoot,
-        txObject.recipients[key].metadata
-      ];
-      formattedRecipients.push(recipientForBramblJS);
-    }
+    txObject.rawRecipients.forEach(address => {
+      for (var key in address) {
+        const recipientForBramblJS = [
+          key,
+          address[key].quantity,
+          address[key].securityRoot,
+          address[key].metadata
+        ];
+        formattedRecipients.push(recipientForBramblJS);
+      }
+    });
+    const temp = txObject.recipients;
     txObject.recipients = formattedRecipients;
     return self.brambljs.requests
       .createRawAssetTransfer(txObject)
       .then(function(result) {
+        txObject.recipients = temp;
         obj.messageToSign = result;
         return obj;
       })
       .catch(function(err) {
         console.error(err);
+        txObject.recipients = temp;
         obj.err = err.message;
-        return obj;
-      })
-      .catch(function(err) {
-        console.error(err);
-        obj.error = err.message;
         return obj;
       });
   }
@@ -414,6 +414,7 @@ class BramblHelper {
       // set transaction object
       let params = {
         propositionType: txObject.propositionType,
+        rawRecipients: txObject.recipients,
         recipients: txObject.recipients.map(recipient => {
           const [key, value] = flatten(Object.entries(recipient));
           return flatten([key, Object.values(value)]);

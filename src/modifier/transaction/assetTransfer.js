@@ -42,7 +42,8 @@ class AssetTransfer extends TransferTransaction {
     fee,
     data,
     minting,
-    assetCode
+    assetCode,
+    bramblHelper
   ) {
     let obj = {};
     let self = this;
@@ -50,7 +51,8 @@ class AssetTransfer extends TransferTransaction {
       senders,
       fee,
       "Assets",
-      assetCode
+      assetCode,
+      bramblHelper
     ).then(function(result) {
       if (result.error) {
         return result;
