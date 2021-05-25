@@ -91,10 +91,10 @@ class UsersService {
       fetchedUser.doc.isActive.status = false;
       fetchedUser.doc.isActive.asOf = timestamp;
       fetchedUser.doc.lastUpdated = timestamp;
-      fetchedUser.markModified("isActive.status");
-      fetchedUser.markModified("isActive.asOf");
+      fetchedUser.doc.markModified("isActive.status");
+      fetchedUser.doc.markModified("isActive.asOf");
 
-      await save2db(fetchedUser, { timestamp, serviceName, session }).catch(
+      await save2db(fetchedUser.doc, { timestamp, serviceName, session }).catch(
         function(err) {
           console.error(err);
           throw stdError(500, err, serviceName, serviceName);
@@ -127,19 +127,19 @@ class UsersService {
 
       // Apply updates
       if (userObj.newEmail) {
-        fetchedUser.email = userObj.newEmail;
+        fetchedUser.doc.email = userObj.newEmail;
       }
 
       if (userObj.firstName) {
-        fetchedUser.firstName = userObj.firstName;
+        fetchedUser.doc.firstName = userObj.firstName;
       }
 
       if (userObj.lastName) {
-        fetchedUser.lastName = userObj.lastName;
+        fetchedUser.doc.lastName = userObj.lastName;
       }
 
-      await save2db(fetchedUser, { timestamp, serviceName, session });
-      return fetchedUser.toJSON();
+      await save2db(fetchedUser.doc, { timestamp, serviceName, session });
+      return fetchedUser.doc.toJSON();
     } catch (err) {
       throw err;
     } finally {
