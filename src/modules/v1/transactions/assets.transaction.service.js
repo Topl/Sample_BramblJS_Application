@@ -3,7 +3,7 @@ const AssetTransfer = require("../../../modifier/transaction/assetTransfer");
 const TransferTransactionValidator = require("../../../modifier/transaction/transferTransactionValidator");
 const stdError = require("../../../core/standardError");
 const Constants = require("../../../util/constants");
-const transactionsServiceHelper = require("./transactionsServiceHelper");
+const TransactionsServiceHelper = require("./transactionsServiceHelper");
 
 const { getObjectDiff } = require("../../../util/extensions");
 
@@ -23,6 +23,7 @@ class AssetTransactionService {
       if (value.error) {
         return value;
       } else {
+<<<<<<< HEAD
         // validate tx
         const txValidator = new TransferTransactionValidator(value);
         const txValid = txValidator.rawSyntacticValidation();
@@ -31,6 +32,13 @@ class AssetTransactionService {
         } else {
           return value;
         }
+=======
+        return TransactionsServiceHelper.signAndSendTransactionWithStateManagement(
+          value,
+          bramblHelper,
+          args
+        );
+>>>>>>> bb64addcdb249958915f1bd8c40be6051024202f
       }
     });
   }
@@ -82,10 +90,12 @@ class AssetTransactionService {
     args.address = bramblHelper.brambljs.keyManager.address;
     if (bramblHelper) {
       // iterate through all sender, recipient, and change addresses checking whether or not they are in the DB
-      args.addresses = await transactionsServiceHelper.addAddressesToDBFromTransaction(
+      args.assetCode = bramblHelper.createAssetValue(args.name);
+      const bramblParams = await TransactionsServiceHelper.extractParamsAndAddAddressesToDb(
         bramblHelper,
         args
       );
+<<<<<<< HEAD
       var assetCode = bramblHelper.createAssetValue(args.name);
       args.assetCode = assetCode;
       args.address = bramblHelper.brambljs.keyManager.address;
@@ -102,6 +112,12 @@ class AssetTransactionService {
           return result;
         }
       });
+=======
+      return AssetTransactionService.assetTransferHelper(
+        bramblHelper,
+        bramblParams
+      );
+>>>>>>> bb64addcdb249958915f1bd8c40be6051024202f
     } else {
       throw stdError(
         404,
@@ -122,12 +138,11 @@ class AssetTransactionService {
     if (bramblHelper) {
       if (args.assetCode) {
         args.minting = false;
-        args.address = bramblHelper.brambljs.keyManager.address;
-        // iterate through all sender, recipient, and change addresses checking whether or not they are in the db
-        args.addresses = await transactionsServiceHelper.addAddressesToDBFromTransaction(
+        const bramblParams = await TransactionsServiceHelper.extractParamsAndAddAddressesToDb(
           bramblHelper,
           args
         );
+<<<<<<< HEAD
         for (var key in args.recipients) {
           args.recipients[key].assetCode = args.assetCode;
         }
@@ -141,6 +156,12 @@ class AssetTransactionService {
             return result;
           }
         });
+=======
+        return AssetTransactionService.assetTransferHelper(
+          bramblHelper,
+          bramblParams
+        );
+>>>>>>> bb64addcdb249958915f1bd8c40be6051024202f
       } else {
         throw stdError(
           404,
@@ -163,11 +184,11 @@ class AssetTransactionService {
       if (args.assetCode) {
         args.recipients = [[Constants.BURNER_ADDRESS, args.quantity]];
         args.minting = false;
-        args.address = bramblHelper.brambljs.keyManager.address;
-        args.addresses = await transactionsServiceHelper.addAddressesToDBFromTransaction(
+        const bramblParams = await TransactionsServiceHelper.extractParamsAndAddAddressesToDb(
           bramblHelper,
           args
         );
+<<<<<<< HEAD
         for (var key in args.recipients) {
           args.recipients[key].assetCode = args.assetCode;
         }
@@ -181,6 +202,12 @@ class AssetTransactionService {
             return result;
           }
         });
+=======
+        return AssetTransactionService.assetTransferHelper(
+          bramblHelper,
+          bramblParams
+        );
+>>>>>>> bb64addcdb249958915f1bd8c40be6051024202f
       } else {
         throw stdError(
           400,

@@ -1,9 +1,9 @@
 const BramblHelper = require("../../../lib/bramblHelper");
 const stdError = require("../../../core/standardError");
-const transactionsServiceHelper = require("./transactionsServiceHelper");
 const PolyTransfer = require("../../../modifier/transaction/polyTransfer");
 const TransferTransactionValidator = require("../../../modifier/transaction/transferTransactionValidator");
 const { getObjectDiff } = require("../../../util/extensions");
+const TransactionsServiceHelper = require("./transactionsServiceHelper");
 
 const serviceName = "polyTransaction";
 
@@ -52,7 +52,7 @@ class PolyTransactionService {
                 rpcResponse.messageToSign.result.rawTx.data
               );
               if (getObjectDiff(jsResponse, rawTransferTransaction)) {
-                return transactionsServiceHelper.signAndSendTransactionWithStateManagement(
+                return TransactionsServiceHelper.signAndSendTransactionWithStateManagement(
                   rpcResponse,
                   bramblHelper,
                   args
@@ -81,13 +81,13 @@ class PolyTransactionService {
     args.address = bramblHelper.brambljs.keyManager.address;
     if (bramblHelper) {
       // iterate through all sender, recipient, and change addresses, checking whether or not they are in the DB
-      args.addresses = await transactionsServiceHelper.addAddressesToDBFromTransaction(
+      const bramblParams = await TransactionsServiceHelper.extractParamsAndAddAddressesToDb(
         bramblHelper,
         args
       );
       return PolyTransactionService.polyTransactionHelper(
         bramblHelper,
-        args
+        bramblParams
       ).then(function(result) {
         if (result.error) {
           throw stdError(500, result.error, serviceName, serviceName);
