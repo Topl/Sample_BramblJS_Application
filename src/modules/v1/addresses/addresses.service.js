@@ -313,7 +313,7 @@ class AddressesService {
   static async getAddressesByUser(args) {
     try {
       const [fetchedUser, projects] = await Promise.all([
-        checkExists(UserModel, args.user_id),
+        checkExists(UserModel, args.user_id, "email"),
         paginateAddresses(args.user_id, args.page, args.limit)
       ]);
 
