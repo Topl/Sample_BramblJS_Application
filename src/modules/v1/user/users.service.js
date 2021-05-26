@@ -1,5 +1,5 @@
 const UserModel = require(`./user.model`);
-const save2db = require("../../../lib/saveToDatabase");
+const save2db = require("../../../lib/db/saveToDatabase");
 const stdErr = require(`../../../core/standardError`);
 const { checkExists } = require("../../../lib/validation");
 const mongoose = require("mongoose");

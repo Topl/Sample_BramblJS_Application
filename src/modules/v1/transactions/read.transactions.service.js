@@ -9,27 +9,16 @@ const serviceName = "readTransactions";
 
 class ReadTransactionService {
   static async getBalanceHelper(bramblHelper, args) {
-    let addressInfo;
-    if (bramblHelper.brambljs) {
-      addressInfo = await bramblHelper.getBoxesWithBrambl([args.address]);
-    } else {
-      addressInfo = await bramblHelper.getBoxesWithRequests([args.address]);
-    }
-    if (addressInfo.error) {
-      throw stdError(500, addressInfo.error, serviceName, serviceName);
-    }
     return AddressesService.updateAddressByAddress({
       name: args.name,
       addressId: args.address,
-      polyBalance: addressInfo.result[args.address].Balances.Polys,
-      polyBox: addressInfo.result[args.address].Boxes.PolyBox,
-      arbitBox: addressInfo.result[args.address].Boxes.ArbitBox,
-      assetBox: addressInfo.result[args.address].Boxes.AssetBox
+      network: args.network,
+      password: args.password
     }).then(function(result) {
       if (result.error) {
         throw stdError(500, result.error, serviceName, serviceName);
       } else {
-        return addressInfo;
+        return result;
       }
     });
   }

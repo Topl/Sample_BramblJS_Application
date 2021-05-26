@@ -34,7 +34,7 @@ class PolyTransfer extends TransferTransaction {
       // compute the amount of tokens to be sent to the recipients
       const amtToSpend = toReceive
         .map(r => {
-          return r[1];
+          return r[1].quantity;
         })
         .reduce((a, b) => +a + +b, 0);
 
@@ -74,13 +74,13 @@ class PolyTransfer extends TransferTransaction {
         changeAddress,
         {
           type: "Simple",
-          quantity: txInputState.polyBalance - +fee - amtToSpend
+          quantity: (txInputState.polyBalance - +fee - amtToSpend).toString()
         }
       ]
     ]
       .concat(toReceive)
       .filter(out => {
-        return out[1].quantity > 0;
+        return +out[1].quantity > 0;
       });
     obj.availableToSpend = availableToSpend;
     obj.inputs = inputs;

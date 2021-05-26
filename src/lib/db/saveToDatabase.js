@@ -1,4 +1,5 @@
-const stdErr = require("../core/standardError");
+const stdErr = require("../../core/standardError");
+const dbUtil = require("./dbUtil");
 
 async function commitWithRetry(session, _serviceName) {
   // eslint-disable-next-line no-constant-condition
@@ -54,32 +55,10 @@ const runTransactionWithRetry = async (_models, _session, _serviceName) => {
   }
 };
 
-module.exports = async (models, opts = {}) => {
+module.exports = async (inputModels, opts = {}) => {
   let obj = {};
-  const timestamp = opts.timestamp || Date.now();
-  const serviceName = opts.serviceName || "";
-  // start a transaction for the session that uses:
-  // - read concern "snapshot"
-  // - write concern "majority"
-  const session = opts.session;
-
-  // if given a single instance, convert to an array for standard handling
-  if (!Array.isArray(models)) {
-    models = [models];
-  }
-
-  models.filter(function(el) {
-    return el != null;
-  });
-
-  // update last modified date
-  models.map(model => (model.lastUpdated = timestamp));
-  //attempt to save to db, retrying on Transient transaction errors
   try {
-    session.startTransaction({
-      readConcern: { level: "snapshot" },
-      writeConcern: { w: "majority" }
-    });
+    const [models, session, serviceName] = dbUtil(inputModels, opts);
     return runTransactionWithRetry(models, session, serviceName);
   } catch (error) {
     console.error(error);

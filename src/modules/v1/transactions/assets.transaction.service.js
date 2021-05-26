@@ -65,8 +65,20 @@ class AssetTransactionService {
             ).then(function(result) {
               // delete boxes via the jsResponse
               for (const box of jsResponse.boxesToRemove) {
-                await 
+                BoxService.deleteBoxByNonce(box[1]).then(function(result) {
+                  if (result.error) {
+                    throw stdError(
+                      500,
+                      "App view out of sync",
+                      result.error,
+                      serviceName
+                    );
+                  } else {
+                    return result;
+                  }
+                });
               }
+              return result;
             });
           } else {
             throw stdError(

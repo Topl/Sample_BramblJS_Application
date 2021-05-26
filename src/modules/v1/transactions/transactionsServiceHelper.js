@@ -14,9 +14,7 @@ class TransactionServiceHelper {
       try {
         for (const address of args.addresses) {
           await checkExists(Address, address, "address").then(function(result) {
-            if (
-              result.error === "The given address could not be found in the db"
-            ) {
+            if (result.error === "address not found in db") {
               return AddressesService.create({
                 network: args.network,
                 password: args.password,
@@ -87,7 +85,8 @@ class TransactionServiceHelper {
             const internalObj = {};
             const internalArgs = {
               address: address,
-              network: args.network
+              network: args.network,
+              password: args.senderPasswords[0]
             };
             return ReadTransactionService.getBalanceHelper(
               bramblHelper,

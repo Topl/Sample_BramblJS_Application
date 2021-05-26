@@ -1,7 +1,6 @@
-const connections = require(`./connections`);
+const connections = require(`./db/connections`);
 const networkUrl = connections.networkUrl;
 const apiKey = connections.networkApiKey;
-const AddressesService = require("../modules/v1/addresses/addresses.service");
 const BramblJS = require("brambljs");
 const { flatten } = require("../util/extensions");
 
@@ -209,13 +208,21 @@ class BramblHelper {
       txObject.senderPasswords,
       txObject.network
     );
-    for (let i = 0; i < txObject.recipients.length; i++) {
-      const [address, quantity] = txObject.recipients[i];
-      formattedRecipients.push([address, quantity]);
-    }
-    txObject.recipients = formattedRecipients;
+    txObject.recipients.forEach(address => {
+      const recipientForBramblJS = [address[0], address[1].quantity];
+      formattedRecipients.push(recipientForBramblJS);
+    });
+
+    const params = {
+      propositionType: txObject.propositionType,
+      recipients: formattedRecipients,
+      fee: txObject.fee,
+      sender: txObject.sender,
+      changeAddress: txObject.changeAddress
+    };
+
     return self.brambljs.requests
-      .createRawPolyTransfer(txObject)
+      .createRawPolyTransfer(params)
       .then(function(result) {
         obj.messageToSign = result;
         return obj;
@@ -306,16 +313,14 @@ class BramblHelper {
       txObject.senderPasswords,
       txObject.network
     );
-    txObject.rawRecipients.forEach(address => {
-      for (var key in address) {
-        const recipientForBramblJS = [
-          key,
-          address[key].quantity,
-          address[key].securityRoot,
-          address[key].metadata
-        ];
-        formattedRecipients.push(recipientForBramblJS);
-      }
+    txObject.recipients.forEach(address => {
+      const recipientForBramblJS = [
+        address[0],
+        address[1].quantity,
+        address[1].securityRoot,
+        address[1].metadata
+      ];
+      formattedRecipients.push(recipientForBramblJS);
     });
     const temp = txObject.recipients;
     txObject.recipients = formattedRecipients;
@@ -415,11 +420,7 @@ class BramblHelper {
       // set transaction object
       let params = {
         propositionType: txObject.propositionType,
-        rawRecipients: txObject.recipients,
-        recipients: txObject.recipients.map(recipient => {
-          const [key, value] = flatten(Object.entries(recipient));
-          return flatten([key, Object.values(value)]);
-        }),
+        recipients: txObject.recipients,
         fee: txObject.fee,
         sender: txObject.sender.map(function(item) {
           return item[0];

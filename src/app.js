@@ -15,8 +15,8 @@ var rfs = require("rotating-file-stream");
 const addresses = require("./core/routes/addresses.route");
 const users = require("./core/routes/users.route");
 const network = require("./core/routes/network.route");
-const settings = require("./lib/mongoDBSettings");
-const connectDB = require("./lib/mongodb");
+const settings = require("./lib/db/mongoDBSettings");
+const connectDB = require("./lib/db/mongodb");
 
 // Initialization
 //-------------------------------------------------------------------------------------//

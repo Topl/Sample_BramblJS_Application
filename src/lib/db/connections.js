@@ -1,4 +1,4 @@
-const connections = require("../../config/connections.json");
+const connections = require("../../../config/connections.json");
 const networkType = connections.networks.connectApi;
 const network = connections.networks[networkType];
 const networkUrl = network.url;
