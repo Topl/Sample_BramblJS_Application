@@ -40,7 +40,7 @@ class BoxHelper {
       );
 
       const timestamp = new Date();
-      const bulkBoxUpdateResult = BoxService.bulkInsert(
+      const bulkBoxUpdateResult = await BoxService.bulkInsert(
         boxesToAdd.map(box =>
           BoxUtils.mapPolyBoxToModel(box, address, timestamp)
         ),

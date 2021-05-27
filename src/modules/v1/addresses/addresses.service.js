@@ -25,7 +25,11 @@ class AddressesService {
 
       // fetch information of user
       let fetchedUser = await checkExists(UserModel, args.userEmail, "email");
-      const [balances, keyfile] = await AddressesService.getBalancesForAddress(
+      const [
+        balances,
+        keyfile,
+        address
+      ] = await AddressesService.getBalancesForAddress(
         args.address,
         args.network,
         args.password
@@ -34,7 +38,7 @@ class AddressesService {
       let addressDoc = {
         name: args.name,
         user_id: args.userEmail,
-        address: args.address,
+        address: address,
         keyfile: keyfile,
         network: args.network,
         polyBalance: balances.polyBalance
@@ -59,7 +63,7 @@ class AddressesService {
           } else {
             // iterate through boxes and either add or update them in the DB
             if (balances.boxes) {
-              return BoxHelper.updateBoxes(balances.boxes, args.address).then(
+              return BoxHelper.updateBoxes(balances.boxes, address).then(
                 function(result) {
                   if (result.error) {
                     throw stdErr(
@@ -203,10 +207,13 @@ class AddressesService {
         args.addressId,
         args.network,
         args.password
-      );
+      ).catch(function(err) {
+        console.error(err);
+        return [false, false];
+      });
 
       // retrieve boxes. Only update the new boxes in the DB and for the address
-      if (balances.boxes) {
+      if (balances) {
         BoxHelper.updateBoxes(balances.boxes, fetchedAddress.address);
       }
 
@@ -218,9 +225,6 @@ class AddressesService {
 
       if (args.polyBalance) {
         fetchedAddress.polyBalance = args.polyBalance;
-      }
-      if (args.polyBox) {
-        fetchedAddress.polyBox = args.polyBox;
       }
 
       if (args.assetBox) {
@@ -406,7 +410,7 @@ class AddressesService {
         serviceName
       );
     }
-    return [balances, keyfile];
+    return [balances, keyfile, address];
   }
 }
 

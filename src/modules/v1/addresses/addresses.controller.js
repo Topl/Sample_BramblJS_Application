@@ -66,7 +66,7 @@ class AddressesController {
   static async apiGetAddressesByUser(req, res, next) {
     const handler = AddressesService.getAddressesByUser;
     const args = {
-      user_id: req.params.email,
+      user_id: req.body.user_id,
       page: parseInt(req.query.page) || 0,
       limit: parseInt(req.query.limit) || 20
     };

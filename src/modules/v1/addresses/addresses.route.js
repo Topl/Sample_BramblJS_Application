@@ -25,11 +25,11 @@ router.route("/").get(
   }),
   AddressesCtrl.apiGetAddresses
 );
-router.route("/users/:email").get(
+router.route("/users/").get(
   auth,
   checkSchema({
-    email: {
-      in: ["params"],
+    user_id: {
+      in: ["body"],
       optional: false,
       isEmail: true,
       errorMessage: "Please provide a valid email"
@@ -95,7 +95,7 @@ router.patch(
       in: ["body"],
       optional: true,
       isString: true,
-      errorMessage: "Please provide a valid Project name"
+      errorMessage: "Please provide a valid update body"
     }
   }),
   AddressesCtrl.apiUpdateAddressById

@@ -12,9 +12,9 @@ var path = require("path");
 var rfs = require("rotating-file-stream");
 
 // Internal Dependencies
-const addresses = require("./core/routes/addresses.route");
-const users = require("./core/routes/users.route");
-const network = require("./core/routes/network.route");
+const addresses = require("./modules/v1/addresses/addresses.route");
+const users = require("./modules/v1/user/users.route");
+const network = require("./modules/v1/network.route");
 const settings = require("./lib/db/mongoDBSettings");
 const connectDB = require("./lib/db/mongodb");
 
