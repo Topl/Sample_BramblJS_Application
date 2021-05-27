@@ -322,18 +322,25 @@ class BramblHelper {
       ];
       formattedRecipients.push(recipientForBramblJS);
     });
-    const temp = txObject.recipients;
-    txObject.recipients = formattedRecipients;
+    const params = {
+      propositionType: txObject.propositionType,
+      recipients: formattedRecipients,
+      fee: txObject.fee,
+      sender: txObject.ender,
+      changeAddress: txObject.changeAddress,
+      data: txObject.data,
+      consolidationAddress: txObject.consolidationAddress,
+      minting: txObject.minting,
+      assetCode: txObject.assetCode
+    };
     return self.brambljs.requests
-      .createRawAssetTransfer(txObject)
+      .createRawAssetTransfer(params)
       .then(function(result) {
-        txObject.recipients = temp;
         obj.messageToSign = result;
         return obj;
       })
       .catch(function(err) {
         console.error(err);
-        txObject.recipients = temp;
         obj.err = err.message;
         return obj;
       });
