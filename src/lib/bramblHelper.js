@@ -218,7 +218,8 @@ class BramblHelper {
       recipients: formattedRecipients,
       fee: txObject.fee,
       sender: txObject.sender,
-      changeAddress: txObject.changeAddress
+      changeAddress: txObject.changeAddress,
+      data: txObject.data
     };
 
     return self.brambljs.requests
@@ -228,6 +229,7 @@ class BramblHelper {
         return obj;
       })
       .catch(function(err) {
+        console.error(err);
         obj.error = err.message;
         return obj;
       });
