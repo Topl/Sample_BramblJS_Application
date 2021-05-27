@@ -28,12 +28,14 @@ class TransferTransactionValidator {
   }
 
   dataValidation() {
-    const dataBuffer = StringOps.getValidLatin1Bytes(this.tx.data);
-    if (!dataBuffer) {
-      return "Data not Latin-1 encoded";
-    }
-    if (Buffer.byteLength(dataBuffer) > 128) {
-      return "Data greater than 128 bytes";
+    if (this.tx.data) {
+      const dataBuffer = StringOps.getValidLatin1Bytes(this.tx.data);
+      if (!dataBuffer) {
+        return "Data not Latin-1 encoded";
+      }
+      if (Buffer.byteLength(dataBuffer) > 128) {
+        return "Data greater than 128 bytes";
+      }
     }
   }
 

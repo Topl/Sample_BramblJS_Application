@@ -1,3 +1,9 @@
+/**
+ * @author Sterling Wells (s.wells@topl.me)
+ * @version 1.0.0
+ * @date 2021.05.27
+ */
+
 const BramblHelper = require("../../../lib/bramblHelper");
 const stdError = require("../../../core/standardError");
 const PolyTransfer = require("../../../modifier/transaction/polyTransfer");
@@ -7,7 +13,17 @@ const TransactionsServiceHelper = require("./transactionsServiceHelper");
 
 const serviceName = "polyTransaction";
 
+/**
+ * @class
+ * @classdesc Poly Transaction Service used for Poly Transactions with the Topl Protocol.
+ */
 class PolyTransactionService {
+  /**
+   * Generates the raw poly transfer using the application view
+   * @param {object} args: arguments that are required in order to create the raw transaction. Those include the recipients, sender, changeAddress, fee, and data which are provided in the request
+   * @returns {object | Boolean} Returns a valid raw transaction, or faflse if a valid transaction is not possible.
+   * @memberof PolyTransactionService
+   */
   static async generateRawPolyTransfer(args) {
     return PolyTransfer.createRaw(
       args.recipients,
@@ -31,6 +47,14 @@ class PolyTransactionService {
     });
   }
 
+  /**
+   * Helper function for poly transfers
+   * @static
+   * @param {object} bramblHelper: Instance of the wrapper around the BramblJS library
+   * @param {object} args: Request parameters
+   * @returns {object} new poly transaction response from the network
+   * @memberof PolyTransactionService
+   */
   static async polyTransactionHelper(bramblHelper, args) {
     return bramblHelper
       .sendRawPolyTransaction(args)
@@ -71,6 +95,13 @@ class PolyTransactionService {
       });
   }
 
+  /**
+   * Main function for initiating a poly transfer
+   * @static
+   * @param {object} args: Request parameters
+   * @returns {object} returns the instance of the poly transfer transaction.
+   * @memberof PolyTransactionService
+   */
   static async polyTransaction(args) {
     const bramblHelper = new BramblHelper(
       false,

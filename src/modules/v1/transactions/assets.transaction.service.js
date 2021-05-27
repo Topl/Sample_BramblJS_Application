@@ -1,3 +1,9 @@
+/**
+ * @author Sterling Wells (s.wells@topl.me)
+ * @version 1.0.0
+ * @date 2021.05.27
+ */
+
 const BramblHelper = require("../../../lib/bramblHelper");
 const AssetTransfer = require("../../../modifier/transaction/assetTransfer");
 const TransferTransactionValidator = require("../../../modifier/transaction/transferTransactionValidator");
@@ -5,10 +11,13 @@ const stdError = require("../../../core/standardError");
 const Constants = require("../../../util/constants");
 const { getObjectDiff } = require("../../../util/extensions");
 const TransactionsServiceHelper = require("./transactionsServiceHelper");
-const BoxService = require("../state/box.service");
 
 const serviceName = "AssetTransaction";
 
+/**
+ * @class
+ * @classdesc Asset Transaction Service used for Asset Transactions with the Topl Protocol
+ */
 class AssetTransactionService {
   static async generateRawAssetTransfer(args, bramblHelper) {
     return AssetTransfer.createRaw(
@@ -37,6 +46,14 @@ class AssetTransactionService {
     });
   }
 
+  /**
+   * Helper function for asset transfers
+   * @static
+   * @param {object} bramblHelper instance
+   * @param {object} args request parameters
+   * @returns {object} new asset transaction response from the network
+   * @memberof AssetTransactionService
+   */
   static async assetTransferHelper(bramblHelper, args) {
     return bramblHelper
       .sendRawAssetTransaction(args)
@@ -62,24 +79,7 @@ class AssetTransactionService {
               rpcResponse,
               bramblHelper,
               args
-            ).then(function(result) {
-              // delete boxes via the jsResponse
-              for (const box of jsResponse.boxesToRemove) {
-                BoxService.deleteBoxByNonce(box[1]).then(function(result) {
-                  if (result.error) {
-                    throw stdError(
-                      500,
-                      "App view out of sync",
-                      result.error,
-                      serviceName
-                    );
-                  } else {
-                    return result;
-                  }
-                });
-              }
-              return result;
-            });
+            );
           } else {
             throw stdError(
               500,
@@ -92,6 +92,13 @@ class AssetTransactionService {
       });
   }
 
+  /**
+   * Main function for creating an asset
+   * @static
+   * @param {object} args: Request parameters
+   * @returns {object} returns the instance of the asset creation transaction
+   * @memberof AssetTransactionService
+   */
   static async createAsset(args) {
     const bramblHelper = new BramblHelper(
       false,
@@ -127,6 +134,12 @@ class AssetTransactionService {
     }
   }
 
+  /**
+   * Main function for updating an asset on the chain
+   * @param {object} args: request parameters used to format the JSON-RPC request
+   * @returns {object} new asset transaction response from the network
+   * @memberof AssetTransactionService
+   */
   static async updateAsset(args) {
     const bramblHelper = new BramblHelper(
       false,
@@ -157,6 +170,12 @@ class AssetTransactionService {
     }
   }
 
+  /**
+   * Main function for burning assets
+   * @param {object} args: Request parameters
+   * @returns {object} returns the instance of the asset creation transaction
+   * @memberof AssetTransactionService
+   */
   static async burnAsset(args) {
     const bramblHelper = new BramblHelper(
       false,
@@ -166,7 +185,9 @@ class AssetTransactionService {
     );
     if (bramblHelper) {
       if (args.assetCode) {
-        args.recipients = [[Constants.BURNER_ADDRESS, args.quantity]];
+        args.recipients = [
+          [Constants.BURNER_ADDRESS, { quantity: args.quantity }]
+        ];
         args.minting = false;
         const bramblParams = await TransactionsServiceHelper.extractParamsAndAddAddressesToDb(
           bramblHelper,

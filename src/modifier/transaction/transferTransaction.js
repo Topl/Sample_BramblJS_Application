@@ -24,10 +24,12 @@ class TransferTransaction {
     // Lookup boxes for the given sender addresses
     return asyncFlatMap(addresses, a => {
       return BoxReader.getTokenBoxes(a, bramblHelper).then(function(result) {
-        if (result.error) {
-          obj.error = result.error;
-          return obj;
-        }
+        result.forEach(box => {
+          if (box.error) {
+            obj.error = box.error;
+            return obj;
+          }
+        });
         if (result.length < 1) {
           obj.error = "No boxes found to fund transactions";
           return obj;
@@ -39,7 +41,7 @@ class TransferTransaction {
             value.boxType === "PolyBox" ||
             (value.boxType === "ArbitBox" && returnBoxes === "ArbitBox") ||
             (value.boxType === "AssetBox" &&
-              returnBoxes === "AssetBox" &&
+              returnBoxes === "Assets" &&
               assetCode === value.value.assetCode)
           );
         });

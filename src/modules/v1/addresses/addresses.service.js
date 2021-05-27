@@ -214,7 +214,7 @@ class AddressesService {
 
       // retrieve boxes. Only update the new boxes in the DB and for the address
       if (balances) {
-        BoxHelper.updateBoxes(balances.boxes, fetchedAddress.address);
+        await BoxHelper.updateBoxes(balances.boxes, fetchedAddress.address);
       }
 
       const timestamp = new Date();

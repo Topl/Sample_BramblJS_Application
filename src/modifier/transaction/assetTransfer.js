@@ -60,7 +60,7 @@ class AssetTransfer extends TransferTransaction {
       // compute the amount of tokens that will be sent to the recipient
       const amtToSpend = toReceive
         .map(r => {
-          return r[1];
+          return r[1].quantity;
         })
         .reduce((a, b) => +a + +b, 0);
 
@@ -118,10 +118,7 @@ class AssetTransfer extends TransferTransaction {
     // create the list of inputs and outputs (senderChangeOut and recipientOut)
     const inputs = assetBoxes
       .map(bx => {
-        return {
-          value: bx.address,
-          nonce: bx.nonce
-        };
+        return [bx.address, bx.nonce];
       })
       .concat(
         txInputState.senderBoxes
@@ -139,10 +136,7 @@ class AssetTransfer extends TransferTransaction {
           quantity: (txInputState.polyBalance - +fee).toString()
         }
       ],
-      [
-        consolidationAddress,
-        new AssetValue((availableToSpend - amtToSpend).toString(), assetCode)
-      ]
+      [consolidationAddress, new AssetValue(amtToSpend.toString(), assetCode)]
     ].concat(toReceive);
     obj.availableToSpend = availableToSpend;
     obj.inputs = inputs;

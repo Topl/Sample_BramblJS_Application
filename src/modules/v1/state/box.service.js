@@ -185,10 +185,10 @@ class BoxService {
                 fetchedBox.doc.markModified("isActive.status");
                 fetchedBox.doc.isActive.asOf = timestamp;
                 fetchedBox.doc.markModified("isActive.asOf");
-                const boxIndex = fetchedAddress.doc.boxes.findIndex(elem => {
-                  elem.equals(mongoose.Types.ObjectId(fetchedBox.doc._id));
-                });
-                fetchedAddress.doc.boxes.splice(boxIndex, 1);
+                Address.updateOne(
+                  { _id: fetchedAddress.doc._id },
+                  { $pullAll: { boxes: fetchedBox.doc._id } }
+                );
                 return save2db([fetchedAddress.doc, fetchedBox.doc], {
                   timestamp,
                   serviceName,

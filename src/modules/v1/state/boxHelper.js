@@ -36,7 +36,9 @@ class BoxHelper {
       );
 
       const boxesToRemove = fetchedBoxes.doc.filter(
-        box => !BoxUtils.doesBoxArrayContainNonce(boxes, box.nonce)
+        box =>
+          !BoxUtils.doesBoxArrayContainNonce(boxes, box.nonce) &&
+          box.isActive.status
       );
 
       const timestamp = new Date();

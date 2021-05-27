@@ -1,6 +1,5 @@
 const BoxService = require("../../modules/v1/state/box.service");
 const AddressService = require("../../modules/v1/addresses/addresses.service");
-const BoxModel = require("../../modules/v1/state/box.model");
 const { asyncFlatMap } = require("../../util/extensions");
 
 class BoxReader {
