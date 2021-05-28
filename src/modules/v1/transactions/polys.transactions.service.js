@@ -105,9 +105,9 @@ class PolyTransactionService {
   static async polyTransaction(args) {
     const bramblHelper = new BramblHelper(
       false,
-      args.password,
+      args.sender[0][1],
       args.network,
-      args.keyFilePath
+      args.sender[0][0]
     );
     if (bramblHelper) {
       // iterate through all sender, recipient, and change addresses, checking whether or not they are in the DB

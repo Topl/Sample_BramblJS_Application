@@ -4,12 +4,14 @@ const BoxModel = require("./box.model");
 const BoxUtils = require("../../../lib/boxes/boxUtils");
 const { checkExists, findAll } = require("../../../lib/validation");
 const stdError = require("../../../core/standardError");
+const mongoose = require("mongoose");
 
 const serviceName = "boxHelper";
 
 class BoxHelper {
   static async updateBoxes(boxes, address) {
     let obj = {};
+    const session = await mongoose.startSession();
     try {
       // fetch information for given address
       let fetchedBoxes = await checkExists(AddressModel, address, "address")
@@ -46,10 +48,13 @@ class BoxHelper {
         boxesToAdd.map(box =>
           BoxUtils.mapPolyBoxToModel(box, address, timestamp)
         ),
-        obj.address
+        obj.address,
+        session
       );
       for (const box of boxesToRemove) {
-        await BoxService.deleteBoxByNonce(box.nonce).catch(function(err) {
+        await BoxService.deleteBoxByNonce(box.nonce, session).catch(function(
+          err
+        ) {
           console.error(err);
           obj.error = err.message;
         });
@@ -58,6 +63,8 @@ class BoxHelper {
     } catch (error) {
       console.error(error);
       throw stdError(500, "Error updating boxes", error, serviceName);
+    } finally {
+      session.endSession();
     }
   }
 }

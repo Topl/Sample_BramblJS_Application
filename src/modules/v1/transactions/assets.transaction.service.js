@@ -58,6 +58,9 @@ class AssetTransactionService {
     return bramblHelper
       .sendRawAssetTransaction(args)
       .then(function(rpcResponse) {
+        if (rpcResponse.err) {
+          throw stdError(403, rpcResponse.error, serviceName, serviceName);
+        }
         return AssetTransactionService.generateRawAssetTransfer(
           args,
           bramblHelper
@@ -102,9 +105,9 @@ class AssetTransactionService {
   static async createAsset(args) {
     const bramblHelper = new BramblHelper(
       false,
-      args.password,
+      args.sender[0][1],
       args.network,
-      args.keyFilePath
+      args.sender[0][0]
     );
     args.address = bramblHelper.brambljs.keyManager.address;
     if (bramblHelper) {
@@ -143,9 +146,9 @@ class AssetTransactionService {
   static async updateAsset(args) {
     const bramblHelper = new BramblHelper(
       false,
-      args.password,
+      args.sender[0][1],
       args.network,
-      args.keyFilePath
+      args.sender[0][0]
     );
     if (bramblHelper) {
       if (args.assetCode) {
@@ -179,9 +182,9 @@ class AssetTransactionService {
   static async burnAsset(args) {
     const bramblHelper = new BramblHelper(
       false,
-      args.password,
+      args.sender[0][1],
       args.network,
-      args.keyFilePath
+      args.sender[0][0]
     );
     if (bramblHelper) {
       if (args.assetCode) {
