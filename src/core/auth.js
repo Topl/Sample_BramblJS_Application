@@ -2,6 +2,10 @@ const User = require("../modules/v1/user/user.model");
 const { checkExists } = require("../lib/validation");
 
 module.exports = async (req, res, next) => {
+  // Checking that user_id was sent
+  if (!req.body("user_id")) {
+    return res.status(401).json({ errors: [{ msg: "User Id is missing." }] });
+  }
   try {
     const userId = req.body.user_id;
     const fetchedUser = await checkExists(User, userId, "email");

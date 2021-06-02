@@ -22,4 +22,6 @@ services:
             - "9085:9085"
             - "9084:9084"
         restart: always
+        volumes: 
+          - ~/data/docker/bifrost:/root/.bifrost
 

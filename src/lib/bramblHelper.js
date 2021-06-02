@@ -32,6 +32,8 @@ class BramblHelper {
       const a = self.brambljs.keyManager.address;
       const kf = self.brambljs.keyManager.getKeyStorage();
 
+      self.brambljs.keyManager.exportToFile(`private_keyfiles/`);
+
       const Address = {
         address: a,
         keyfile: kf
