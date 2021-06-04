@@ -1,0 +1,18 @@
+{
+    "plugins": [],
+    "templates": {
+        "cleverLinks": true,
+        "monospaceLinks": false
+    },
+    "source": {
+        "include": ["./src"],
+        "includePattern": ".+\\.js(doc|x)?$",
+        "excludePattern": "(^|\\/|\\\\)_"
+    },
+    "opts": {
+        "readme": "./README.md",
+        "changelog": "./CHANGELOG.md",
+        "destination": "./docs",
+        "recurse": true
+    }
+}

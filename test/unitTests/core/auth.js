@@ -1,14 +1,12 @@
 /* eslint-disable no-undef */
 const User = require("../../../src/modules/v1/user/user.model");
 const MockUser = require("../../mockData/mockUser");
-const mongoose = require("mongoose");
-const Db = require("mongodb").Db;
 const chai = require("chai");
 const expect = chai.expect;
 const sinon = require("sinon");
 const sandbox = sinon.createSandbox();
+const mongoose = require("mongoose");
 const authorizationMiddleware = require("../../../src/core/auth");
-const connectMockDb = require("../../lib/testMongoDb");
 
 describe("Core: Auth middleware", function () {
     let mockRequest;
@@ -17,7 +15,7 @@ describe("Core: Auth middleware", function () {
     let nextFunctionStub = sandbox.stub();
     let bodyStub;
     before(function () {
-        connectMockDb();
+        this.timeout(120000);
         let responseStub = sandbox.stub().callsFake(() => {
             return {
                 status: sandbox.stub().returnsThis(),
@@ -29,8 +27,9 @@ describe("Core: Auth middleware", function () {
             status: responseStub,
         };
     });
-    afterEach(function () {
+    afterEach(function (done) {
         sandbox.restore();
+        mongoose.disconnect(done);
     });
     it("It should return 401 status when there is no email", function () {
         bodyStub = sandbox.stub().returns("");

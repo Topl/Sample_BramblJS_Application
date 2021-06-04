@@ -1,5 +1,5 @@
 {
-    "mongoURI": "mongodb://localhost:27017/data", 
-    "port": 8082,
-    "bifrostPort": 9085
+    "localMongoURI": "mongodb://localhost:27017/data", 
+    "dockerMongoURI": "mongodb://my-mongo-container_name:27017:data?socketTimeoutMS=120000",
+    "port": 8082
 }

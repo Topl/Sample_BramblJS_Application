@@ -1,14 +1,14 @@
 /* eslint-disable no-console */
 
 const glob = require("glob");
-const mongoose = require("mongoose");
 const settings = require("./mongoDBSettings");
+const mongoose = require("mongoose");
 
 const clientOption = {
     useNewUrlParser: true,
     useCreateIndex: true,
     useFindAndModify: false,
-    useUnifiedTopology: true,
+    useUnifiedTopology: false,
 };
 
 const uri = settings.mongoURI;
@@ -16,9 +16,9 @@ const uri = settings.mongoURI;
 // search for all models defined in modules and create the needed collections
 // this is required for atomic transactions
 const ensureCollections = async () => {
-    glob.sync("**/*.model.js", { cwd: `${process.cwd()}/src/modules` })
-        .map((filename) => require(`../../modules/${filename}`))
-        .forEach((model) => model.createCollection());
+    glob.sync("**/*.model.js", { cwd: `${process.cwd()}/src/modules` }).map((filename) =>
+        require(`../../modules/${filename}`)
+    );
 };
 
 var connectWithRetry = function () {
@@ -30,45 +30,30 @@ var connectWithRetry = function () {
     });
 };
 
-async function doesCollectionExist(collectionName) {
-    let obj = {};
-    return connectionIsUp().then(function (result) {
-        if (result) {
-            try {
-                const collectionsQueryResult = mongoose.connection.db.listCollections({
-                    name: collectionName,
-                });
-                if (collectionsQueryResult) {
-                    obj.result = true;
-                    console.log(`Collection ${collectionName} found`);
-                    return obj;
-                } else {
-                    console.error(`Collection ${collectionName} not found`);
-                    obj.error = "Collection not found";
-                    return obj;
-                }
-            } catch (error) {
-                console.error(error);
-                obj.error = error;
-                return obj;
-            }
-        } else {
-            console.error("Sample BramblJS Application is not connected to the DB. Please try again later");
-            obj.error = "Sample BramblJS Application is not connected to the DB. Please try again later";
-            return obj;
+function waitForMongooseConnection() {
+    return new Promise((resolve) => {
+        const connection = mongoose.connection;
+        if (connection.readyState === 1) {
+            resolve();
+            return;
         }
+        console.log("Mongoose connection is not ready. Waiting for open or reconnect event.");
+        let resolved = false;
+        const setResolved = () => {
+            console.log("Mongoose connection became ready. Promise already resolved");
+            if (!resolved) {
+                console.log("resolving waitForMongooseConnection");
+                resolved = true;
+                resolve();
+            }
+        };
+        connection.once("open", setResolved);
+        connection.once("reconnect", setResolved);
     });
 }
 
-async function connectionIsUp() {
-    try {
-        return mongoose.connection.readyState === 1;
-    } catch (err) {
-        return false;
-    }
-}
-
 module.exports = async () => {
+    mongoose.set("debug", true);
     connectWithRetry();
 
     await mongoose.connection.on("connected", function () {
@@ -89,5 +74,4 @@ module.exports = async () => {
     });
 };
 
-module.exports.connectionIsUp = connectionIsUp;
-module.exports.doesCollectionExist = doesCollectionExist;
+module.exports.waitForMongooseConnection = waitForMongooseConnection;
