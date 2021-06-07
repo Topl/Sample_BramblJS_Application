@@ -24,8 +24,8 @@ class ReadTransactionService {
       polyBalance: addressInfo.result[args.address].Balances.Polys,
       polyBox: addressInfo.result[args.address].Boxes.PolyBox,
       arbitBox: addressInfo.result[args.address].Boxes.ArbitBox,
-      assetBox: addressInfo.result[args.address].Boxes.AssetBox
-    }).then(function(result) {
+      assetBox: addressInfo.result[args.address].Boxes.AssetBox,
+    }).then(function (result) {
       if (result.error) {
         throw stdError(500, result.error, serviceName, serviceName);
       } else {
@@ -47,7 +47,7 @@ class ReadTransactionService {
     } else {
       // check if address exists in the db
       return checkExistsByAddress(Address, address) // eslint-disable-next-line no-unused-vars
-        .then(function(result) {
+        .then(function (result) {
           // if the address is not in the db, add to the db
           if (result.error) {
             return (
@@ -56,17 +56,17 @@ class ReadTransactionService {
                 password: args.password,
                 name: args.name,
                 userEmail: args.userEmail,
-                address: args.address
+                address: args.address,
                 // eslint-disable-next-line no-unused-vars
               })
                 // eslint-disable-next-line no-unused-vars
-                .then(function(result) {
+                .then(function (result) {
                   return ReadTransactionService.getBalanceHelper(
                     bramblHelper,
                     args
                   );
                 })
-                .catch(function(err) {
+                .catch(function (err) {
                   console.error(err);
                   throw stdError(
                     400,

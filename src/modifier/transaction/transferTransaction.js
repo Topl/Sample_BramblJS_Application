@@ -17,13 +17,13 @@ class TransferTransaction {
   static async getSenderBoxesForRawTransaction(
     addresses,
     returnBoxes,
-    assetCode
+    assetCode,
+    bramblHelper
   ) {
     let obj = {};
     // Lookup boxes for the given sender addresses
-    return asyncFlatMap(addresses, a => {
-      return BoxReader.getTokenBoxes(a).then(function(result) {
-        // Throw an error if there are no boxes.
+    return asyncFlatMap(addresses, (a) => {
+      return BoxReader.getTokenBoxes(a, bramblHelper).then(function (result) {
         if (result.error) {
           obj.error = result.error;
           return obj;
@@ -32,7 +32,7 @@ class TransferTransaction {
           obj.error = "No boxes found to fund transactions";
           return obj;
         }
-        return result.filter(value => {
+        return result.filter((value) => {
           // implement grouping
           // always get polys since this is how fees are paid
           return (
@@ -51,26 +51,29 @@ class TransferTransaction {
     senders,
     fee,
     txType,
-    assetCode
+    assetCode,
+    bramblHelper
   ) {
     let obj = {};
     // Lookup boxes for the given senders
-    const senderBoxes = await TransferTransaction.getSenderBoxesForRawTransaction(
-      senders,
-      txType,
-      assetCode
-    ).then(function(result) {
-      if (result.error) {
-        obj.error = result.error;
-        return obj;
-      } else {
-        return result;
-      }
-    });
+    const senderBoxes =
+      await TransferTransaction.getSenderBoxesForRawTransaction(
+        senders,
+        txType,
+        assetCode,
+        bramblHelper
+      ).then(function (result) {
+        if (result.error) {
+          obj.error = result.error;
+          return obj;
+        } else {
+          return result;
+        }
+      });
 
     const errors = [];
 
-    senderBoxes.map(box => {
+    senderBoxes.map((box) => {
       if (box.error) errors.push(box.error);
     });
 
@@ -78,8 +81,8 @@ class TransferTransaction {
     // make sure there are no errors
     if (errors.length < 1) {
       const polyBalance = senderBoxes
-        .filter(s => s.boxType === "PolyBox")
-        .map(s => s.value.quantity)
+        .filter((s) => s.boxType === "PolyBox")
+        .map((s) => s.value.quantity)
         .reduce((a, b) => +a + +b, 0);
 
       // ensure there are enough polys to pay the fee
@@ -94,7 +97,7 @@ class TransferTransaction {
   }
 }
 
-TransferTransaction.prototype.equals = function(o) {
+TransferTransaction.prototype.equals = function (o) {
   return (
     this.from === o.from &&
     this.to === o.to &&

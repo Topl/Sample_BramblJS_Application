@@ -16,7 +16,7 @@ class UsersService {
       userInfo.lastUpdated = timestamp;
       userInfo.isActive = {
         status: true,
-        asOf: timestamp
+        asOf: timestamp,
       };
 
       const newUser = new UserModel(userInfo);
@@ -42,7 +42,7 @@ class UsersService {
       // Access Control
       const [isAdmin, fetchedUser] = await Promise.all([
         UsersService.checkAdmin(args.userEmail),
-        checkExists(UserModel, args.requestedEmail, { serviceName })
+        checkExists(UserModel, args.requestedEmail, { serviceName }),
       ]);
       if (!isAdmin && !(args.requestedEmail === args.userEmail)) {
         throw stdErr(403, "Not Authorized", serviceName, serviceName);
@@ -63,7 +63,7 @@ class UsersService {
     try {
       const [isAdmin, fetchedUser] = await Promise.all([
         UsersService.checkAdmin(userObj.userEmail),
-        checkExists(UserModel, userObj.requestedEmail, { serviceName })
+        checkExists(UserModel, userObj.requestedEmail, { serviceName }),
       ]);
 
       // check for active user
@@ -91,11 +91,11 @@ class UsersService {
       fetchedUser.doc.isActive.status = false;
       fetchedUser.doc.isActive.asOf = timestamp;
       fetchedUser.doc.lastUpdated = timestamp;
-      fetchedUser.markModified("isActive.status");
-      fetchedUser.markModified("isActive.asOf");
+      fetchedUser.doc.markModified("isActive.status");
+      fetchedUser.doc.markModified("isActive.asOf");
 
-      await save2db(fetchedUser, { timestamp, serviceName, session }).catch(
-        function(err) {
+      await save2db(fetchedUser.doc, { timestamp, serviceName, session }).catch(
+        function (err) {
           console.error(err);
           throw stdError(500, err, serviceName, serviceName);
         }
@@ -112,7 +112,7 @@ class UsersService {
       // Access Control
       const [isAdmin, fetchedUser] = await Promise.all([
         UsersService.checkAdmin(userObj.user_id),
-        checkExists(UserModel, userObj.changeEmail, { serviceName })
+        checkExists(UserModel, userObj.changeEmail, { serviceName }),
       ]);
 
       if (!isAdmin && !(userObj.userEmail === userObj.changeEmail)) {
@@ -127,19 +127,19 @@ class UsersService {
 
       // Apply updates
       if (userObj.newEmail) {
-        fetchedUser.email = userObj.newEmail;
+        fetchedUser.doc.email = userObj.newEmail;
       }
 
       if (userObj.firstName) {
-        fetchedUser.firstName = userObj.firstName;
+        fetchedUser.doc.firstName = userObj.firstName;
       }
 
       if (userObj.lastName) {
-        fetchedUser.lastName = userObj.lastName;
+        fetchedUser.doc.lastName = userObj.lastName;
       }
 
-      await save2db(fetchedUser, { timestamp, serviceName, session });
-      return fetchedUser.toJSON();
+      await save2db(fetchedUser.doc, { timestamp, serviceName, session });
+      return fetchedUser.doc.toJSON();
     } catch (err) {
       throw err;
     } finally {

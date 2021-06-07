@@ -179,7 +179,7 @@ class AddressesService {
     // check if the address exists in the db
     const fetchedAddress = await checkExistsById(Address, args.addressId)
       .then(function(result) {
-        if (!result.isActive.status) {
+        if (!result.doc.isActive.status) {
           throw stdErr(
             404,
             "No Active Address Found",
@@ -187,9 +187,11 @@ class AddressesService {
             serviceName
           );
         }
+        return result.doc;
       })
       // eslint-disable-next-line no-unused-vars
       .catch(function(err) {
+        console.error(err);
         throw stdErr(
           500,
           "Unable to update address by ID",
@@ -197,7 +199,7 @@ class AddressesService {
           serviceName
         );
       });
-    return this.updateAddress(args, fetchedAddress);
+    return AddressesService.updateAddress(args, fetchedAddress);
   }
 
   static async updateAddress(args, fetchedAddress) {
@@ -375,11 +377,11 @@ class AddressesService {
 
       const fetchedAddress = await checkExistsById(Address, args.addressId);
 
-      if (!fetchedAddress.isActive.status) {
+      if (!fetchedAddress.doc.isActive.status) {
         throw stdErr(404, "No Active Address", serviceName, serviceName);
       }
 
-      return fetchedAddress;
+      return fetchedAddress.doc;
     } catch (err) {
       throw err;
     }

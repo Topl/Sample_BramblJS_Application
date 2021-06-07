@@ -1,7 +1,6 @@
 const connections = require(`./connections`);
 const networkUrl = connections.networkUrl;
 const apiKey = connections.networkApiKey;
-const AddressesService = require("../modules/v1/addresses/addresses.service");
 const BramblJS = require("brambljs");
 
 class BramblHelper {
@@ -11,12 +10,12 @@ class BramblHelper {
         networkPrefix: network, // applies to both Requests and KeyManager
         Requests: {
           url: `${networkUrl}`,
-          apiKey: `${apiKey}`
+          apiKey: `${apiKey}`,
         },
         KeyManager: {
           password: password,
-          keyPath: keyfilePath ? `private_keyfiles/${keyfilePath}` : ""
-        }
+          keyPath: keyfilePath ? `private_keyfiles/${keyfilePath}.json` : "",
+        },
       });
     } else {
       this.requests = BramblJS.Requests(network, networkUrl, apiKey);
@@ -29,13 +28,13 @@ class BramblHelper {
    */
   async createAddress() {
     const self = this;
-    return new Promise(resolve => {
+    return new Promise((resolve) => {
       const a = self.brambljs.keyManager.address;
       const kf = self.brambljs.keyManager.getKeyStorage();
 
       const Address = {
         address: a,
-        keyfile: kf
+        keyfile: kf,
       };
       resolve(Address);
     });
@@ -51,9 +50,9 @@ class BramblHelper {
     let self = this;
     let e = await this.requests
       .lookupBalancesByAddresses({
-        addresses: [address]
+        addresses: [address],
       })
-      .then(function(result) {
+      .then(function (result) {
         try {
           return self.generateBoxes(obj, result, address);
         } catch (err) {
@@ -62,7 +61,7 @@ class BramblHelper {
           return obj;
         }
       })
-      .catch(function(err) {
+      .catch(function (err) {
         return (obj.error = err.message);
       });
     return e;
@@ -94,12 +93,13 @@ class BramblHelper {
     let self = this;
     return this.brambljs.requests
       .lookupBalancesByAddresses({
-        addresses: [address]
+        addresses: [address],
       })
-      .then(function(result) {
+      .then(function (result) {
         return self.generateBoxes(obj, result, address);
       })
-      .catch(function(err) {
+      .catch(function (err) {
+        console.error(err);
         obj.error = err.message;
         return obj;
       });
@@ -113,11 +113,11 @@ class BramblHelper {
     let obj = {};
     let e = await this.requests
       .getLatestBlock()
-      .then(function(result) {
+      .then(function (result) {
         obj.blockHeight = result.result.height;
         return obj;
       })
-      .catch(function(err) {
+      .catch(function (err) {
         return (obj.error = err.message);
       });
     return e;
@@ -132,13 +132,13 @@ class BramblHelper {
     let obj = {};
     return await this.requests
       .getTransactionFromMempool({
-        transactionId: transactionId
+        transactionId: transactionId,
       })
-      .then(function(result) {
+      .then(function (result) {
         obj = result;
         return obj;
       })
-      .catch(function(err) {
+      .catch(function (err) {
         console.error(err);
         obj.error = err.message;
         return obj;
@@ -154,13 +154,13 @@ class BramblHelper {
     let obj = {};
     return await this.requests
       .getTransactionById({
-        transactionId: transactionId
+        transactionId: transactionId,
       })
-      .then(function(result) {
+      .then(function (result) {
         obj.transaction = result;
         return obj;
       })
-      .catch(function(err) {
+      .catch(function (err) {
         console.error(err);
         obj.error = err.message;
         return obj;
@@ -180,13 +180,13 @@ class BramblHelper {
     }
     return await this.requests
       .getBlockByHeight({
-        height: parseInt(blockNumber)
+        height: parseInt(blockNumber),
       })
-      .then(function(result) {
+      .then(function (result) {
         obj = result;
         return obj;
       })
-      .catch(err => {
+      .catch((err) => {
         obj.error = err.message;
         return obj;
       });
@@ -207,18 +207,28 @@ class BramblHelper {
       txObject.senderPasswords,
       txObject.network
     );
-    for (let i = 0; i < txObject.recipients.length; i++) {
-      const [address, quantity] = txObject.recipients[i];
-      formattedRecipients.push([address, quantity]);
-    }
-    txObject.recipients = formattedRecipients;
+    txObject.recipients.forEach((address) => {
+      const recipientForBramblJS = [address[0], address[1].quantity];
+      formattedRecipients.push(recipientForBramblJS);
+    });
+
+    const params = {
+      propositionType: txObject.propositionType,
+      recipients: formattedRecipients,
+      fee: txObject.fee,
+      sender: txObject.sender,
+      changeAddress: txObject.changeAddress,
+      data: txObject.data,
+    };
+
     return self.brambljs.requests
-      .createRawPolyTransfer(txObject)
-      .then(function(result) {
+      .createRawPolyTransfer(params)
+      .then(function (result) {
         obj.messageToSign = result;
         return obj;
       })
-      .catch(function(err) {
+      .catch(function (err) {
+        console.error(err);
         obj.error = err.message;
         return obj;
       });
@@ -233,9 +243,9 @@ class BramblHelper {
     let data = {};
     return this.brambljs.requests
       .lookupBalancesByAddresses({
-        addresses: addresses
+        addresses: addresses,
       })
-      .catch(function(error) {
+      .catch(function (error) {
         data.error = error.message;
         return data;
       });
@@ -250,9 +260,9 @@ class BramblHelper {
     let data = {};
     return this.requests
       .lookupBalancesByAddresses({
-        addresses: addresses
+        addresses: addresses,
       })
-      .catch(function(error) {
+      .catch(function (error) {
         data.error = error.message;
         return data;
       });
@@ -273,7 +283,7 @@ class BramblHelper {
   async checkPolyBalances(senders, fee) {
     let obj = {};
     obj.polyBalance = senders
-      .map(s => {
+      .map((s) => {
         if (this.brambljs) {
           this.getBalanceWithBrambl(s);
         } else {
@@ -304,30 +314,30 @@ class BramblHelper {
       txObject.senderPasswords,
       txObject.network
     );
-    for (var key in txObject.recipients) {
-      const recipientForBramblJS = [
-        key,
-        txObject.recipients[key].quantity,
-        txObject.recipients[key].securityRoot,
-        txObject.recipients[key].metadata
-      ];
-      formattedRecipients.push(recipientForBramblJS);
-    }
+    txObject.rawRecipients.forEach((address) => {
+      for (var key in address) {
+        const recipientForBramblJS = [
+          key,
+          address[key].quantity,
+          address[key].securityRoot,
+          address[key].metadata,
+        ];
+        formattedRecipients.push(recipientForBramblJS);
+      }
+    });
+    const temp = txObject.recipients;
     txObject.recipients = formattedRecipients;
     return self.brambljs.requests
       .createRawAssetTransfer(txObject)
-      .then(function(result) {
+      .then(function (result) {
+        txObject.recipients = temp;
         obj.messageToSign = result;
         return obj;
       })
-      .catch(function(err) {
+      .catch(function (err) {
         console.error(err);
+        txObject.recipients = temp;
         obj.err = err.message;
-        return obj;
-      })
-      .catch(function(err) {
-        console.error(err);
-        obj.error = err.message;
         return obj;
       });
   }
@@ -335,12 +345,12 @@ class BramblHelper {
   async signAndSendTransaction(txObject) {
     let obj = {};
     let self = this;
-    return this.signTransaction(txObject).then(function(value) {
+    return this.signTransaction(txObject).then(function (value) {
       if (value.error) {
         obj.error = value.error;
         return obj;
       } else {
-        return self.sendSignedTransaction(value).then(function(value) {
+        return self.sendSignedTransaction(value).then(function (value) {
           if (value.error) {
             obj.error = value.error;
             return obj;
@@ -362,7 +372,7 @@ class BramblHelper {
     let self = this;
     return await self.brambljs
       .addSigToTx(txObject.messageToSign.result, txObject.keys)
-      .catch(function(err) {
+      .catch(function (err) {
         console.error(err);
         obj.error = err.message;
         return obj;
@@ -375,11 +385,11 @@ class BramblHelper {
     return new Promise((resolve, reject) => {
       let e = self.brambljs.requests
         .broadcastTx({ tx: signedTransactionData })
-        .then(function(result) {
+        .then(function (result) {
           obj.txId = result.result.txId;
           resolve(obj);
         })
-        .catch(function(err) {
+        .catch(function (err) {
           console.error(err);
           obj.error = err.message;
           reject(err);
@@ -400,7 +410,7 @@ class BramblHelper {
           BramblJS.KeyManager({
             networkPrefix: networkPrefix,
             password: sendersPasswords[i],
-            keyPath: `private_keyfiles/${senders[i]}.json`
+            keyPath: `private_keyfiles/${senders[i]}.json`,
           })
         );
       }
@@ -409,28 +419,16 @@ class BramblHelper {
   }
 
   async verifyRawTransactionData(txObject) {
-    var networkPrefix = txObject.network;
-    return new Promise(resolve => {
-      const getCurrentFees = () => {
-        let fees = {
-          valhalla: 100,
-          toplnet: 1000000000,
-          local: 0,
-          private: 100
-        };
-        return fees;
-      };
-
-      let fees = getCurrentFees();
+    return new Promise((resolve) => {
       // set transaction object
       let params = {
         propositionType: txObject.propositionType,
         recipients: txObject.recipients,
-        fee: fees[networkPrefix],
-        sender: txObject.sender.map(function(item) {
+        fee: txObject.fee,
+        sender: txObject.sender.map(function (item) {
           return item[0];
         }),
-        senderPasswords: txObject.sender.map(function(item) {
+        senderPasswords: txObject.sender.map(function (item) {
           return item[1];
         }),
         changeAddress: txObject.changeAddress,
@@ -438,7 +436,7 @@ class BramblHelper {
         consolidationAddress: txObject.consolidationAddress,
         minting: txObject.minting,
         assetCode: txObject.assetCode ? txObject.assetCode : null,
-        network: txObject.network
+        network: txObject.network,
       };
       resolve(params);
     });
