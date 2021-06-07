@@ -207,18 +207,28 @@ class BramblHelper {
       txObject.senderPasswords,
       txObject.network
     );
-    for (let i = 0; i < txObject.recipients.length; i++) {
-      const [address, quantity] = txObject.recipients[i];
-      formattedRecipients.push([address, quantity]);
-    }
-    txObject.recipients = formattedRecipients;
+    txObject.recipients.forEach((address) => {
+      const recipientForBramblJS = [address[0], address[1].quantity];
+      formattedRecipients.push(recipientForBramblJS);
+    });
+
+    const params = {
+      propositionType: txObject.propositionType,
+      recipients: formattedRecipients,
+      fee: txObject.fee,
+      sender: txObject.sender,
+      changeAddress: txObject.changeAddress,
+      data: txObject.data,
+    };
+
     return self.brambljs.requests
-      .createRawPolyTransfer(txObject)
+      .createRawPolyTransfer(params)
       .then(function (result) {
         obj.messageToSign = result;
         return obj;
       })
       .catch(function (err) {
+        console.error(err);
         obj.error = err.message;
         return obj;
       });
