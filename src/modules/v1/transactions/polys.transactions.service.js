@@ -31,6 +31,14 @@ class PolyTransactionService {
     });
   }
 
+  /**
+   * Helper function for poly transfers
+   * @static
+   * @param {object} bramblHelper: Instance of the wrapper around the BramblJS library
+   * @param {object} args: Request parameters
+   * @returns {object} new poly transaction response from the network
+   * @memberof PolyTransactionService
+   */
   static async polyTransactionHelper(bramblHelper, args) {
     return bramblHelper
       .sendRawPolyTransaction(args)
@@ -71,12 +79,19 @@ class PolyTransactionService {
       });
   }
 
+  /**
+   * Main function for initiating a poly transfer
+   * @static
+   * @param {object} args: Request parameters
+   * @returns {object} returns the instance of the poly transfer transaction.
+   * @memberof PolyTransactionService
+   */
   static async polyTransaction(args) {
     const bramblHelper = new BramblHelper(
       false,
-      args.password,
+      args.sender[0][1],
       args.network,
-      args.keyFilePath
+      args.sender[0][0]
     );
     if (bramblHelper) {
       // iterate through all sender, recipient, and change addresses, checking whether or not they are in the DB

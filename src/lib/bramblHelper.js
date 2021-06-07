@@ -1,9 +1,7 @@
 const connections = require(`./connections`);
 const networkUrl = connections.networkUrl;
 const apiKey = connections.networkApiKey;
-const AddressesService = require("../modules/v1/addresses/addresses.service");
 const BramblJS = require("brambljs");
-const { flatten } = require("../util/extensions");
 
 class BramblHelper {
   constructor(readOnly, password, network, keyfilePath) {
@@ -16,7 +14,7 @@ class BramblHelper {
         },
         KeyManager: {
           password: password,
-          keyPath: keyfilePath ? `private_keyfiles/${keyfilePath}` : "",
+          keyPath: keyfilePath ? `private_keyfiles/${keyfilePath}.json` : "",
         },
       });
     } else {
