@@ -15,7 +15,7 @@ class PolyTransactionService {
       args.changeAddress,
       args.fee,
       args.data
-    ).then(function(value) {
+    ).then(function (value) {
       if (value.error) {
         return value;
       } else {
@@ -34,12 +34,12 @@ class PolyTransactionService {
   static async polyTransactionHelper(bramblHelper, args) {
     return bramblHelper
       .sendRawPolyTransaction(args)
-      .then(function(rpcResponse) {
+      .then(function (rpcResponse) {
         if (rpcResponse.error) {
           return rpcResponse;
         } else {
           return PolyTransactionService.generateRawPolyTransfer(args).then(
-            function(jsResponse) {
+            function (jsResponse) {
               if (jsResponse.error) {
                 return jsResponse;
               }
@@ -80,14 +80,15 @@ class PolyTransactionService {
     );
     if (bramblHelper) {
       // iterate through all sender, recipient, and change addresses, checking whether or not they are in the DB
-      const bramblParams = await TransactionsServiceHelper.extractParamsAndAddAddressesToDb(
-        bramblHelper,
-        args
-      );
+      const bramblParams =
+        await TransactionsServiceHelper.extractParamsAndAddAddressesToDb(
+          bramblHelper,
+          args
+        );
       return PolyTransactionService.polyTransactionHelper(
         bramblHelper,
         bramblParams
-      ).then(function(result) {
+      ).then(function (result) {
         if (result.error) {
           throw stdError(500, result.error, serviceName, serviceName);
         } else {

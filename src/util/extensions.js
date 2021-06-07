@@ -76,5 +76,5 @@ module.exports = {
   flatMap,
   flatten,
   getObjectDiff,
-  StringOps
+  StringOps,
 };

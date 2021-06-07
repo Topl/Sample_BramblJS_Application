@@ -13,7 +13,7 @@ class TransactionServiceHelper {
     if (bramblHelper) {
       try {
         for (const address of args.addresses) {
-          await checkExistsByAddress(Address, address).then(function(result) {
+          await checkExistsByAddress(Address, address).then(function (result) {
             if (
               result.error === "The given address could not be found in the db"
             ) {
@@ -22,7 +22,7 @@ class TransactionServiceHelper {
                 password: args.password,
                 name: args.name,
                 userEmail: args.userEmail,
-                address: address
+                address: address,
               });
             }
           });
@@ -55,13 +55,13 @@ class TransactionServiceHelper {
     const bramblParams = await bramblHelper.verifyRawTransactionData(args);
     bramblParams.addresses = BramblJS.utils
       .extractAddressesFromObj(bramblParams)
-      .filter(function(value, index, self) {
+      .filter(function (value, index, self) {
         return self.indexOf(value) === index;
       }); // uniqueness filter
     await TransactionServiceHelper.addAddressesToDBFromTransaction(
       bramblHelper,
       bramblParams
-    ).then(function(result) {
+    ).then(function (result) {
       if (result.error) {
         throw stdError(500, result.error, serviceName, serviceName);
       } else {
@@ -80,30 +80,30 @@ class TransactionServiceHelper {
     obj.result = await bramblHelper
       .signAndSendTransaction(rawTransaction)
       // eslint-disable-next-line no-unused-vars
-      .then(function(assetTransactionResult) {
+      .then(function (assetTransactionResult) {
         obj.txId = assetTransactionResult.txId;
         return Promise.all(
-          args.addresses.map(function(address) {
+          args.addresses.map(function (address) {
             const internalObj = {};
             const internalArgs = {
               address: address,
-              network: args.network
+              network: args.network,
             };
             return ReadTransactionService.getBalanceHelper(
               bramblHelper,
               internalArgs
             )
-              .then(function(result) {
+              .then(function (result) {
                 internalObj.balance = result;
                 return internalObj;
               })
-              .catch(function(err) {
+              .catch(function (err) {
                 console.error(err);
                 internalObj.err = err.message;
                 return internalObj;
               });
           })
-        ).catch(function(err) {
+        ).catch(function (err) {
           console.error(err);
           obj.err = err.message;
           return obj;

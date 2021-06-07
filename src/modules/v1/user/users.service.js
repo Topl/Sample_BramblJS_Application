@@ -16,7 +16,7 @@ class UsersService {
       userInfo.lastUpdated = timestamp;
       userInfo.isActive = {
         status: true,
-        asOf: timestamp
+        asOf: timestamp,
       };
 
       const newUser = new UserModel(userInfo);
@@ -42,7 +42,7 @@ class UsersService {
       // Access Control
       const [isAdmin, fetchedUser] = await Promise.all([
         UsersService.checkAdmin(args.userEmail),
-        checkExists(UserModel, args.requestedEmail, { serviceName })
+        checkExists(UserModel, args.requestedEmail, { serviceName }),
       ]);
       if (!isAdmin && !(args.requestedEmail === args.userEmail)) {
         throw stdErr(403, "Not Authorized", serviceName, serviceName);
@@ -63,7 +63,7 @@ class UsersService {
     try {
       const [isAdmin, fetchedUser] = await Promise.all([
         UsersService.checkAdmin(userObj.userEmail),
-        checkExists(UserModel, userObj.requestedEmail, { serviceName })
+        checkExists(UserModel, userObj.requestedEmail, { serviceName }),
       ]);
 
       // check for active user
@@ -95,7 +95,7 @@ class UsersService {
       fetchedUser.doc.markModified("isActive.asOf");
 
       await save2db(fetchedUser.doc, { timestamp, serviceName, session }).catch(
-        function(err) {
+        function (err) {
           console.error(err);
           throw stdError(500, err, serviceName, serviceName);
         }
@@ -112,7 +112,7 @@ class UsersService {
       // Access Control
       const [isAdmin, fetchedUser] = await Promise.all([
         UsersService.checkAdmin(userObj.user_id),
-        checkExists(UserModel, userObj.changeEmail, { serviceName })
+        checkExists(UserModel, userObj.changeEmail, { serviceName }),
       ]);
 
       if (!isAdmin && !(userObj.userEmail === userObj.changeEmail)) {

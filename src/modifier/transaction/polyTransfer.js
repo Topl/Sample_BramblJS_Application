@@ -9,7 +9,7 @@ class PolyTransfer extends TransferTransaction {
   constructor(from, newBoxes, attestation, fee, timestamp, data) {
     super(from, newBoxes, attestation, fee, timestamp, data);
 
-    this.coinOutput = newBoxes.map(recipient => {
+    this.coinOutput = newBoxes.map((recipient) => {
       // grabbing the value of the polys that will be put in the recipient's box
       return new PolyBox(recipient[1].quantity);
     });
@@ -27,14 +27,14 @@ class PolyTransfer extends TransferTransaction {
       senders,
       fee,
       "Polys"
-    ).then(function(txInputState) {
+    ).then(function (txInputState) {
       if (txInputState.error) {
         return txInputState;
       }
       // compute the amount of tokens to be sent to the recipients
       const amtToSpend = toReceive
-        .map(r => {
-          return r[1];
+        .map((r) => {
+          return r[1].quantity;
         })
         .reduce((a, b) => +a + +b, 0);
 
@@ -66,7 +66,7 @@ class PolyTransfer extends TransferTransaction {
   static ioTransfer(txInputState, toReceive, changeAddress, fee, amtToSpend) {
     let obj = {};
     const availableToSpend = txInputState.polyBalance - +fee;
-    const inputs = txInputState.senderBoxes.map(bx => {
+    const inputs = txInputState.senderBoxes.map((bx) => {
       return [bx.address, bx.nonce];
     });
     const outputs = [
@@ -74,13 +74,13 @@ class PolyTransfer extends TransferTransaction {
         changeAddress,
         {
           type: "Simple",
-          quantity: txInputState.polyBalance - +fee - amtToSpend
-        }
-      ]
+          quantity: (txInputState.polyBalance - +fee - amtToSpend).toString(),
+        },
+      ],
     ]
       .concat(toReceive)
-      .filter(out => {
-        return out[1].quantity > 0;
+      .filter((out) => {
+        return +out[1].quantity > 0;
       });
     obj.availableToSpend = availableToSpend;
     obj.inputs = inputs;
