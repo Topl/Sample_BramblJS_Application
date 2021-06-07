@@ -24,6 +24,7 @@ migrations/
 key_file.json
 valhalla_.json
 valhalla_key_file.json
+.husky/
 .history/
 data/db/
 .env

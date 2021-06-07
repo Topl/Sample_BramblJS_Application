@@ -12,7 +12,7 @@ class AssetTransfer extends TransferTransaction {
   constructor(from, newBoxes, attestation, fee, timestamp, data, minting) {
     super(from, newBoxes, attestation, fee, timestamp, data, minting);
 
-    this.coinOutput = newBoxes.map(recipient => {
+    this.coinOutput = newBoxes.map((recipient) => {
       // grabbing the value of the assets that will be put in the recipient's box
       return new AssetBox(recipient[1].quantity);
     });
@@ -24,7 +24,7 @@ class AssetTransfer extends TransferTransaction {
 
   generateNewBoxes() {
     const recipientCoinOutput = this.coinOutput.filter(
-      r => r.value.quantity > 0
+      (r) => r.value.quantity > 0
     );
     const hasRecipientOutput = recipientCoinOutput.length > 0;
     const hasFeeChangeOutput = this.feeChangeOutput.value.quantity > 0;
@@ -53,7 +53,7 @@ class AssetTransfer extends TransferTransaction {
       "Assets",
       assetCode,
       bramblHelper
-    ).then(function(result) {
+    ).then(function (result) {
       if (result.error) {
         return result;
       }
@@ -105,7 +105,7 @@ class AssetTransfer extends TransferTransaction {
   ) {
     let obj = {};
     let assetBoxes = txInputState.senderBoxes.filter(
-      box => box.boxType === "AssetBox"
+      (box) => box.boxType === "AssetBox"
     );
     if (assetBoxes.length < 1) {
       obj.error = `No Assets Found with assetCode ${assetCode}`;
@@ -113,7 +113,7 @@ class AssetTransfer extends TransferTransaction {
     }
 
     const availableToSpend = assetBoxes
-      .map(box => box.value.quantity)
+      .map((box) => box.value.quantity)
       .reduce((a, b) => a + b, 0);
     // create the list of inputs and outputs (senderChangeOut and recipientOut)
     const inputs = assetBoxes
@@ -122,8 +122,8 @@ class AssetTransfer extends TransferTransaction {
       })
       .concat(
         txInputState.senderBoxes
-          .filter(box => box.boxType === "PolyBox")
-          .map(bx => {
+          .filter((box) => box.boxType === "PolyBox")
+          .map((bx) => {
             return [bx.address, bx.nonce];
           })
       );
@@ -133,8 +133,8 @@ class AssetTransfer extends TransferTransaction {
         changeAddress,
         {
           type: "Simple",
-          quantity: (txInputState.polyBalance - +fee).toString()
-        }
+          quantity: (txInputState.polyBalance - +fee).toString(),
+        },
       ],
       [consolidationAddress, new AssetValue(amtToSpend.toString(), assetCode)]
     ].concat(toReceive);
@@ -149,8 +149,8 @@ class AssetTransfer extends TransferTransaction {
     const retVal = {};
     const availableToSpend = MAX_INTEGER_VALUE;
     const inputs = txInputState.senderBoxes
-      .filter(box => box.boxType === "PolyBox")
-      .map(bx => {
+      .filter((box) => box.boxType === "PolyBox")
+      .map((bx) => {
         return [bx.address, bx.nonce];
       });
     const outputs = [
@@ -158,9 +158,9 @@ class AssetTransfer extends TransferTransaction {
         changeAddress,
         {
           type: "Simple",
-          quantity: (txInputState.polyBalance - +fee).toString()
-        }
-      ]
+          quantity: (txInputState.polyBalance - +fee).toString(),
+        },
+      ],
     ].concat(toReceive);
     retVal.availableToSpend = availableToSpend;
     retVal.inputs = inputs;
