@@ -28,11 +28,19 @@ class AddressesService {
       const timestamp = new Date();
 
       // fetch information of user
-      let fetchedUser = await UserModel.findOne({ email: args.userEmail });
+      let fetchedUser = await UserModel.findOne({
+        email: args.userEmail
+      }).catch(function(error) {
+        console.error(error);
+        throw error;
+      });
       let address;
       let keyfile;
       let brambl;
       let balances;
+      let polyBox;
+      let assetBox;
+      let arbitBox;
       // if address is not provided.
       if (!args.address) {
         // create address
@@ -74,7 +82,10 @@ class AddressesService {
         address: address,
         keyfile: keyfile,
         network: args.network,
-        polyBalance: balances.polyBalance
+        polyBalance: balances.polyBalance,
+        polyBox: polyBox,
+        assetBox: assetBox,
+        arbitBox: arbitBox
       };
 
       addressDoc.isActive = {
@@ -82,11 +93,6 @@ class AddressesService {
         asOf: timestamp
       };
       let newAddress = new Address(addressDoc);
-
-      // iterate through boxes and either add or update them in the DB
-      if (balances.boxes) {
-        BoxHelper.updateBoxes(balances.boxes, address);
-      }
 
       // Save Address and User in transaction
       if (fetchedUser) {
@@ -99,6 +105,10 @@ class AddressesService {
           if (result.error) {
             throw stdError(500, result.error, serviceName, serviceName);
           } else {
+            // iterate through boxes and either add or update them in the DB
+            if (balances.boxes) {
+              BoxHelper.updateBoxes(balances.boxes, address);
+            }
             return result;
           }
         });
@@ -108,6 +118,10 @@ class AddressesService {
             if (result.error) {
               throw stdError(500, result.error, serviceName, serviceName);
             } else {
+              // iterate through boxes and either add or update them in the DB
+              if (balances.boxes) {
+                BoxHelper.updateBoxes(balances.boxes, address);
+              }
               return result;
             }
           })
@@ -163,9 +177,7 @@ class AddressesService {
 
   static async updateAddressById(args) {
     // check if the address exists in the db
-    const fetchedAddress = await checkExistsById(Address, args.addressId, {
-      serviceName
-    })
+    const fetchedAddress = await checkExistsById(Address, args.addressId)
       .then(function(result) {
         if (!result.isActive.status) {
           throw stdErr(
@@ -226,6 +238,17 @@ class AddressesService {
       if (args.polyBalance) {
         fetchedAddress.polyBalance = args.polyBalance;
       }
+      if (args.polyBox) {
+        fetchedAddress.polyBox = args.polyBox;
+      }
+
+      if (args.assetBox) {
+        fetchedAddress.assetBox = args.assetBox;
+      }
+
+      if (args.arbitBox) {
+        fetchedAddress.arbitBox = args.arbitBox;
+      }
 
       // save
       await save2db(fetchedAddress, { timestamp, serviceName, session });
@@ -241,16 +264,14 @@ class AddressesService {
     const session = await mongoose.startSession();
     try {
       const timestamp = new Date();
-      const fetchedAddress = await checkExistsById(Address, args.addressId, {
-        serviceName
-      });
+      const fetchedAddress = await checkExistsById(Address, args.addressId);
 
-      if (!fetchedAddress.isActive.status) {
+      if (!fetchedAddress.doc.isActive.status) {
         throw stdErr(404, "No Active Address", serviceName, serviceName);
       }
 
       // fetch user
-      const user_id = fetchedAddress.user_id.toString();
+      const user_id = fetchedAddress.doc.user_id.toString();
       let [hasAdminAccess, fetchedUser] = await Promise.all([
         UsersService.checkAdmin(user_id),
         UserModel.findOne({ email: user_id })
@@ -268,15 +289,15 @@ class AddressesService {
       }
 
       // business logic
-      fetchedAddress.isActive.status = false;
-      fetchedAddress.markModified("isActive.status");
-      fetchedAddress.isActive.asOf = timestamp;
-      fetchedAddress.markModified("isActive.asOf");
+      fetchedAddress.doc.isActive.status = false;
+      fetchedAddress.doc.markModified("isActive.status");
+      fetchedAddress.doc.isActive.asOf = timestamp;
+      fetchedAddress.doc.markModified("isActive.asOf");
       const addressIndex = fetchedUser.addresses.findIndex(elem => {
         elem.equals(mongoose.Types.ObjectId(args.addressId));
       });
       fetchedUser.addresses.splice(addressIndex, 1);
-      await save2db([fetchedUser, fetchedAddress], {
+      await save2db([fetchedUser, fetchedAddress.doc], {
         timestamp,
         serviceName,
         session
@@ -305,11 +326,11 @@ class AddressesService {
   static async getAddressesByUser(args) {
     try {
       const [fetchedUser, projects] = await Promise.all([
-        checkExists(UserModel, args.user_id, { serviceName }),
+        checkExists(UserModel, args.user_id),
         paginateAddresses(args.user_id, args.page, args.limit)
       ]);
 
-      if (!fetchedUser.isActive.status) {
+      if (!fetchedUser.doc.isActive.status) {
         throw stdErr(404, "No Active User Found", serviceName, serviceName);
       }
       return projects;
@@ -318,13 +339,41 @@ class AddressesService {
     }
   }
 
+  static async getAddressByAddress(args) {
+    // check if address exists and is active
+    return await checkExistsByAddress(Address, args.address)
+      .then(function(result) {
+        if (result.error) {
+          throw stdErr(
+            500,
+            "Unable to retrieve address by address",
+            serviceName,
+            serviceName
+          );
+        }
+
+        if (!result.doc.isActive.status) {
+          throw stdErr(404, "No Active Address", serviceName, serviceName);
+        }
+
+        return result.doc;
+      })
+      // eslint-disable-next-line no-unused-vars
+      .catch(function(err) {
+        throw stdErr(
+          500,
+          "Unable to retrieve address by address",
+          serviceName,
+          serviceName
+        );
+      });
+  }
+
   static async getAddressById(args) {
     try {
       // check if address exists and is active
 
-      const fetchedAddress = await checkExistsById(Address, args.addressId, {
-        serviceName
-      });
+      const fetchedAddress = await checkExistsById(Address, args.addressId);
 
       if (!fetchedAddress.isActive.status) {
         throw stdErr(404, "No Active Address", serviceName, serviceName);

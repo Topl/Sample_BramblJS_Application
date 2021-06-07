@@ -9,29 +9,32 @@ const serviceName = "readTransactions";
 
 class ReadTransactionService {
   static async getBalanceHelper(bramblHelper, args) {
-    let polyBalance;
+    let addressInfo;
     if (bramblHelper.brambljs) {
-      polyBalance = await bramblHelper.getBalanceWithBrambl(args.address);
+      addressInfo = await bramblHelper.getBoxesWithBrambl([args.address]);
     } else {
-      polyBalance = await bramblHelper.getBalanceWithRequests(args.address);
+      addressInfo = await bramblHelper.getBoxesWithRequests([args.address]);
     }
-    if (polyBalance.error) {
-      throw stdError(500, polyBalance.error, serviceName, serviceName);
+    if (addressInfo.error) {
+      throw stdError(500, addressInfo.error, serviceName, serviceName);
     }
     return AddressesService.updateAddressByAddress({
       name: args.name,
       addressId: args.address,
-      polyBalance: polyBalance.polyBalance
+      polyBalance: addressInfo.result[args.address].Balances.Polys,
+      polyBox: addressInfo.result[args.address].Boxes.PolyBox,
+      arbitBox: addressInfo.result[args.address].Boxes.ArbitBox,
+      assetBox: addressInfo.result[args.address].Boxes.AssetBox
     }).then(function(result) {
       if (result.error) {
         throw stdError(500, result.error, serviceName, serviceName);
       } else {
-        return polyBalance;
+        return addressInfo;
       }
     });
   }
 
-  static async getBalance(args) {
+  static async getBalances(args) {
     const bramblHelper = new BramblHelper(true, args.network);
     let address = "";
     address =
@@ -39,7 +42,7 @@ class ReadTransactionService {
       RequestValidator.validateAddresses([args.address], args.network)
         ? args.address
         : false;
-    if (address === false) {
+    if (!address) {
       throw stdError(404, "Unable to find address", serviceName, serviceName);
     } else {
       // check if address exists in the db

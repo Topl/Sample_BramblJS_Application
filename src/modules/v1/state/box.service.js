@@ -5,7 +5,8 @@ const BoxModel = require("./box.model");
 const save2db = require("../../../lib/saveToDatabase");
 const {
   checkExistsByAddress,
-  checkExistsByBifrostId
+  checkExistsByBifrostId,
+  checkExistsById
 } = require("../../../lib/validation");
 const Address = require("../addresses/addresses.model");
 
@@ -146,37 +147,73 @@ class BoxService {
   }
 
   static async getBoxById(args) {
-    try {
-      // check if box exists and is active
-      const fetchedBox = await checkExistsByBifrostId(BoxModel, args.id, {
-        serviceName
+    // check if box exists and is active
+    let obj = {};
+    return checkExistsById(BoxModel, args.id)
+      .then(function(result) {
+        if (result.error) {
+          obj.error = result.error;
+          return obj;
+        }
+        if (!result.doc.isActive.status) {
+          throw stdError(404, "No Active Box Found", serviceName, serviceName);
+        } else {
+          return result.doc;
+        }
       })
-        .then(function(result) {
-          if (!result.isActive.status) {
-            throw stdError(
-              404,
-              "No Active Box Found",
-              serviceName,
-              serviceName
-            );
-          }
-        })
-        .catch(function(err) {
-          throw stdError(
-            500,
-            "Unable to find box by Bifrost Id",
-            serviceName,
-            serviceName
-          );
-        });
+      .catch(function(err) {
+        throw stdError(
+          500,
+          "Unable to find box by Bifrost Id",
+          serviceName,
+          serviceName
+        );
+      });
+  }
 
+  static async deleteBox(args) {
+    const session = await mongoose.startSession();
+    try {
+      const timestamp = new Date();
+      const fetchedBox = await checkExistsByBifrostId(BoxModel, args.id).doc;
       if (!fetchedBox.isActive.status) {
-        throw stdError(404, "No Active Boxes", serviceName, serviceName);
+        throw stdError(404, "No Active Box", serviceName, serviceName);
       }
 
-      return fetchedBox;
+      // fetch address
+      const addressId = fetchedBox.address.toString();
+      let fetchedAddress = await (await checkExistsByAddress(addressId)).doc;
+
+      if (!fetchedAddress) {
+        throw stdError(
+          404,
+          "No Active Address for Box",
+          serviceName,
+          serviceName
+        );
+      } else if (!fetchedAddress.isActive.status) {
+        throw stdError(404, "No Active Address for Box");
+      }
+
+      fetchedBox.isActive.status = false;
+      fetchedBox.markModified("isActive.status");
+      fetchedBox.isActive.asOf = timestamp;
+      fetchedBox.markModified("isActive.asOf");
+      const boxIndex = fetchedAddress.boxes.findIndex(elem => {
+        elem.equals(mongoose.Types.ObjectId(args.id));
+      });
+      fetchedAddress.addresses.splice(boxIndex, 1);
+      await save2db([fetchedAddress, fetchedBox], {
+        timestamp,
+        serviceName,
+        session
+      });
+      return {};
     } catch (err) {
+      console.error(err);
       throw err;
+    } finally {
+      session.endSession();
     }
   }
 }

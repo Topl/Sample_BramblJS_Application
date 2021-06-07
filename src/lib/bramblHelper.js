@@ -1,6 +1,7 @@
 const connections = require(`./connections`);
 const networkUrl = connections.networkUrl;
 const apiKey = connections.networkApiKey;
+const AddressesService = require("../modules/v1/addresses/addresses.service");
 const BramblJS = require("brambljs");
 
 class BramblHelper {
@@ -223,6 +224,52 @@ class BramblHelper {
       });
   }
 
+  /**
+   * Get Poly, Asset, and Arbit boxes for a valid set of addresses
+   * @param {String[]} addresses: List of addresses
+   * @return {Promise} Promise obj with data or error
+   */
+  async getBoxesWithBrambl(addresses) {
+    let data = {};
+    return this.brambljs.requests
+      .lookupBalancesByAddresses({
+        addresses: addresses
+      })
+      .catch(function(error) {
+        data.error = error.message;
+        return data;
+      });
+  }
+
+  /**
+   * Get Poly, Asset, and Arbit boxes for a valid set of addresses
+   * @param {String[]} addresses: List of addresses
+   * @return {Promise} Promise obj with data or error
+   */
+  async getBoxesWithRequests(addresses) {
+    let data = {};
+    return this.requests
+      .lookupBalancesByAddresses({
+        addresses: addresses
+      })
+      .catch(function(error) {
+        data.error = error.message;
+        return data;
+      });
+  }
+
+  returnAssetBoxWithAssetCode(assetBoxes, assetCode) {
+    var result = [];
+    for (var i = 0; i < assetBoxes.length; i++) {
+      if (assetBoxes[i].value.hasOwnProperty("assetCode")) {
+        if (assetBoxes[i].value.assetCode === assetCode) {
+          assetBoxes.push(assetBoxes[i].value);
+        }
+      }
+    }
+    return result;
+  }
+
   async checkPolyBalances(senders, fee) {
     let obj = {};
     obj.polyBalance = senders
@@ -242,23 +289,6 @@ class BramblHelper {
     return obj;
   }
 
-  // async generateRawAssetTransfer(txObject) {
-  //   let obj = {};
-  //   const assetCode = txObject.assetCode;
-
-  //   if (Array.isArray(assetCode)) {
-  //     obj.error = "Found multiple asset codes when only one was expected";
-  //   }
-
-  //   const polyBalance = this.checkPolyBalances(txObject.senders, txObject.fee);
-
-  //   // compute the number of tokens to be sent to the recipients
-  //   // will branch depending on if we are minting or not
-
-  // }
-
-  // ioMint()
-
   /**
    * Gets the raw transaction object on the asset transaction you plan on signing before sending.
    * Allows verification of the asset transaction is correct as well as providing the message to sign
@@ -274,14 +304,14 @@ class BramblHelper {
       txObject.senderPasswords,
       txObject.network
     );
-    for (let i = 0; i < txObject.recipients.length; i++) {
-      const [address, quantity, data, metadata] = txObject.recipients[i];
-      if (data) {
-        const securityRoot = BramblJS.Hash("string", data);
-        formattedRecipients.push([address, quantity, securityRoot, metadata]);
-      } else {
-        formattedRecipients.push([address, quantity]);
-      }
+    for (var key in txObject.recipients) {
+      const recipientForBramblJS = [
+        key,
+        txObject.recipients[key].quantity,
+        txObject.recipients[key].securityRoot,
+        txObject.recipients[key].metadata
+      ];
+      formattedRecipients.push(recipientForBramblJS);
     }
     txObject.recipients = formattedRecipients;
     return self.brambljs.requests
@@ -380,20 +410,7 @@ class BramblHelper {
 
   async verifyRawTransactionData(txObject) {
     var networkPrefix = txObject.network;
-    return new Promise((resolve, reject) => {
-      // check that all recipients have a valid number of Topl assets
-      if (Array.isArray(txObject.recipients)) {
-        for (var i = 0; i < txObject.recipients.length; i++) {
-          if (isNaN(txObject.recipients[i][1])) {
-            reject(
-              new Error(`value addressed to recipient is not a valid number`)
-            );
-          }
-        }
-      } else {
-        reject(new Error(`recipients is not an array of [String, String]`));
-      }
-
+    return new Promise(resolve => {
       const getCurrentFees = () => {
         let fees = {
           valhalla: 100,
@@ -420,7 +437,8 @@ class BramblHelper {
         data: txObject.data,
         consolidationAddress: txObject.consolidationAddress,
         minting: txObject.minting,
-        assetCode: txObject.assetCode ? txObject.assetCode : null
+        assetCode: txObject.assetCode ? txObject.assetCode : null,
+        network: txObject.network
       };
       resolve(params);
     });
