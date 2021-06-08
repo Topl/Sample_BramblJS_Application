@@ -59,69 +59,12 @@ class BoxService {
       });
   }
 
-  static async deleteBoxByNonce(nonce, session) {
-    let obj = {};
-    try {
-      const timestamp = new Date();
-      return await checkExists(BoxModel, nonce, "nonce")
-        .then(function (fetchedBox) {
-          if (fetchedBox.error) {
-            obj.error = fetchedBox.error;
-            return obj;
-          } else {
-            if (!fetchedBox.doc.isActive.status) {
-              throw stdError(404, "No Active Box", serviceName, serviceName);
-            }
-            // fetch address
-            const addressId = fetchedBox.doc.address.toString();
-            return checkExists(Address, addressId, "address")
-              .then(function (fetchedAddress) {
-                if (!fetchedAddress.doc) {
-                  throw stdError(
-                    404,
-                    "No Active Address for Box",
-                    serviceName,
-                    serviceName
-                  );
-                } else if (!fetchedAddress.doc.isActive.status) {
-                  throw stdError(404, "No Active Address for Box");
-                }
-
-                fetchedBox.doc.isActive.status = false;
-                fetchedBox.doc.markModified("isActive.status");
-                fetchedBox.doc.isActive.asOf = timestamp;
-                fetchedBox.doc.markModified("isActive.asOf");
-                Address.updateOne(
-                  { _id: fetchedAddress.doc._id },
-                  { $pullAll: { boxes: fetchedBox.doc._id } }
-                );
-                return save2db([fetchedAddress.doc, fetchedBox.doc], {
-                  timestamp,
-                  serviceName,
-                  session,
-                }).then(function (result) {
-                  if (result.error) {
-                    throw stdError(500, result.error, serviceName, serviceName);
-                  }
-                  return result;
-                });
-              })
-              .catch(function (err) {
-                console.error(err);
-                throw err;
-              });
-          }
-        })
-        .catch(function (err) {
-          console.error(err);
-          throw err;
-        });
-    } catch (err) {
-      console.error(err);
-      throw err;
-    } finally {
-      session.endSession();
-    }
+  static async deleteBoxes(boxes, address) {
+    await Address(
+      { address: address },
+      { $pullAll: { boxes: boxes.map((box) => box._id) } }
+    );
+    await BoxModel.deleteMany({ _id: boxes.map((box) => box._id) });
   }
 }
 

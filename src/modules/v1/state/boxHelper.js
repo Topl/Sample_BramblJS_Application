@@ -55,14 +55,7 @@ class BoxHelper {
         obj.address,
         session
       );
-      for (const box of boxesToRemove) {
-        await BoxService.deleteBoxByNonce(box.nonce, session).catch(function (
-          err
-        ) {
-          console.error(err);
-          obj.error = err.message;
-        });
-      }
+      await BoxService.deleteBoxes(boxesToRemove, address);
       return bulkBoxUpdateResult;
     } catch (error) {
       console.error(error);
