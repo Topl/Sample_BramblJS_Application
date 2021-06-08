@@ -4,7 +4,7 @@
   "description": "A sample BramblJS application that uses all of the APIs which can be used for documentation, tutorials, training and onboarding.",
   "main": "index.js",
   "scripts": {
-    "lint": "eslint src --ext .js",
+    "lint": "eslint src --ext .js --fix",
     "lint:fix": "npm run lint --fix",
     "test:ut": "./node_modules/mocha/bin/mocha --recursive test/unitTests",
     "test": "npm run lint && npm run test:ut",

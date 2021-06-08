@@ -1,63 +1,63 @@
 const mongoose = require("mongoose");
 
 const BoxSchema = new mongoose.Schema({
-  address: {
-    type: String,
-    required: true,
-  },
-  nonce: {
-    type: String,
-    required: true,
-    unique: true,
-  },
-  bifrostId: {
-    type: String,
-    required: true,
-    unique: true,
-  },
-  evidence: {
-    type: String,
-    required: true,
-  },
-  boxType: {
-    type: String,
-    required: true,
-  },
-  value: {
-    type: mongoose.Schema.Types.Mixed,
-    required: true,
-    valueType: {
-      type: String,
-      required: true,
+    address: {
+        type: String,
+        required: true,
     },
-    quantity: {
-      type: String,
-      required: true,
+    nonce: {
+        type: String,
+        required: true,
+        unique: true,
     },
-    assetCode: {
-      type: String,
-      required: false,
+    bifrostId: {
+        type: String,
+        required: true,
+        unique: true,
     },
-    metadata: {
-      type: String,
-      required: false,
+    evidence: {
+        type: String,
+        required: true,
     },
-    securityRoot: {
-      type: String,
-      required: false,
+    boxType: {
+        type: String,
+        required: true,
     },
-  },
-  isActive: {
-    type: mongoose.Schema.Types.Mixed,
-    status: {
-      type: Boolean,
-      default: true,
+    value: {
+        type: mongoose.Schema.Types.Mixed,
+        required: true,
+        valueType: {
+            type: String,
+            required: true,
+        },
+        quantity: {
+            type: String,
+            required: true,
+        },
+        assetCode: {
+            type: String,
+            required: false,
+        },
+        metadata: {
+            type: String,
+            required: false,
+        },
+        securityRoot: {
+            type: String,
+            required: false,
+        },
     },
-    asOf: {
-      type: Date,
+    isActive: {
+        type: mongoose.Schema.Types.Mixed,
+        status: {
+            type: Boolean,
+            default: true,
+        },
+        asOf: {
+            type: Date,
+        },
+        required: true,
     },
-    required: true,
-  },
 });
 // eslint-disable-next-line no-undef
 module.exports = Box = mongoose.model("box", BoxSchema);
