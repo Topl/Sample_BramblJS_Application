@@ -73,11 +73,11 @@ class AssetTransfer extends TransferTransaction {
     let obj = {};
     let self = this;
     return TransferTransaction.getSenderBoxesAndCheckPolyBalance(
-      senders,
+      senders.map((sender) => sender.address),
       fee,
       "Assets",
-      assetCode,
-      bramblHelper
+      bramblHelper,
+      assetCode
     ).then(function (result) {
       if (result.error) {
         return result;

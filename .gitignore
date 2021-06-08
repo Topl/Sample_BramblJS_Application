@@ -27,6 +27,7 @@ valhalla_key_file.json
 .husky/
 .history/
 data/db/
+brambljs/
 .env
 *.log
 logs/

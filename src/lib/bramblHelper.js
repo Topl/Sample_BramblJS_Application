@@ -9,15 +9,15 @@ class BramblHelper {
     let obj = {};
     if (args.readOnly) {
       this.requests = BramblJS.Requests(args.network, networkUrl, apiKey);
-    } else if (args.keyPair || args.keyFilePath) {
+    } else if (args.keyFile || args.keyFilePath) {
       this.brambljs = new BramblJS({
         networkPrefix: args.network, // applies to both Requests and KeyManager
         Requests: {
           url: `${networkUrl}`,
           apiKey: `${apiKey}`,
         },
-        KeyManager: args.keyPair
-          ? BramblJS.KeyManager.importKeyPair(args.keyPair, args.password)
+        KeyManager: args.keyFile
+          ? BramblJS.KeyManager.importKeyPair(args.keyFile, args.password)
           : BramblJS.KeyManager.importKeyPairFromFile(
               `private_keyfiles/${args.keyFilePath}.json`,
               args.password
@@ -355,7 +355,7 @@ class BramblHelper {
       propositionType: txObject.propositionType,
       recipients: formattedRecipients,
       fee: txObject.fee,
-      sender: txObject.sender,
+      sender: txObject.sender.map((sender) => sender.address),
       changeAddress: txObject.changeAddress,
       data: txObject.data,
       consolidationAddress: txObject.consolidationAddress,

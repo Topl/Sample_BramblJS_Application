@@ -107,35 +107,8 @@ class PolyTransactionService {
    */
   static async polyTransaction(args) {
     let bramblHelper;
-    args.keyfiles = await TransactionsServiceHelper.getKeyfileForAddresses(
-      args.sender.map((sender) => sender[0])
-    ).then(function (result) {
-      if (result.error) {
-        throw stdError(500, result.error, serviceName, serviceName);
-      }
-      const bramblHelperParams = {
-        readOnly: false,
-        network: args.network,
-        password: args.sender[0][1],
-        keyFilePath: args.sender[0][0],
-        keyFile: result.length > 0 ? result[0].keyfile : null,
-      };
-      bramblHelper = new BramblHelper(bramblHelperParams);
-      if (!bramblHelperParams.keyFile) {
-        const ks = bramblHelper.brambljs.keyManager.getKeyStorage();
-        return AddressesService.create({
-          network: args.network,
-          password: args.sender[0][1],
-          name: `${ks.address}`,
-          userEmail: args.userEmail,
-          address: ks.address,
-          keyfile: ks,
-        }).then(() => {
-          return [ks];
-        });
-      }
-      return result.map((elem) => elem.keyfile);
-    });
+    [bramblHelper, args] =
+      await TransactionsServiceHelper.initiateBramblHelperFromRequest(args);
     if (bramblHelper) {
       // iterate through all sender, recipient, and change addresses, checking whether or not they are in the DB
       TransactionsServiceHelper.extractParamsAndAddAddressesToDb(

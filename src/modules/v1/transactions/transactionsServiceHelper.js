@@ -5,6 +5,7 @@ const ReadTransactionService = require("./read.transactions.service");
 const BoxUtils = require("../../../lib/boxes/boxUtils");
 const stdError = require("../../../core/standardError");
 const BramblJS = require("../../../../brambljs");
+const BramblHelper = require("../../../lib/bramblHelper");
 const { reject } = require("lodash");
 
 const serviceName = "TransactionServiceHelper";
@@ -101,6 +102,39 @@ class TransactionServiceHelper {
       }
     });
     return bramblParams;
+  }
+
+  static async initiateBramblHelperFromRequest(args) {
+    return this.getKeyfileForAddresses(
+      args.sender.map((sender) => sender[0])
+    ).then(function (result) {
+      if (result.error) {
+        throw stdError(500, result.error, serviceName, serviceName);
+      }
+      const bramblHelperParams = {
+        readOnly: false,
+        network: args.network,
+        password: args.sender[0][1],
+        keyFilePath: args.sender[0][0],
+        keyFile: result.length > 0 ? result[0].keyfile : null,
+      };
+      const bramblHelper = new BramblHelper(bramblHelperParams);
+      if (!bramblHelperParams.keyFile) {
+        const ks = bramblHelper.brambljs.keyManager.getKeyStorage();
+        return AddressesService.create({
+          network: args.network,
+          password: args.sender[0][1],
+          name: `${ks.address}`,
+          userEmail: args.userEmail,
+          address: ks.address,
+          keyfile: ks,
+        }).then(() => {
+          return [ks];
+        });
+      }
+      args.keyfiles = result.map((elem) => elem.keyfile);
+      return [bramblHelper, args];
+    });
   }
 
   static async signAndSendTransactionWithStateManagement(

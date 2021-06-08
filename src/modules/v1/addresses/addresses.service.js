@@ -219,6 +219,9 @@ class AddressesService {
           console.error(err);
           return [false, false];
         });
+        if (!args.polyBalance) {
+          args.polyBalance = balances.polyBalance;
+        }
       }
 
       // retrieve boxes. Only update the new boxes in the DB and for the address
@@ -227,7 +230,7 @@ class AddressesService {
       }
 
       const timestamp = new Date();
-      // update fieldsb
+      // update fields
       if (args.name) {
         fetchedAddress.name = args.name;
       }
@@ -242,6 +245,14 @@ class AddressesService {
           if (result.error) {
             throw stdError(500, result.error, serviceName, serviceName);
           }
+          return checkExists(Address, fetchedAddress.address, "address").then(
+            function (result) {
+              if (result.error) {
+                throw stdError(500, result.error, serviceName, serviceName);
+              }
+              return result.doc;
+            }
+          );
         }
       );
       return fetchedAddress.toJSON();

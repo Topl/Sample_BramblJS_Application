@@ -103,17 +103,9 @@ class AssetTransactionService {
    * @memberof AssetTransactionService
    */
   static async createAsset(args) {
-    args.keyfiles = await TransactionsServiceHelper.getKeyfileForAddresses(
-      args.sender
-    );
-    const bramblHelperParams = {
-      readOnly: false,
-      network: args.network,
-      password: args.sender[0][1],
-      keyFilePath: args.sender[0][0],
-      keyFile: args.keyfile.length > 0 ? args.keyfiles[0] : null,
-    };
-    const bramblHelper = new BramblHelper(bramblHelperParams);
+    let bramblHelper;
+    [bramblHelper, args] =
+      await TransactionsServiceHelper.initiateBramblHelperFromRequest(args);
     args.address = bramblHelper.brambljs.keyManager.address;
     if (bramblHelper) {
       // iterate through all recipient, and change addresses checking whether or not they are in the DB

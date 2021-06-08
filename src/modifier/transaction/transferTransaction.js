@@ -26,30 +26,36 @@ class TransferTransaction {
     return asyncFlatMap(addresses, (a) => {
       return BoxReader.getTokenBoxes(a, bramblHelper).then(function (result) {
         const errors = [];
-        result.forEach((box) => {
-          if (box.error) {
-            errors.push(box.error);
+        if (result) {
+          result.forEach((box) => {
+            if (box.error) {
+              errors.push(box.error);
+            }
+          });
+          if (errors.length > 0) {
+            obj.error = "Boxes for given address not found in DB.";
+            return obj;
           }
-        });
-        if (errors.length > 0) {
-          obj.error = "Boxes for given address not found in DB.";
-          return obj;
+          if (result.length < 1) {
+            obj.error = "No boxes found to fund transactions";
+            return obj;
+          }
+          return result.filter((value) => {
+            // implement grouping
+            // always get polys since this is how fees are paid
+            return (
+              value.typeString === "PolyBox" ||
+              (value.typeString === "ArbitBox" && returnBoxes === "ArbitBox") ||
+              (value.typeString === "AssetBox" &&
+                returnBoxes === "Assets" &&
+                assetCode === value.value.assetCode)
+            );
+          });
+        } else if (result.error) {
+          return result;
+        } else {
+          return [];
         }
-        if (result.length < 1) {
-          obj.error = "No boxes found to fund transactions";
-          return obj;
-        }
-        return result.filter((value) => {
-          // implement grouping
-          // always get polys since this is how fees are paid
-          return (
-            value.typeString === "PolyBox" ||
-            (value.typeString === "ArbitBox" && returnBoxes === "ArbitBox") ||
-            (value.typeString === "AssetBox" &&
-              returnBoxes === "Assets" &&
-              assetCode === value.value.assetCode)
-          );
-        });
       });
     });
   }

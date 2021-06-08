@@ -10,8 +10,8 @@ router.route("/balance/:address").get(
     address: {
       in: ["params"],
       optional: false,
-      errorMessage: "Please provide a valid address"
-    }
+      errorMessage: "Please provide a valid address",
+    },
   }),
   NetworkCtrl.getBalance
 );

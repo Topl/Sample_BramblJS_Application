@@ -60,7 +60,7 @@ class BoxService {
   }
 
   static async deleteBoxes(boxes, address) {
-    await Address(
+    await Address.updateOne(
       { address: address },
       { $pullAll: { boxes: boxes.map((box) => box._id) } }
     );
