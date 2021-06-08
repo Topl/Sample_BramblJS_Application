@@ -22,7 +22,7 @@ class PolyTransactionService {
   /**
    * Generates the raw poly transfer using the application view
    * @param {object} args: arguments that are required in order to create the raw transaction. Those include the recipients, sender, changeAddress, fee, and data which are provided in the request
-   * @returns {object | Boolean} Returns a valid raw transaction, or faflse if a valid transaction is not possible.
+   * @returns {object | Boolean} Returns a valid raw transaction, or false if a valid transaction is not possible.
    * @memberof PolyTransactionService
    */
   static async generateRawPolyTransfer(args) {

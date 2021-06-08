@@ -13,7 +13,7 @@ class BoxHelper {
     try {
       // fetch information for given address
       let fetchedBoxes = await checkExists(AddressModel, address, "address")
-        .then(function(result) {
+        .then(function (result) {
           if (result.error) {
             obj.error = result.error;
             return obj;
@@ -21,7 +21,7 @@ class BoxHelper {
           obj.address = result.doc;
           return findAll(BoxModel, result.doc.boxes, "_id");
         })
-        .then(function(result) {
+        .then(function (result) {
           if (result.error) {
             obj.error = result.error;
             return obj;
@@ -32,26 +32,21 @@ class BoxHelper {
 
       // calculate the boxes to remove and the boxes to add
       const boxesToAdd = boxes.filter(
-        box => !BoxUtils.doesBoxArrayContainNonce(fetchedBoxes.doc, box.nonce)
+        (box) => !BoxUtils.doesBoxArrayContainNonce(fetchedBoxes.doc, box.nonce)
       );
 
       const boxesToRemove = fetchedBoxes.doc.filter(
-        box => !BoxUtils.doesBoxArrayContainNonce(boxes, box.nonce)
+        (box) => !BoxUtils.doesBoxArrayContainNonce(boxes, box.nonce)
       );
 
       const timestamp = new Date();
       const bulkBoxUpdateResult = await BoxService.bulkInsert(
-        boxesToAdd.map(box =>
+        boxesToAdd.map((box) =>
           BoxUtils.mapPolyBoxToModel(box, address, timestamp)
         ),
         obj.address
       );
-      for (const box of boxesToRemove) {
-        await BoxService.deleteBoxByNonce(box.nonce).catch(function(err) {
-          console.error(err);
-          obj.error = err.message;
-        });
-      }
+      await BoxService.deleteBoxes(boxesToRemove, address);
       return bulkBoxUpdateResult;
     } catch (error) {
       console.error(error);

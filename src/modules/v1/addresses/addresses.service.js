@@ -387,7 +387,6 @@ class AddressesService {
       keyfile = address.keyfile;
       //retrieve the polyBalance for the address that has been imported
       balances = await brambl.getBalanceWithBrambl(address);
-      // retrieve and update boxes in db
     }
 
     if (!balances) {

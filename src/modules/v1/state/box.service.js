@@ -17,7 +17,7 @@ class BoxService {
         Address,
         args.address,
         "address"
-      ).then(function(result) {
+      ).then(function (result) {
         if (result.error) {
           throw stdError(
             500,
@@ -42,12 +42,12 @@ class BoxService {
         bifrostId: args.bifrostId,
         evidence: args.evidence,
         boxType: args.boxType,
-        value: args.value
+        value: args.value,
       };
 
       boxDoc.isActive = {
         status: true,
-        asOf: timestamp
+        asOf: timestamp,
       };
       let newBox = new BoxModel(boxDoc);
 
@@ -57,8 +57,8 @@ class BoxService {
         await save2db([fetchedAddress.doc, newBox], {
           timestamp,
           serviceName,
-          session
-        }).then(function(result) {
+          session,
+        }).then(function (result) {
           if (result.error) {
             throw stdError(500, result.error, serviceName, serviceName);
           } else {
@@ -67,14 +67,14 @@ class BoxService {
         });
       } else {
         await save2db(newBox, { timestamp, serviceName, session })
-          .then(function(result) {
+          .then(function (result) {
             if (result.error) {
               throw stdError(500, result.error, serviceName, serviceName);
             } else {
               return result;
             }
           })
-          .catch(function(err) {
+          .catch(function (err) {
             console.error(err);
             throw stdError(
               400,
@@ -107,21 +107,21 @@ class BoxService {
     // fetch information of address
     await Address.findOneAndUpdate(
       { _id: address._id },
-      { $addToSet: { boxes: { $each: boxes.map(box => box._id) } } }
+      { $addToSet: { boxes: { $each: boxes.map((box) => box._id) } } }
     );
     return await save2db(boxes, {
       timestamp,
       serviceName,
-      session
+      session,
     })
-      .then(function(result) {
+      .then(function (result) {
         if (result.error) {
           throw stdError(500, result.error, serviceName, serviceName);
         } else {
           return result;
         }
       })
-      .catch(function(err) {
+      .catch(function (err) {
         console.error(err);
         throw stdError(500, err, serviceName, serviceName);
       });
@@ -131,7 +131,7 @@ class BoxService {
     // check if box exists and is active
     let obj = {};
     return checkExistsById(BoxModel, args.id)
-      .then(function(result) {
+      .then(function (result) {
         if (result.error) {
           obj.error = result.error;
           return obj;
@@ -142,7 +142,7 @@ class BoxService {
           return result.doc;
         }
       })
-      .catch(function(err) {
+      .catch(function (err) {
         throw stdError(
           500,
           "Unable to find box by Bifrost Id",
@@ -152,70 +152,12 @@ class BoxService {
       });
   }
 
-  static async deleteBoxByNonce(nonce) {
-    const session = await mongoose.startSession();
-    let obj = {};
-    try {
-      const timestamp = new Date();
-      return await checkExists(BoxModel, nonce, "nonce")
-        .then(function(fetchedBox) {
-          if (fetchedBox.error) {
-            obj.error = fetchedBox.error;
-            return obj;
-          } else {
-            if (!fetchedBox.doc.isActive.status) {
-              throw stdError(404, "No Active Box", serviceName, serviceName);
-            }
-            // fetch address
-            const addressId = fetchedBox.doc.address.toString();
-            return checkExists(Address, addressId, "address")
-              .then(function(fetchedAddress) {
-                if (!fetchedAddress.doc) {
-                  throw stdError(
-                    404,
-                    "No Active Address for Box",
-                    serviceName,
-                    serviceName
-                  );
-                } else if (!fetchedAddress.doc.isActive.status) {
-                  throw stdError(404, "No Active Address for Box");
-                }
-
-                fetchedBox.doc.isActive.status = false;
-                fetchedBox.doc.markModified("isActive.status");
-                fetchedBox.doc.isActive.asOf = timestamp;
-                fetchedBox.doc.markModified("isActive.asOf");
-                const boxIndex = fetchedAddress.doc.boxes.findIndex(elem => {
-                  elem.equals(mongoose.Types.ObjectId(fetchedBox.doc._id));
-                });
-                fetchedAddress.doc.boxes.splice(boxIndex, 1);
-                return save2db([fetchedAddress.doc, fetchedBox.doc], {
-                  timestamp,
-                  serviceName,
-                  session
-                }).then(function(result) {
-                  if (result.error) {
-                    throw stdError(500, result.error, serviceName, serviceName);
-                  }
-                  return result;
-                });
-              })
-              .catch(function(err) {
-                console.error(err);
-                throw err;
-              });
-          }
-        })
-        .catch(function(err) {
-          console.error(err);
-          throw err;
-        });
-    } catch (err) {
-      console.error(err);
-      throw err;
-    } finally {
-      session.endSession();
-    }
+  static async deleteBoxes(boxes, address) {
+    await Address(
+      { address: address },
+      { $pullAll: { boxes: boxes.map((box) => box._id) } }
+    );
+    await BoxModel.deleteMany({ _id: boxes.map((box) => box._id) });
   }
 }
 
