@@ -2,12 +2,8 @@
 const mongoose = require("mongoose");
 const stdError = require("../../../core/standardError");
 const BoxModel = require("./box.model");
-const save2db = require("../../../lib/saveToDatabase");
-const {
-  checkExistsByAddress,
-  checkExistsByBifrostId,
-  checkExistsById
-} = require("../../../lib/validation");
+const save2db = require("../../../lib/db/saveToDatabase");
+const { checkExistsById, checkExists } = require("../../../lib/validation");
 const Address = require("../addresses/addresses.model");
 
 const serviceName = "Box";
@@ -17,10 +13,11 @@ class BoxService {
     const session = await mongoose.startSession();
     try {
       // fetch information of address for box
-      let fetchedAddress = await checkExistsByAddress(
+      let fetchedAddress = await checkExists(
         Address,
-        args.address
-      ).then(function(result) {
+        args.address,
+        "address"
+      ).then(function (result) {
         if (result.error) {
           throw stdError(
             500,
@@ -45,12 +42,12 @@ class BoxService {
         bifrostId: args.bifrostId,
         evidence: args.evidence,
         boxType: args.boxType,
-        value: args.value
+        value: args.value,
       };
 
       boxDoc.isActive = {
         status: true,
-        asOf: timestamp
+        asOf: timestamp,
       };
       let newBox = new BoxModel(boxDoc);
 
@@ -60,8 +57,8 @@ class BoxService {
         await save2db([fetchedAddress.doc, newBox], {
           timestamp,
           serviceName,
-          session
-        }).then(function(result) {
+          session,
+        }).then(function (result) {
           if (result.error) {
             throw stdError(500, result.error, serviceName, serviceName);
           } else {
@@ -70,14 +67,14 @@ class BoxService {
         });
       } else {
         await save2db(newBox, { timestamp, serviceName, session })
-          .then(function(result) {
+          .then(function (result) {
             if (result.error) {
               throw stdError(500, result.error, serviceName, serviceName);
             } else {
               return result;
             }
           })
-          .catch(function(err) {
+          .catch(function (err) {
             console.error(err);
             throw stdError(
               400,
@@ -104,53 +101,37 @@ class BoxService {
     }
   }
 
-  static async updateBoxById(args) {
-    // check if the box exists in the db
-    let self = this;
-    await checkExistsByBifrostId(BoxModel, args.id)
-      .then(function(result) {
-        if (!result.doc.isActive.status) {
-          throw stdError(404, "No Active Box Found", serviceName, serviceName);
+  static async bulkInsert(boxes, address) {
+    const timestamp = new Date();
+    const session = await mongoose.startSession();
+    // fetch information of address
+    await Address.findOneAndUpdate(
+      { _id: address._id },
+      { $addToSet: { boxes: { $each: boxes.map((box) => box._id) } } }
+    );
+    return await save2db(boxes, {
+      timestamp,
+      serviceName,
+      session,
+    })
+      .then(function (result) {
+        if (result.error) {
+          throw stdError(500, result.error, serviceName, serviceName);
         } else {
-          self.updateBox(args, result.doc);
+          return result;
         }
       })
-      .catch(function(err) {
-        throw stdError(
-          500,
-          "Unable to update box by Bifrost Id",
-          serviceName,
-          serviceName
-        );
+      .catch(function (err) {
+        console.error(err);
+        throw stdError(500, err, serviceName, serviceName);
       });
-  }
-
-  static async updateBox(args, fetchedBox) {
-    const session = await mongoose.startSession();
-    try {
-      const timestamp = new Date();
-
-      // update fields
-      fetchedBox.address = args.address ? args.address : fetchedBox.address;
-      fetchedBox.nonce = args.nonce ? args.nonce : fetchedBox.nonce;
-      fetchedBox.evidence = args.evidence ? args.evidence : fetchedBox.evidence;
-      fetchedBox.value = args.value ? args.value : fetchedBox.value;
-      // save
-      await save2db(fetchedBox, { timestamp, serviceName, session });
-      return fetchedBox;
-    } catch (err) {
-      console.error(err);
-      throw err;
-    } finally {
-      session.endSession();
-    }
   }
 
   static async getBoxById(args) {
     // check if box exists and is active
     let obj = {};
     return checkExistsById(BoxModel, args.id)
-      .then(function(result) {
+      .then(function (result) {
         if (result.error) {
           obj.error = result.error;
           return obj;
@@ -161,7 +142,7 @@ class BoxService {
           return result.doc;
         }
       })
-      .catch(function(err) {
+      .catch(function (err) {
         throw stdError(
           500,
           "Unable to find box by Bifrost Id",
@@ -171,50 +152,12 @@ class BoxService {
       });
   }
 
-  static async deleteBox(args) {
-    const session = await mongoose.startSession();
-    try {
-      const timestamp = new Date();
-      const fetchedBox = await checkExistsByBifrostId(BoxModel, args.id).doc;
-      if (!fetchedBox.isActive.status) {
-        throw stdError(404, "No Active Box", serviceName, serviceName);
-      }
-
-      // fetch address
-      const addressId = fetchedBox.address.toString();
-      let fetchedAddress = await (await checkExistsByAddress(addressId)).doc;
-
-      if (!fetchedAddress) {
-        throw stdError(
-          404,
-          "No Active Address for Box",
-          serviceName,
-          serviceName
-        );
-      } else if (!fetchedAddress.isActive.status) {
-        throw stdError(404, "No Active Address for Box");
-      }
-
-      fetchedBox.isActive.status = false;
-      fetchedBox.markModified("isActive.status");
-      fetchedBox.isActive.asOf = timestamp;
-      fetchedBox.markModified("isActive.asOf");
-      const boxIndex = fetchedAddress.boxes.findIndex(elem => {
-        elem.equals(mongoose.Types.ObjectId(args.id));
-      });
-      fetchedAddress.addresses.splice(boxIndex, 1);
-      await save2db([fetchedAddress, fetchedBox], {
-        timestamp,
-        serviceName,
-        session
-      });
-      return {};
-    } catch (err) {
-      console.error(err);
-      throw err;
-    } finally {
-      session.endSession();
-    }
+  static async deleteBoxes(boxes, address) {
+    await Address(
+      { address: address },
+      { $pullAll: { boxes: boxes.map((box) => box._id) } }
+    );
+    await BoxModel.deleteMany({ _id: boxes.map((box) => box._id) });
   }
 }
 

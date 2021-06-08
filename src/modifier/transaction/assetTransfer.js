@@ -118,10 +118,7 @@ class AssetTransfer extends TransferTransaction {
     // create the list of inputs and outputs (senderChangeOut and recipientOut)
     const inputs = assetBoxes
       .map((bx) => {
-        return {
-          value: bx.address,
-          nonce: bx.nonce,
-        };
+        return [bx.address, bx.nonce];
       })
       .concat(
         txInputState.senderBoxes

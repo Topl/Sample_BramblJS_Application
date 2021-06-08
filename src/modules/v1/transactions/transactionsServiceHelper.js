@@ -1,4 +1,4 @@
-const { checkExistsByAddress } = require("../../../lib/validation");
+const { checkExists } = require("../../../lib/validation");
 const Address = require("../addresses/addresses.model");
 const AddressesService = require("../addresses/addresses.service");
 const ReadTransactionService = require("./read.transactions.service");
@@ -13,10 +13,10 @@ class TransactionServiceHelper {
     if (bramblHelper) {
       try {
         for (const address of args.addresses) {
-          await checkExistsByAddress(Address, address).then(function (result) {
-            if (
-              result.error === "The given address could not be found in the db"
-            ) {
+          await checkExists(Address, address, "address").then(function (
+            result
+          ) {
+            if (result.error === "address not found in db") {
               return AddressesService.create({
                 network: args.network,
                 password: args.password,
@@ -88,6 +88,7 @@ class TransactionServiceHelper {
             const internalArgs = {
               address: address,
               network: args.network,
+              password: args.senderPasswords[0],
             };
             return ReadTransactionService.getBalanceHelper(
               bramblHelper,

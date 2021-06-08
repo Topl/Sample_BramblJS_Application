@@ -1,4 +1,4 @@
-const connections = require(`./connections`);
+const connections = require(`./db/connections`);
 const networkUrl = connections.networkUrl;
 const apiKey = connections.networkApiKey;
 const BramblJS = require("brambljs");

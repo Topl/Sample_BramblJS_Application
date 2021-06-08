@@ -1,5 +1,5 @@
 const UserModel = require(`./user.model`);
-const save2db = require("../../../lib/saveToDatabase");
+const save2db = require("../../../lib/db/saveToDatabase");
 const stdErr = require(`../../../core/standardError`);
 const { checkExists } = require("../../../lib/validation");
 const mongoose = require("mongoose");
@@ -42,7 +42,7 @@ class UsersService {
       // Access Control
       const [isAdmin, fetchedUser] = await Promise.all([
         UsersService.checkAdmin(args.userEmail),
-        checkExists(UserModel, args.requestedEmail, { serviceName }),
+        checkExists(UserModel, args.requestedEmail, "email"),
       ]);
       if (!isAdmin && !(args.requestedEmail === args.userEmail)) {
         throw stdErr(403, "Not Authorized", serviceName, serviceName);
@@ -63,7 +63,7 @@ class UsersService {
     try {
       const [isAdmin, fetchedUser] = await Promise.all([
         UsersService.checkAdmin(userObj.userEmail),
-        checkExists(UserModel, userObj.requestedEmail, { serviceName }),
+        checkExists(UserModel, userObj.requestedEmail, "email"),
       ]);
 
       // check for active user
@@ -112,7 +112,7 @@ class UsersService {
       // Access Control
       const [isAdmin, fetchedUser] = await Promise.all([
         UsersService.checkAdmin(userObj.user_id),
-        checkExists(UserModel, userObj.changeEmail, { serviceName }),
+        checkExists(UserModel, userObj.changeEmail, "email"),
       ]);
 
       if (!isAdmin && !(userObj.userEmail === userObj.changeEmail)) {

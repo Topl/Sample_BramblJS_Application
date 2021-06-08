@@ -7,7 +7,8 @@ const BoxSchema = new mongoose.Schema({
   },
   nonce: {
     type: String,
-    required: true
+    required: true,
+    unique: true
   },
   bifrostId: {
     type: String,

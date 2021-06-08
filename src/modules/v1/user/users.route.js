@@ -1,6 +1,6 @@
 const Router = require("express").Router;
-const usersCtrl = require("../../modules/v1/user/users.controller");
-const auth = require("../../core/auth");
+const usersCtrl = require("./users.controller");
+const auth = require("../../../core/auth");
 const { checkSchema } = require("express-validator");
 
 const router = new Router();

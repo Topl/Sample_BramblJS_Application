@@ -1,4 +1,4 @@
-const mongoDBSettings = require("../../config/mongoDBSettings.json");
+const mongoDBSettings = require("../../../config/mongoDBSettings.json");
 require("dotenv").config();
 
 const settings = {

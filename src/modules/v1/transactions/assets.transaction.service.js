@@ -5,6 +5,7 @@ const stdError = require("../../../core/standardError");
 const Constants = require("../../../util/constants");
 const { getObjectDiff } = require("../../../util/extensions");
 const TransactionsServiceHelper = require("./transactionsServiceHelper");
+const BoxService = require("../state/box.service");
 
 const serviceName = "AssetTransaction";
 
@@ -61,7 +62,24 @@ class AssetTransactionService {
               rpcResponse,
               bramblHelper,
               args
-            );
+            ).then(function(result) {
+              // delete boxes via the jsResponse
+              for (const box of jsResponse.boxesToRemove) {
+                BoxService.deleteBoxByNonce(box[1]).then(function(result) {
+                  if (result.error) {
+                    throw stdError(
+                      500,
+                      "App view out of sync",
+                      result.error,
+                      serviceName
+                    );
+                  } else {
+                    return result;
+                  }
+                });
+              }
+              return result;
+            });
           } else {
             throw stdError(
               500,

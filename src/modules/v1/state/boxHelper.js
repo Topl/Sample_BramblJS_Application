@@ -1,38 +1,57 @@
 const BoxService = require("./box.service");
+const AddressModel = require("../addresses/addresses.model");
 const BoxModel = require("./box.model");
-const { checkExistsByBifrostId } = require("../../../lib/validation");
+const BoxUtils = require("../../../lib/boxes/boxUtils");
+const { checkExists, findAll } = require("../../../lib/validation");
+const stdError = require("../../../core/standardError");
+
+const serviceName = "boxHelper";
 
 class BoxHelper {
   static async updateBoxes(boxes, address) {
     let obj = {};
-    return boxes.forEach(box => {
-      checkExistsByBifrostId(BoxModel, box.id).then(function(result) {
-        if (result.error) {
-          return BoxService.saveToDb({
-            address: address,
-            nonce: box.nonce,
-            bifrostId: box.id,
-            evidence: box.evidence,
-            boxType: box.type,
-            value: box.value
-          }).catch(function(err) {
-            console.error(err);
-            obj.error = err.message;
+    try {
+      // fetch information for given address
+      let fetchedBoxes = await checkExists(AddressModel, address, "address")
+        .then(function (result) {
+          if (result.error) {
+            obj.error = result.error;
             return obj;
-          });
-        } else {
-          return BoxService.updateBoxById({
-            address: address,
-            nonce: box.nonce,
-            evidence: box.evidence,
-            value: box.value,
-            id: box.id
-          }).then(function(result) {
+          }
+          obj.address = result.doc;
+          return findAll(BoxModel, result.doc.boxes, "_id");
+        })
+        .then(function (result) {
+          if (result.error) {
+            obj.error = result.error;
+            return obj;
+          } else {
             return result;
-          });
-        }
-      });
-    });
+          }
+        });
+
+      // calculate the boxes to remove and the boxes to add
+      const boxesToAdd = boxes.filter(
+        (box) => !BoxUtils.doesBoxArrayContainNonce(fetchedBoxes.doc, box.nonce)
+      );
+
+      const boxesToRemove = fetchedBoxes.doc.filter(
+        (box) => !BoxUtils.doesBoxArrayContainNonce(boxes, box.nonce)
+      );
+
+      const timestamp = new Date();
+      const bulkBoxUpdateResult = await BoxService.bulkInsert(
+        boxesToAdd.map((box) =>
+          BoxUtils.mapPolyBoxToModel(box, address, timestamp)
+        ),
+        obj.address
+      );
+      await BoxService.deleteBoxes(boxesToRemove, address);
+      return bulkBoxUpdateResult;
+    } catch (error) {
+      console.error(error);
+      throw stdError(500, "Error updating boxes", error, serviceName);
+    }
   }
 }
 

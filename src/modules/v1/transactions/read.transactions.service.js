@@ -1,7 +1,7 @@
 const BramblHelper = require("../../../lib/bramblHelper");
 const RequestValidator = require("../../../lib/requestValidator");
 const stdError = require("../../../core/standardError");
-const { checkExistsByAddress } = require("../../../lib/validation");
+const { checkExists } = require("../../../lib/validation");
 const AddressesService = require("../addresses/addresses.service");
 const Address = require("../addresses/addresses.model");
 
@@ -9,27 +9,16 @@ const serviceName = "readTransactions";
 
 class ReadTransactionService {
   static async getBalanceHelper(bramblHelper, args) {
-    let addressInfo;
-    if (bramblHelper.brambljs) {
-      addressInfo = await bramblHelper.getBoxesWithBrambl([args.address]);
-    } else {
-      addressInfo = await bramblHelper.getBoxesWithRequests([args.address]);
-    }
-    if (addressInfo.error) {
-      throw stdError(500, addressInfo.error, serviceName, serviceName);
-    }
     return AddressesService.updateAddressByAddress({
       name: args.name,
       addressId: args.address,
-      polyBalance: addressInfo.result[args.address].Balances.Polys,
-      polyBox: addressInfo.result[args.address].Boxes.PolyBox,
-      arbitBox: addressInfo.result[args.address].Boxes.ArbitBox,
-      assetBox: addressInfo.result[args.address].Boxes.AssetBox,
+      network: args.network,
+      password: args.password,
     }).then(function (result) {
       if (result.error) {
         throw stdError(500, result.error, serviceName, serviceName);
       } else {
-        return addressInfo;
+        return result;
       }
     });
   }
@@ -46,7 +35,7 @@ class ReadTransactionService {
       throw stdError(404, "Unable to find address", serviceName, serviceName);
     } else {
       // check if address exists in the db
-      return checkExistsByAddress(Address, address) // eslint-disable-next-line no-unused-vars
+      return checkExists(Address, address, "address") // eslint-disable-next-line no-unused-vars
         .then(function (result) {
           // if the address is not in the db, add to the db
           if (result.error) {

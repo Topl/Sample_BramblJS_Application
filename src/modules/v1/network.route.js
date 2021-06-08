@@ -1,5 +1,5 @@
 const Router = require("express").Router;
-const NetworkCtrl = require("../../modules/v1/transactions/network.controller");
+const NetworkCtrl = require("./transactions/network.controller");
 const { checkSchema } = require("express-validator");
 const router = new Router();
 

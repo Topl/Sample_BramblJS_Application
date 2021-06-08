@@ -18,7 +18,7 @@ const uri = settings.mongoURI;
 const ensureCollections = async () => {
   glob
     .sync("**/*.model.js", { cwd: `${process.cwd()}/src/modules` })
-    .map(filename => require(`../modules/${filename}`))
+    .map(filename => require(`../../modules/${filename}`))
     .forEach(model => model.createCollection());
 };
 

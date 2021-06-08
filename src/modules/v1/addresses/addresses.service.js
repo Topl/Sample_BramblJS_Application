@@ -6,12 +6,8 @@ const stdError = require("../../../core/standardError");
 
 const stdErr = require("../../../core/standardError");
 const BramblHelper = require("../../../lib/bramblHelper");
-const save2db = require("../../../lib/saveToDatabase");
-const {
-  checkExists,
-  checkExistsById,
-  checkExistsByAddress
-} = require("../../../lib/validation");
+const save2db = require("../../../lib/db/saveToDatabase");
+const { checkExists, checkExistsById } = require("../../../lib/validation");
 const paginateAddresses = require(`../../../lib/paginateAddresses`);
 const BoxHelper = require(`../state/boxHelper`);
 
@@ -28,53 +24,13 @@ class AddressesService {
       const timestamp = new Date();
 
       // fetch information of user
-      let fetchedUser = await UserModel.findOne({
-        email: args.userEmail
-      }).catch(function(error) {
-        console.error(error);
-        throw error;
-      });
-      let address;
-      let keyfile;
-      let brambl;
-      let balances;
-      let polyBox;
-      let assetBox;
-      let arbitBox;
-      // if address is not provided.
-      if (!args.address) {
-        // create address
-        brambl = new BramblHelper(false, args.password, args.network);
-        const generatedAddress = await brambl.createAddress();
-        address = generatedAddress.address;
-        keyfile = address.keyfile;
-        //retrieve the polyBalance for the address that has been imported
-        balances = await brambl.getBalanceWithBrambl(address);
-        // retrieve and update boxes in db
-      } else {
-        brambl = new BramblHelper(true, args.network);
-        address = args.address;
-        //retrieve the polyBalance for the address that has been imported
-        balances = await brambl.getBalanceWithRequests(address);
-      }
-
-      //retrieve the polyBalance for the address that has been imported
-
-      if (!balances) {
-        throw stdErr(
-          500,
-          "Unable to retrieve balance for address from network",
-          serviceName,
-          serviceName
+      let fetchedUser = await checkExists(UserModel, args.userEmail, "email");
+      const [balances, keyfile, address] =
+        await AddressesService.getBalancesForAddress(
+          args.address,
+          args.network,
+          args.password
         );
-      } else if (balances.polyBalance < 0) {
-        throw stdErr(
-          500,
-          "polyBalance for address must be greater than 0.",
-          serviceName,
-          serviceName
-        );
-      }
 
       let addressDoc = {
         name: args.name,
@@ -83,49 +39,72 @@ class AddressesService {
         keyfile: keyfile,
         network: args.network,
         polyBalance: balances.polyBalance,
-        polyBox: polyBox,
-        assetBox: assetBox,
-        arbitBox: arbitBox
       };
 
       addressDoc.isActive = {
         status: true,
-        asOf: timestamp
+        asOf: timestamp,
       };
       let newAddress = new Address(addressDoc);
 
       // Save Address and User in transaction
-      if (fetchedUser) {
-        fetchedUser.addresses.push(newAddress._id);
-        await save2db([fetchedUser, newAddress], {
+      if (fetchedUser.doc) {
+        fetchedUser.doc.addresses.push(newAddress._id);
+        await save2db([fetchedUser.doc, newAddress], {
           timestamp,
           serviceName,
-          session
-        }).then(function(result) {
+          session,
+        }).then(function (result) {
           if (result.error) {
             throw stdError(500, result.error, serviceName, serviceName);
           } else {
             // iterate through boxes and either add or update them in the DB
             if (balances.boxes) {
-              BoxHelper.updateBoxes(balances.boxes, address);
+              return BoxHelper.updateBoxes(balances.boxes, address).then(
+                function (result) {
+                  if (result.error) {
+                    throw stdErr(
+                      500,
+                      "Unable to update application view",
+                      result.error,
+                      serviceName
+                    );
+                  } else {
+                    return result;
+                  }
+                }
+              );
             }
             return result;
           }
         });
       } else {
         await save2db(newAddress, { timestamp, serviceName, session })
-          .then(function(result) {
+          .then(function (result) {
             if (result.error) {
               throw stdError(500, result.error, serviceName, serviceName);
             } else {
               // iterate through boxes and either add or update them in the DB
               if (balances.boxes) {
-                BoxHelper.updateBoxes(balances.boxes, address);
+                return BoxHelper.updateBoxes(balances.boxes, args.address).then(
+                  function (result) {
+                    if (result.error) {
+                      throw stdErr(
+                        500,
+                        "Unable to update application view",
+                        result.error,
+                        serviceName
+                      );
+                    } else {
+                      return result;
+                    }
+                  }
+                );
               }
               return result;
             }
           })
-          .catch(function(err) {
+          .catch(function (err) {
             console.error(err);
             throw stdError(
               400,
@@ -152,11 +131,26 @@ class AddressesService {
     }
   }
 
+  static async updateBoxesHelper(boxes, address) {
+    return BoxHelper.updateBoxes(boxes, address).then(function (result) {
+      if (result.error) {
+        throw stdErr(
+          500,
+          "Unable to update application view",
+          result.error,
+          serviceName
+        );
+      } else {
+        return result;
+      }
+    });
+  }
+
   static async updateAddressByAddress(args) {
     // check if the address already exists
     let obj = {};
     const self = this;
-    return await checkExistsByAddress(Address, args.addressId).then(function(
+    return await checkExists(Address, args.addressId, "address").then(function (
       result
     ) {
       if (result.error) {
@@ -167,7 +161,7 @@ class AddressesService {
           serviceName
         );
       }
-      return self.updateAddress(args, result.doc).catch(function(err) {
+      return self.updateAddress(args, result.doc).catch(function (err) {
         console.error(err);
         obj.err = err.message;
         return obj;
@@ -178,7 +172,7 @@ class AddressesService {
   static async updateAddressById(args) {
     // check if the address exists in the db
     const fetchedAddress = await checkExistsById(Address, args.addressId)
-      .then(function(result) {
+      .then(function (result) {
         if (!result.doc.isActive.status) {
           throw stdErr(
             404,
@@ -190,7 +184,7 @@ class AddressesService {
         return result.doc;
       })
       // eslint-disable-next-line no-unused-vars
-      .catch(function(err) {
+      .catch(function (err) {
         console.error(err);
         throw stdErr(
           500,
@@ -205,29 +199,18 @@ class AddressesService {
   static async updateAddress(args, fetchedAddress) {
     const session = await mongoose.startSession();
     try {
-      const brambl = new BramblHelper(true, args.network);
-      const balances = await brambl.getBalanceWithRequests(
-        fetchedAddress.address
-      );
+      // eslint-disable-next-line no-unused-vars
+      const [balances, keyfile] = await AddressesService.getBalancesForAddress(
+        args.addressId,
+        args.network,
+        args.password
+      ).catch(function (err) {
+        console.error(err);
+        return [false, false];
+      });
 
-      if (!balances) {
-        stdErr(
-          500,
-          "Unable to retrieve balance for address from network",
-          serviceName,
-          serviceName
-        );
-      } else if (balances.polyBalance < 0) {
-        stdErr(
-          500,
-          "polyBalance for address must be greater than 0.",
-          serviceName,
-          serviceName
-        );
-      }
-
-      // iterate through boxes and either add or update them in the DB
-      if (balances.boxes) {
+      // retrieve boxes. Only update the new boxes in the DB and for the address
+      if (balances) {
         BoxHelper.updateBoxes(balances.boxes, fetchedAddress.address);
       }
 
@@ -240,9 +223,6 @@ class AddressesService {
       if (args.polyBalance) {
         fetchedAddress.polyBalance = args.polyBalance;
       }
-      if (args.polyBox) {
-        fetchedAddress.polyBox = args.polyBox;
-      }
 
       if (args.assetBox) {
         fetchedAddress.assetBox = args.assetBox;
@@ -253,7 +233,13 @@ class AddressesService {
       }
 
       // save
-      await save2db(fetchedAddress, { timestamp, serviceName, session });
+      await save2db(fetchedAddress, { timestamp, serviceName, session }).then(
+        function (result) {
+          if (result.error) {
+            throw stdError(500, result.error, serviceName, serviceName);
+          }
+        }
+      );
       return fetchedAddress;
     } catch (err) {
       throw err;
@@ -276,7 +262,7 @@ class AddressesService {
       const user_id = fetchedAddress.doc.user_id.toString();
       let [hasAdminAccess, fetchedUser] = await Promise.all([
         UsersService.checkAdmin(user_id),
-        UserModel.findOne({ email: user_id })
+        UserModel.findOne({ email: user_id }),
       ]);
 
       if (!fetchedUser) {
@@ -295,14 +281,14 @@ class AddressesService {
       fetchedAddress.doc.markModified("isActive.status");
       fetchedAddress.doc.isActive.asOf = timestamp;
       fetchedAddress.doc.markModified("isActive.asOf");
-      const addressIndex = fetchedUser.addresses.findIndex(elem => {
+      const addressIndex = fetchedUser.addresses.findIndex((elem) => {
         elem.equals(mongoose.Types.ObjectId(args.addressId));
       });
       fetchedUser.addresses.splice(addressIndex, 1);
       await save2db([fetchedUser, fetchedAddress.doc], {
         timestamp,
         serviceName,
-        session
+        session,
       });
 
       return {};
@@ -316,9 +302,7 @@ class AddressesService {
   static async getAddresses(args) {
     try {
       const offset = args.page == 0 ? 0 : args.page * args.limit;
-      const addresses = await Address.find()
-        .skip(offset)
-        .limit(args.limit);
+      const addresses = await Address.find().skip(offset).limit(args.limit);
       return addresses;
     } catch (err) {
       throw err;
@@ -328,8 +312,8 @@ class AddressesService {
   static async getAddressesByUser(args) {
     try {
       const [fetchedUser, projects] = await Promise.all([
-        checkExists(UserModel, args.user_id),
-        paginateAddresses(args.user_id, args.page, args.limit)
+        checkExists(UserModel, args.user_id, "email"),
+        paginateAddresses(args.user_id, args.page, args.limit),
       ]);
 
       if (!fetchedUser.doc.isActive.status) {
@@ -343,8 +327,8 @@ class AddressesService {
 
   static async getAddressByAddress(args) {
     // check if address exists and is active
-    return await checkExistsByAddress(Address, args.address)
-      .then(function(result) {
+    return await checkExists(Address, args.address, "address")
+      .then(function (result) {
         if (result.error) {
           throw stdErr(
             500,
@@ -361,7 +345,7 @@ class AddressesService {
         return result.doc;
       })
       // eslint-disable-next-line no-unused-vars
-      .catch(function(err) {
+      .catch(function (err) {
         throw stdErr(
           500,
           "Unable to retrieve address by address",
@@ -385,6 +369,42 @@ class AddressesService {
     } catch (err) {
       throw err;
     }
+  }
+
+  static async getBalancesForAddress(address, network, password) {
+    let balances;
+    let keyfile;
+    let brambl;
+    if (address) {
+      brambl = new BramblHelper(true, network);
+      //retrieve the polyBalance for the address that has been imported
+      balances = await brambl.getBalanceWithRequests(address);
+    } else {
+      // create address
+      brambl = new BramblHelper(false, password, network);
+      const generatedAddress = await brambl.createAddress();
+      address = generatedAddress.address;
+      keyfile = address.keyfile;
+      //retrieve the polyBalance for the address that has been imported
+      balances = await brambl.getBalanceWithBrambl(address);
+    }
+
+    if (!balances) {
+      throw stdErr(
+        500,
+        "Unable to retrieve balance for address from network",
+        serviceName,
+        serviceName
+      );
+    } else if (balances.polyBalance < 0) {
+      throw stdErr(
+        500,
+        "polyBalance for address must be greater than 0.",
+        serviceName,
+        serviceName
+      );
+    }
+    return [balances, keyfile, address];
   }
 }
 
