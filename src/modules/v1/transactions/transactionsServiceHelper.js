@@ -5,6 +5,7 @@ const ReadTransactionService = require("./read.transactions.service");
 const BoxUtils = require("../../../lib/boxes/boxUtils");
 const stdError = require("../../../core/standardError");
 const BramblJS = require("../../../../brambljs");
+const { reject } = require("lodash");
 
 const serviceName = "TransactionServiceHelper";
 
@@ -72,7 +73,14 @@ class TransactionServiceHelper {
     args,
     serviceName
   ) {
-    const bramblParams = await bramblHelper.verifyRawTransactionData(args);
+    let obj = {};
+    const bramblParams = await bramblHelper
+      .verifyRawTransactionData(args)
+      .catch(function (err) {
+        console.error(err);
+        obj.error = err.message;
+        reject(err);
+      });
 
     // sender addresses were checked to be in the DB in a previous step, no need to do that computation for a second time.
     const temp = bramblParams.sender;

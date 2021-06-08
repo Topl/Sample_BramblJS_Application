@@ -2,9 +2,11 @@ const connections = require(`./db/connections`);
 const networkUrl = connections.networkUrl;
 const apiKey = connections.networkApiKey;
 const BramblJS = require("../../brambljs");
+const BoxUtils = require("./boxes/boxUtils");
 
 class BramblHelper {
   constructor(args) {
+    let obj = {};
     if (args.readOnly) {
       this.requests = BramblJS.Requests(args.network, networkUrl, apiKey);
     } else if (args.keyPair || args.keyFilePath) {
@@ -22,14 +24,20 @@ class BramblHelper {
             ),
       });
     } else {
-      this.brambljs = new BramblJS({
-        networkPrefix: args.network, // applies to both requests and keyManager
-        password: args.password,
-        Requests: {
-          url: `${networkUrl}`,
-          apiKey: `${apiKey}`,
-        },
-      });
+      try {
+        this.brambljs = new BramblJS({
+          networkPrefix: args.network, // applies to both requests and keyManager
+          password: args.password,
+          Requests: {
+            url: `${networkUrl}`,
+            apiKey: `${apiKey}`,
+          },
+        });
+      } catch (err) {
+        console.error(err);
+        obj.error = err.message;
+        return obj;
+      }
     }
   }
 
@@ -42,9 +50,6 @@ class BramblHelper {
     return new Promise((resolve) => {
       const a = self.brambljs.keyManager.address;
       const kf = self.brambljs.keyManager.getKeyStorage();
-
-      self.brambljs.keyManager.exportToFile(`private_keyfiles/`);
-
       const Address = {
         address: a,
         keyfile: kf,
@@ -157,7 +162,7 @@ class BramblHelper {
         return obj;
       });
   }
-
+  s;
   /**
    * Get transaction details from the block
    * @param {string} transactionId id for transaction
@@ -405,6 +410,10 @@ class BramblHelper {
         .broadcastTx({ tx: signedTransactionData })
         .then(function (result) {
           obj.txId = result.result.txId;
+          obj.result = result.result;
+          obj.result.newBoxes = obj.result.newBoxes.map((box) =>
+            BoxUtils.convertToBox(box)
+          );
           resolve(obj);
         })
         .catch(function (err) {

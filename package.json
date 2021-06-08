@@ -25,6 +25,7 @@
   },
   "homepage": "https://github.com/Topl/Sample_BramblJS_Application#readme",
   "dependencies": {
+    "blake2": "^4.0.2",
     "bs58": "^4.0.1",
     "chai": "^4.3.4",
     "cors": "^2.8.4",

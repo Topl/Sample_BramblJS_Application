@@ -2,8 +2,9 @@ class PolyBox {
   typePrefix = 2;
   typeString = "PolyBox";
 
-  constructor(value) {
-    //add evidence and nonce values once the serializers are available in JS
+  constructor(evidence, nonce, value) {
+    this.evidence = evidence;
+    this.nonce = nonce;
     this.value = value;
   }
 }

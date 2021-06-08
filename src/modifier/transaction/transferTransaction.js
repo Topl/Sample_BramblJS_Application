@@ -1,4 +1,5 @@
 const BoxReader = require("../../lib/boxes/boxReader");
+const BoxUtils = require("../../lib/boxes/boxUtils");
 const { asyncFlatMap } = require("../../util/extensions");
 
 class TransferTransaction {
@@ -38,9 +39,9 @@ class TransferTransaction {
           // implement grouping
           // always get polys since this is how fees are paid
           return (
-            value.boxType === "PolyBox" ||
-            (value.boxType === "ArbitBox" && returnBoxes === "ArbitBox") ||
-            (value.boxType === "AssetBox" &&
+            value.typeString === "PolyBox" ||
+            (value.typeString === "ArbitBox" && returnBoxes === "ArbitBox") ||
+            (value.typeString === "AssetBox" &&
               returnBoxes === "Assets" &&
               assetCode === value.value.assetCode)
           );
@@ -53,8 +54,8 @@ class TransferTransaction {
     senders,
     fee,
     txType,
-    assetCode,
-    bramblHelper
+    bramblHelper,
+    assetCode
   ) {
     let obj = {};
     // Lookup boxes for the given senders
@@ -82,10 +83,7 @@ class TransferTransaction {
     // compute poly balance since it is used often
     // make sure there are no errors
     if (errors.length < 1) {
-      const polyBalance = senderBoxes
-        .filter((s) => s.boxType === "PolyBox")
-        .map((s) => s.value.quantity)
-        .reduce((a, b) => +a + +b, 0);
+      const polyBalance = BoxUtils.calculatePolyBalance(senderBoxes);
 
       // ensure there are enough polys to pay the fee
       if (polyBalance < fee) {
