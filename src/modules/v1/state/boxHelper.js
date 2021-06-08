@@ -30,7 +30,9 @@ class BoxHelper {
             obj.error = result.error;
             return obj;
           } else {
-            return result;
+            return result.length > 0
+              ? result.map((box) => BoxUtils.convertToBox(box))
+              : result;
           }
         });
 

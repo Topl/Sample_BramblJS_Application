@@ -11,7 +11,7 @@ class PolyTransfer extends TransferTransaction {
 
     this.coinOutput = newBoxes.map((recipient) => {
       // grabbing the value of the polys that will be put in the recipient's box
-      return new PolyBox(recipient[1].quantity);
+      return new PolyBox(new SimpleValue(recipient[1].quantity));
     });
 
     this.feeChangeOutput = new PolyBox(

@@ -9,12 +9,37 @@ class AssetTransfer extends TransferTransaction {
   typePrefix = 3;
   typeString = "AssetTransfer";
 
-  constructor(from, newBoxes, attestation, fee, timestamp, data, minting) {
-    super(from, newBoxes, attestation, fee, timestamp, data, minting);
+  constructor(
+    from,
+    newBoxes,
+    attestation,
+    fee,
+    timestamp,
+    data,
+    minting,
+    assetCode
+  ) {
+    super(
+      from,
+      newBoxes,
+      attestation,
+      fee,
+      timestamp,
+      data,
+      minting,
+      assetCode
+    );
 
     this.coinOutput = newBoxes.map((recipient) => {
       // grabbing the value of the assets that will be put in the recipient's box
-      return new AssetBox(recipient[1].quantity);
+      return new AssetBox(
+        new AssetValue(
+          recipient[1].quantity,
+          assetCode,
+          recipient[1].securityRoot,
+          recipient[1].metadata
+        )
+      );
     });
 
     this.feeChangeOutput = new PolyBox(
@@ -59,7 +84,7 @@ class AssetTransfer extends TransferTransaction {
       }
       // compute the amount of tokens that will be sent to the recipient
       const amtToSpend = toReceive
-        .map(r => {
+        .map((r) => {
           return r[1].quantity;
         })
         .reduce((a, b) => +a + +b, 0);
@@ -89,7 +114,8 @@ class AssetTransfer extends TransferTransaction {
         fee,
         Date.now(),
         data,
-        minting
+        minting,
+        assetCode
       );
     });
   }
@@ -117,7 +143,7 @@ class AssetTransfer extends TransferTransaction {
       .reduce((a, b) => a + b, 0);
     // create the list of inputs and outputs (senderChangeOut and recipientOut)
     const inputs = assetBoxes
-      .map(bx => {
+      .map((bx) => {
         return [bx.address, bx.nonce];
       })
       .concat(
@@ -136,7 +162,7 @@ class AssetTransfer extends TransferTransaction {
           quantity: (txInputState.polyBalance - +fee).toString(),
         },
       ],
-      [consolidationAddress, new AssetValue(amtToSpend.toString(), assetCode)]
+      [consolidationAddress, new AssetValue(amtToSpend.toString(), assetCode)],
     ].concat(toReceive);
     obj.availableToSpend = availableToSpend;
     obj.inputs = inputs;

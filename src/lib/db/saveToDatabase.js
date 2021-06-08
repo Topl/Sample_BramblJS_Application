@@ -29,7 +29,7 @@ const runTransactionWithRetry = async (_models, _session, _serviceName) => {
   while (true) {
     try {
       const result = await Promise.all(
-        _models.map(model => model.save({ _session }))
+        _models.map((model) => model.save({ _session }))
       );
       await commitWithRetry(_session, _serviceName);
       return result;

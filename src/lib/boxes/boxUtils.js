@@ -17,11 +17,11 @@ class BoxUtils {
 
   static convertToBox(box) {
     if (box.type === "PolyBox" || box.boxType === "PolyBox") {
-      return new PolyBox(box.evidence, box.nonce, box.value);
+      return new PolyBox(box.value, box.evidence, box.nonce, box.id);
     } else if (box.type === "ArbitBox" || box.boxType === "ArbitBox") {
-      return new ArbitBox(box.evidence, box.nonce, box.value);
+      return new ArbitBox(box.evidence, box.nonce, box.value, box.id);
     } else if (box.type === "AssetBox" || box.boxType === "AssetBox") {
-      return new AssetBox(box.evidence, box.nonce, box.value);
+      return new AssetBox(box.value, box.evidence, box.nonce, box.id);
     }
   }
 
@@ -31,7 +31,7 @@ class BoxUtils {
       evidence: polyBox.evidence,
       bifrostId: polyBox.id,
       nonce: polyBox.nonce,
-      boxType: polyBox.type,
+      boxType: polyBox.typeString,
       value: polyBox.value,
     };
 

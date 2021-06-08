@@ -25,12 +25,16 @@ class TransferTransaction {
     // Lookup boxes for the given sender addresses
     return asyncFlatMap(addresses, (a) => {
       return BoxReader.getTokenBoxes(a, bramblHelper).then(function (result) {
+        const errors = [];
         result.forEach((box) => {
           if (box.error) {
-            obj.error = box.error;
-            return obj;
+            errors.push(box.error);
           }
         });
+        if (errors.length > 0) {
+          obj.error = "Boxes for given address not found in DB.";
+          return obj;
+        }
         if (result.length < 1) {
           obj.error = "No boxes found to fund transactions";
           return obj;

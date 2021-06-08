@@ -90,13 +90,23 @@ class BramblHelper {
     obj.arbitsBalance = result.result[address].Balances.Arbits;
     obj.boxes = [];
     obj.boxes = result.result[address].Boxes.PolyBox
-      ? result.result[address].Boxes.PolyBox
+      ? result.result[address].Boxes.PolyBox.map((box) =>
+          BoxUtils.convertToBox(box)
+        )
       : [];
     obj.boxes = result.result[address].Boxes.ArbitBox
-      ? obj.boxes.concat(result.result[address].Boxes.ArbitBox)
+      ? obj.boxes.concat(
+          result.result[address].Boxes.ArbitBox.map((box) =>
+            BoxUtils.convertToBox(box)
+          )
+        )
       : obj.boxes;
     obj.boxes = result.result[address].Boxes.AssetBox
-      ? obj.boxes.concat(result.result[address].Boxes.AssetBox)
+      ? obj.boxes.concat(
+          result.result[address].Boxes.AssetBox.map((box) =>
+            BoxUtils.convertToBox(box)
+          )
+        )
       : obj.boxes;
     return obj;
   }

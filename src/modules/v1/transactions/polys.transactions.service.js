@@ -123,15 +123,16 @@ class PolyTransactionService {
       bramblHelper = new BramblHelper(bramblHelperParams);
       if (!bramblHelperParams.keyFile) {
         const ks = bramblHelper.brambljs.keyManager.getKeyStorage();
-        AddressesService.create({
+        return AddressesService.create({
           network: args.network,
           password: args.sender[0][1],
           name: `${ks.address}`,
           userEmail: args.userEmail,
           address: ks.address,
           keyfile: ks,
+        }).then(() => {
+          return [ks];
         });
-        return [ks];
       }
       return result.map((elem) => elem.keyfile);
     });
