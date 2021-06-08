@@ -25,15 +25,12 @@ class AddressesService {
 
       // fetch information of user
       let fetchedUser = await checkExists(UserModel, args.userEmail, "email");
-      const [
-        balances,
-        keyfile,
-        address
-      ] = await AddressesService.getBalancesForAddress(
-        args.address,
-        args.network,
-        args.password
-      );
+      const [balances, keyfile, address] =
+        await AddressesService.getBalancesForAddress(
+          args.address,
+          args.network,
+          args.password
+        );
 
       let addressDoc = {
         name: args.name,
@@ -41,12 +38,12 @@ class AddressesService {
         address: address,
         keyfile: keyfile,
         network: args.network,
-        polyBalance: balances.polyBalance
+        polyBalance: balances.polyBalance,
       };
 
       addressDoc.isActive = {
         status: true,
-        asOf: timestamp
+        asOf: timestamp,
       };
       let newAddress = new Address(addressDoc);
 
@@ -56,15 +53,15 @@ class AddressesService {
         await save2db([fetchedUser.doc, newAddress], {
           timestamp,
           serviceName,
-          session
-        }).then(function(result) {
+          session,
+        }).then(function (result) {
           if (result.error) {
             throw stdError(500, result.error, serviceName, serviceName);
           } else {
             // iterate through boxes and either add or update them in the DB
             if (balances.boxes) {
               return BoxHelper.updateBoxes(balances.boxes, address).then(
-                function(result) {
+                function (result) {
                   if (result.error) {
                     throw stdErr(
                       500,
@@ -83,14 +80,14 @@ class AddressesService {
         });
       } else {
         await save2db(newAddress, { timestamp, serviceName, session })
-          .then(function(result) {
+          .then(function (result) {
             if (result.error) {
               throw stdError(500, result.error, serviceName, serviceName);
             } else {
               // iterate through boxes and either add or update them in the DB
               if (balances.boxes) {
                 return BoxHelper.updateBoxes(balances.boxes, args.address).then(
-                  function(result) {
+                  function (result) {
                     if (result.error) {
                       throw stdErr(
                         500,
@@ -107,7 +104,7 @@ class AddressesService {
               return result;
             }
           })
-          .catch(function(err) {
+          .catch(function (err) {
             console.error(err);
             throw stdError(
               400,
@@ -135,7 +132,7 @@ class AddressesService {
   }
 
   static async updateBoxesHelper(boxes, address) {
-    return BoxHelper.updateBoxes(boxes, address).then(function(result) {
+    return BoxHelper.updateBoxes(boxes, address).then(function (result) {
       if (result.error) {
         throw stdErr(
           500,
@@ -153,7 +150,7 @@ class AddressesService {
     // check if the address already exists
     let obj = {};
     const self = this;
-    return await checkExists(Address, args.addressId, "address").then(function(
+    return await checkExists(Address, args.addressId, "address").then(function (
       result
     ) {
       if (result.error) {
@@ -164,7 +161,7 @@ class AddressesService {
           serviceName
         );
       }
-      return self.updateAddress(args, result.doc).catch(function(err) {
+      return self.updateAddress(args, result.doc).catch(function (err) {
         console.error(err);
         obj.err = err.message;
         return obj;
@@ -175,7 +172,7 @@ class AddressesService {
   static async updateAddressById(args) {
     // check if the address exists in the db
     const fetchedAddress = await checkExistsById(Address, args.addressId)
-      .then(function(result) {
+      .then(function (result) {
         if (!result.doc.isActive.status) {
           throw stdErr(
             404,
@@ -187,7 +184,7 @@ class AddressesService {
         return result.doc;
       })
       // eslint-disable-next-line no-unused-vars
-      .catch(function(err) {
+      .catch(function (err) {
         console.error(err);
         throw stdErr(
           500,
@@ -207,7 +204,7 @@ class AddressesService {
         args.addressId,
         args.network,
         args.password
-      ).catch(function(err) {
+      ).catch(function (err) {
         console.error(err);
         return [false, false];
       });
@@ -237,7 +234,7 @@ class AddressesService {
 
       // save
       await save2db(fetchedAddress, { timestamp, serviceName, session }).then(
-        function(result) {
+        function (result) {
           if (result.error) {
             throw stdError(500, result.error, serviceName, serviceName);
           }
@@ -265,7 +262,7 @@ class AddressesService {
       const user_id = fetchedAddress.doc.user_id.toString();
       let [hasAdminAccess, fetchedUser] = await Promise.all([
         UsersService.checkAdmin(user_id),
-        UserModel.findOne({ email: user_id })
+        UserModel.findOne({ email: user_id }),
       ]);
 
       if (!fetchedUser) {
@@ -284,14 +281,14 @@ class AddressesService {
       fetchedAddress.doc.markModified("isActive.status");
       fetchedAddress.doc.isActive.asOf = timestamp;
       fetchedAddress.doc.markModified("isActive.asOf");
-      const addressIndex = fetchedUser.addresses.findIndex(elem => {
+      const addressIndex = fetchedUser.addresses.findIndex((elem) => {
         elem.equals(mongoose.Types.ObjectId(args.addressId));
       });
       fetchedUser.addresses.splice(addressIndex, 1);
       await save2db([fetchedUser, fetchedAddress.doc], {
         timestamp,
         serviceName,
-        session
+        session,
       });
 
       return {};
@@ -305,9 +302,7 @@ class AddressesService {
   static async getAddresses(args) {
     try {
       const offset = args.page == 0 ? 0 : args.page * args.limit;
-      const addresses = await Address.find()
-        .skip(offset)
-        .limit(args.limit);
+      const addresses = await Address.find().skip(offset).limit(args.limit);
       return addresses;
     } catch (err) {
       throw err;
@@ -318,7 +313,7 @@ class AddressesService {
     try {
       const [fetchedUser, projects] = await Promise.all([
         checkExists(UserModel, args.user_id, "email"),
-        paginateAddresses(args.user_id, args.page, args.limit)
+        paginateAddresses(args.user_id, args.page, args.limit),
       ]);
 
       if (!fetchedUser.doc.isActive.status) {
@@ -333,7 +328,7 @@ class AddressesService {
   static async getAddressByAddress(args) {
     // check if address exists and is active
     return await checkExists(Address, args.address, "address")
-      .then(function(result) {
+      .then(function (result) {
         if (result.error) {
           throw stdErr(
             500,
@@ -350,7 +345,7 @@ class AddressesService {
         return result.doc;
       })
       // eslint-disable-next-line no-unused-vars
-      .catch(function(err) {
+      .catch(function (err) {
         throw stdErr(
           500,
           "Unable to retrieve address by address",
