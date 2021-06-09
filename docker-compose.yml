@@ -16,7 +16,7 @@ services:
             - mongodb
         restart: always
     bifrost: 
-        image: toplprotocol/bifrost:1.4.3
+        image: toplprotocol/bifrost:1.6.3
         container_name: bifrost
         ports:
             - "9085:9085"
