@@ -7,24 +7,28 @@ const BoxUtils = require("./boxes/boxUtils");
 class BramblHelper {
     constructor(args) {
         let obj = {};
-        if (args.readOnly) {
-            this.requests = BramblJS.Requests(args.network, networkUrl, apiKey);
-        } else if (args.keyFile || args.keyFilePath) {
-            this.brambljs = new BramblJS({
-                networkPrefix: args.network, // applies to both Requests and KeyManager
-                Requests: {
-                    url: `${networkUrl}`,
-                    apiKey: `${apiKey}`,
-                },
-                KeyManager: args.keyFile
-                    ? BramblJS.KeyManager.importKeyPair(args.keyFile, args.password)
-                    : BramblJS.KeyManager.importKeyPairFromFile(
-                          `private_keyfiles/${args.keyFilePath}.json`,
-                          args.password
-                      ),
-            });
-        } else {
-            try {
+        try {
+            if (args.readOnly) {
+                this.requests = BramblJS.Requests(args.network, networkUrl, apiKey);
+            } else if (args.keyManager) {
+                this.brambljs = new BramblJS({
+                    networkPrefix: args.network,
+                    Requests: {
+                        url: `${networkUrl}`,
+                        apiKey: `${apiKey}`,
+                    },
+                    KeyManager: args.keyManager,
+                });
+            } else if (args.keyFile) {
+                this.brambljs = new BramblJS({
+                    networkPrefix: args.network, // applies to both Requests and KeyManager
+                    Requests: {
+                        url: `${networkUrl}`,
+                        apiKey: `${apiKey}`,
+                    },
+                    KeyManager: BramblJS.KeyManager.importKeyPair(args.keyFile, args.password),
+                });
+            } else {
                 this.brambljs = new BramblJS({
                     networkPrefix: args.network, // applies to both requests and keyManager
                     password: args.password,
@@ -33,11 +37,11 @@ class BramblHelper {
                         apiKey: `${apiKey}`,
                     },
                 });
-            } catch (err) {
-                console.error(err);
-                obj.error = err.message;
-                return obj;
             }
+        } catch (err) {
+            console.error(err);
+            obj.error = err.message;
+            return obj;
         }
     }
 
@@ -435,9 +439,7 @@ class BramblHelper {
                 recipients: txObject.recipients,
                 fee: txObject.fee,
                 sender: txObject.keyfiles,
-                senderPasswords: txObject.sender.map(function (item) {
-                    return item[1];
-                }),
+                senderPasswords: Object.values(txObject.sender),
                 changeAddress: txObject.changeAddress,
                 data: txObject.data,
                 consolidationAddress: txObject.consolidationAddress,

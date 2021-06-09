@@ -6,7 +6,6 @@ const BoxUtils = require("../../../lib/boxes/boxUtils");
 const stdError = require("../../../core/standardError");
 const BramblJS = require("../../../../brambljs");
 const BramblHelper = require("../../../lib/bramblHelper");
-const { reject } = require("lodash");
 
 const serviceName = "TransactionServiceHelper";
 
@@ -96,36 +95,55 @@ class TransactionServiceHelper {
     }
 
     static async initiateBramblHelperFromRequest(args) {
-        return this.getKeyfileForAddresses(args.sender.map((sender) => sender[0])).then(function (result) {
-            if (result.error) {
-                throw stdError(500, result.error, serviceName, serviceName);
-            }
-            const bramblHelperParams = {
-                readOnly: false,
-                network: args.network,
-                password: args.sender[0][1],
-                keyFilePath: args.sender[0][0],
-                keyFile: result.length > 0 ? result[0].keyfile : null,
-            };
-            const bramblHelper = new BramblHelper(bramblHelperParams);
-            if (!bramblHelperParams.keyFile) {
-                const ks = bramblHelper.brambljs.keyManager.getKeyStorage();
-
-                return AddressesService.create({
+        let senderKeyManagers = [];
+        let bramblHelperParams;
+        const result = await this.getKeyfileForAddresses(Object.keys(args.sender));
+        if (result.error) {
+            throw stdError(500, result.error, serviceName, serviceName);
+        }
+        //partitions the result based on whether a keyfile was found in the db
+        const [addressesWithKeyfilesInDB, addressesWithoutKeyfilesInDB] = result.reduce(
+            ([p, f], e) => (e.keyfile ? [[...p, e], f] : [p, [...f, e]]),
+            [[], []]
+        );
+        if (addressesWithoutKeyfilesInDB.length > 0) {
+            for (const keyStorage of addressesWithoutKeyfilesInDB) {
+                const kM = BramblJS.KeyManager.importKeyPairFromFile(
+                    `private_keyfiles/${keyStorage.address}.json`,
+                    args.password
+                );
+                senderKeyManagers.push(kM);
+                await AddressesService.create({
                     network: args.network,
-                    password: args.sender[0][1],
-                    name: `${ks.address}`,
+                    password: args.sender[keyStorage.address],
+                    name: `${keyStorage.address}`,
                     userEmail: args.userEmail,
-                    address: ks.address,
-                    keyfile: ks,
-                }).then(() => {
-                    args.keyfiles = [ks];
-                    return [bramblHelper, args];
+                    address: keyStorage.address,
+                    keyfile: kM.getKeyStorage(),
                 });
             }
-            args.keyfiles = result.map((elem) => elem.keyfile);
-            return [bramblHelper, args];
-        });
+        }
+        if (senderKeyManagers.length > 0) {
+            bramblHelperParams = {
+                readOnly: false,
+                network: args.network,
+                keyManager: senderKeyManagers[0],
+            };
+        } else {
+            bramblHelperParams = {
+                readOnly: false,
+                network: args.network,
+                password: args.sender[addressesWithKeyfilesInDB[0].address],
+                keyFile: addressesWithKeyfilesInDB[0].keyfile,
+            };
+        }
+        const bramblHelper = new BramblHelper(bramblHelperParams);
+        args.keyfiles = senderKeyManagers
+            .map(function (manager) {
+                return manager.getKeyStorage();
+            })
+            .concat(addressesWithKeyfilesInDB.map((keyStorage) => keyStorage.keyfile));
+        return [bramblHelper, args];
     }
 
     static async signAndSendTransactionWithStateManagement(rawTransaction, bramblHelper, args) {
