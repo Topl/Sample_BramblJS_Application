@@ -4,7 +4,6 @@
  * @date 2021.05.27
  */
 
-const BramblHelper = require("../../../lib/bramblHelper");
 const AssetTransfer = require("../../../modifier/transaction/assetTransfer");
 const TransferTransactionValidator = require("../../../modifier/transaction/transferTransactionValidator");
 const stdError = require("../../../core/standardError");
