@@ -6,22 +6,20 @@ const router = new Router();
 router.route("/").get(NetworkCtrl.getTest);
 
 router.route("/balance/:address").get(
-  checkSchema({
-    address: {
-      in: ["params"],
-      optional: false,
-      errorMessage: "Please provide a valid address"
-    }
-  }),
-  NetworkCtrl.getBalance
+    checkSchema({
+        address: {
+            in: ["params"],
+            optional: false,
+            errorMessage: "Please provide a valid address",
+        },
+    }),
+    NetworkCtrl.getBalance
 );
 
 router.route("/block").get(NetworkCtrl.getBlockNumber);
 router.route("/block/:blockNumber").get(NetworkCtrl.getBlock);
 router.route("/tx/:transactionId").get(NetworkCtrl.getTransactionFromMempool);
-router
-  .route("/tx-from-block/:transactionId")
-  .get(NetworkCtrl.getTransactionFromBlock);
+router.route("/tx-from-block/:transactionId").get(NetworkCtrl.getTransactionFromBlock);
 
 // Endpoints to perform a poly transaction
 router.route("/send-raw-poly-tx").post(NetworkCtrl.sendRawPolyTransaction);

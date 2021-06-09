@@ -6,170 +6,146 @@ const AssetValue = require("../../lib/boxes/assetValue");
 const MAX_INTEGER_VALUE = require("../../util/constants").MAX_INTEGER_VALUE;
 
 class AssetTransfer extends TransferTransaction {
-  typePrefix = 3;
-  typeString = "AssetTransfer";
+    typePrefix = 3;
+    typeString = "AssetTransfer";
 
-  constructor(from, newBoxes, attestation, fee, timestamp, data, minting) {
-    super(from, newBoxes, attestation, fee, timestamp, data, minting);
+    constructor(from, newBoxes, attestation, fee, timestamp, data, minting, assetCode) {
+        super(from, newBoxes, attestation, fee, timestamp, data, minting, assetCode);
 
-    this.coinOutput = newBoxes.map((recipient) => {
-      // grabbing the value of the assets that will be put in the recipient's box
-      return new AssetBox(recipient[1].quantity);
-    });
+        this.coinOutput = newBoxes.map((recipient) => {
+            // grabbing the value of the assets that will be put in the recipient's box
+            return new AssetBox(
+                new AssetValue(recipient[1].quantity, assetCode, recipient[1].securityRoot, recipient[1].metadata)
+            );
+        });
 
-    this.feeChangeOutput = new PolyBox(
-      new SimpleValue(newBoxes[0][1].quantity)
-    );
-  }
-
-  generateNewBoxes() {
-    const recipientCoinOutput = this.coinOutput.filter(
-      (r) => r.value.quantity > 0
-    );
-    const hasRecipientOutput = recipientCoinOutput.length > 0;
-    const hasFeeChangeOutput = this.feeChangeOutput.value.quantity > 0;
-
-    if (hasRecipientOutput && !hasFeeChangeOutput) return recipientCoinOutput;
-    if (hasRecipientOutput && hasFeeChangeOutput)
-      return new Array(this.feeChangeOutput).concat(recipientCoinOutput);
-  }
-
-  static async createRaw(
-    toReceive,
-    senders,
-    changeAddress,
-    consolidationAddress,
-    fee,
-    data,
-    minting,
-    assetCode,
-    bramblHelper
-  ) {
-    let obj = {};
-    let self = this;
-    return TransferTransaction.getSenderBoxesAndCheckPolyBalance(
-      senders,
-      fee,
-      "Assets",
-      assetCode,
-      bramblHelper
-    ).then(function (result) {
-      if (result.error) {
-        return result;
-      }
-      // compute the amount of tokens that will be sent to the recipient
-      const amtToSpend = toReceive
-        .map((r) => {
-          return r[1];
-        })
-        .reduce((a, b) => +a + +b, 0);
-
-      // create the list of inputs and outputs (senderChangeOut and recipientOut)
-      const inputOutputObj = minting
-        ? self.ioMint(result, toReceive, changeAddress, fee)
-        : self.ioTransfer(
-            result,
-            toReceive,
-            changeAddress,
-            consolidationAddress,
-            fee,
-            amtToSpend,
-            assetCode
-          );
-
-      // ensure there are sufficient funds from the sender boxes to create all outputs
-      if (inputOutputObj.availableToSpend < amtToSpend) {
-        obj.error = "Insufficient funds available to create transaction.";
-        return obj;
-      }
-      return new AssetTransfer(
-        inputOutputObj.inputs,
-        inputOutputObj.outputs,
-        new Map(),
-        fee,
-        Date.now(),
-        data,
-        minting
-      );
-    });
-  }
-
-  static ioTransfer(
-    txInputState,
-    toReceive,
-    changeAddress,
-    consolidationAddress,
-    fee,
-    amtToSpend,
-    assetCode
-  ) {
-    let obj = {};
-    let assetBoxes = txInputState.senderBoxes.filter(
-      (box) => box.boxType === "AssetBox"
-    );
-    if (assetBoxes.length < 1) {
-      obj.error = `No Assets Found with assetCode ${assetCode}`;
-      return obj;
+        this.feeChangeOutput = new PolyBox(new SimpleValue(newBoxes[0][1].quantity));
     }
 
-    const availableToSpend = assetBoxes
-      .map((box) => box.value.quantity)
-      .reduce((a, b) => a + b, 0);
-    // create the list of inputs and outputs (senderChangeOut and recipientOut)
-    const inputs = assetBoxes
-      .map((bx) => {
-        return [bx.address, bx.nonce];
-      })
-      .concat(
-        txInputState.senderBoxes
-          .filter((box) => box.boxType === "PolyBox")
-          .map((bx) => {
-            return [bx.address, bx.nonce];
-          })
-      );
+    generateNewBoxes() {
+        const recipientCoinOutput = this.coinOutput.filter((r) => r.value.quantity > 0);
+        const hasRecipientOutput = recipientCoinOutput.length > 0;
+        const hasFeeChangeOutput = this.feeChangeOutput.value.quantity > 0;
 
-    const outputs = [
-      [
+        if (hasRecipientOutput && !hasFeeChangeOutput) return recipientCoinOutput;
+        if (hasRecipientOutput && hasFeeChangeOutput)
+            return new Array(this.feeChangeOutput).concat(recipientCoinOutput);
+    }
+
+    static async createRaw(
+        toReceive,
+        senders,
         changeAddress,
-        {
-          type: "Simple",
-          quantity: (txInputState.polyBalance - +fee).toString(),
-        },
-      ],
-      [
         consolidationAddress,
-        new AssetValue((availableToSpend - amtToSpend).toString(), assetCode),
-      ],
-    ].concat(toReceive);
-    obj.availableToSpend = availableToSpend;
-    obj.inputs = inputs;
-    obj.outputs = outputs;
-    return obj;
-  }
+        fee,
+        data,
+        minting,
+        assetCode,
+        bramblHelper
+    ) {
+        let obj = {};
+        let self = this;
+        return TransferTransaction.getSenderBoxesAndCheckPolyBalance(
+            senders.map((sender) => sender.address),
+            fee,
+            "Assets",
+            bramblHelper,
+            assetCode
+        ).then(function (result) {
+            if (result.error) {
+                return result;
+            }
+            // compute the amount of tokens that will be sent to the recipient
+            const amtToSpend = toReceive
+                .map((r) => {
+                    return r[1].quantity;
+                })
+                .reduce((a, b) => +a + +b, 0);
 
-  static ioMint(txInputState, toReceive, changeAddress, fee) {
-    // you cannot mint more than the max number that bifrost can represent
-    const retVal = {};
-    const availableToSpend = MAX_INTEGER_VALUE;
-    const inputs = txInputState.senderBoxes
-      .filter((box) => box.boxType === "PolyBox")
-      .map((bx) => {
-        return [bx.address, bx.nonce];
-      });
-    const outputs = [
-      [
-        changeAddress,
-        {
-          type: "Simple",
-          quantity: (txInputState.polyBalance - +fee).toString(),
-        },
-      ],
-    ].concat(toReceive);
-    retVal.availableToSpend = availableToSpend;
-    retVal.inputs = inputs;
-    retVal.outputs = outputs;
-    return retVal;
-  }
+            // create the list of inputs and outputs (senderChangeOut and recipientOut)
+            const inputOutputObj = minting
+                ? self.ioMint(result, toReceive, changeAddress, fee)
+                : self.ioTransfer(result, toReceive, changeAddress, consolidationAddress, fee, amtToSpend, assetCode);
+
+            // ensure there are sufficient funds from the sender boxes to create all outputs
+            if (inputOutputObj.availableToSpend < amtToSpend) {
+                obj.error = "Insufficient funds available to create transaction.";
+                return obj;
+            }
+            return new AssetTransfer(
+                inputOutputObj.inputs,
+                inputOutputObj.outputs,
+                new Map(),
+                fee,
+                Date.now(),
+                data,
+                minting,
+                assetCode
+            );
+        });
+    }
+
+    static ioTransfer(txInputState, toReceive, changeAddress, consolidationAddress, fee, amtToSpend, assetCode) {
+        let obj = {};
+        let assetBoxes = txInputState.senderBoxes.filter((box) => box.typeString === "AssetBox");
+        if (assetBoxes.length < 1) {
+            obj.error = `No Assets Found with assetCode ${assetCode}`;
+            return obj;
+        }
+
+        const availableToSpend = assetBoxes.map((box) => box.value.quantity).reduce((a, b) => +a + +b, 0);
+        // create the list of inputs and outputs (senderChangeOut and recipientOut)
+        const inputs = assetBoxes
+            .map((bx) => {
+                return [bx.address, bx.nonce];
+            })
+            .concat(
+                txInputState.senderBoxes
+                    .filter((box) => box.boxType === "PolyBox")
+                    .map((bx) => {
+                        return [bx.address, bx.nonce];
+                    })
+            );
+
+        const outputs = [
+            [
+                changeAddress,
+                {
+                    type: "Simple",
+                    quantity: (txInputState.polyBalance - +fee).toString(),
+                },
+            ],
+            [consolidationAddress, new AssetValue(amtToSpend.toString(), assetCode)],
+        ].concat(toReceive);
+        obj.availableToSpend = availableToSpend;
+        obj.inputs = inputs;
+        obj.outputs = outputs;
+        return obj;
+    }
+
+    static ioMint(txInputState, toReceive, changeAddress, fee) {
+        // you cannot mint more than the max number that bifrost can represent
+        const retVal = {};
+        const availableToSpend = MAX_INTEGER_VALUE;
+        const inputs = txInputState.senderBoxes
+            .filter((box) => box.boxType === "PolyBox")
+            .map((bx) => {
+                return [bx.address, bx.nonce];
+            });
+        const outputs = [
+            [
+                changeAddress,
+                {
+                    type: "Simple",
+                    quantity: (txInputState.polyBalance - +fee).toString(),
+                },
+            ],
+        ].concat(toReceive);
+        retVal.availableToSpend = availableToSpend;
+        retVal.inputs = inputs;
+        retVal.outputs = outputs;
+        return retVal;
+    }
 }
 
 module.exports = AssetTransfer;

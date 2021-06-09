@@ -1,11 +1,13 @@
 class PolyBox {
-  typePrefix = 2;
-  typeString = "PolyBox";
+    typePrefix = 2;
+    typeString = "PolyBox";
 
-  constructor(value) {
-    //add evidence and nonce values once the serializers are available in JS
-    this.value = value;
-  }
+    constructor(value, evidence, nonce, id) {
+        this.value = value;
+        this.id = id;
+        this.evidence = evidence;
+        this.nonce = nonce;
+    }
 }
 
 module.exports = PolyBox;

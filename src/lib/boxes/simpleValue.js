@@ -1,9 +1,9 @@
 class SimpleValue {
-  type = "Simple";
+    type = "Simple";
 
-  constructor(quantity) {
-    this.quantity = quantity;
-  }
+    constructor(quantity) {
+        this.quantity = quantity;
+    }
 }
 
 module.exports = SimpleValue;
