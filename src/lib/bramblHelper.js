@@ -327,7 +327,9 @@ class BramblHelper {
         let obj = {};
         const formattedRecipients = [];
         const self = this;
-        obj.keys = self.getSenderKeyManagers(txObject.sender, txObject.senderPasswords, txObject.network);
+        obj.keys = self
+            .getSenderKeyManagers(txObject.sender, txObject.senderPasswords, txObject.network)
+            .concat(txObject.issuerKeyManager);
         txObject.recipients.forEach((address) => {
             const recipientForBramblJS = [
                 address[0],
@@ -438,7 +440,7 @@ class BramblHelper {
                 propositionType: txObject.propositionType,
                 recipients: txObject.recipients,
                 fee: txObject.fee,
-                sender: txObject.keyfiles,
+                sender: txObject.senderKeyfiles,
                 senderPasswords: Object.values(txObject.sender),
                 changeAddress: txObject.changeAddress,
                 data: txObject.data,
@@ -446,6 +448,8 @@ class BramblHelper {
                 minting: txObject.minting,
                 assetCode: txObject.assetCode ? txObject.assetCode : null,
                 network: txObject.network,
+                issuerKeyManager: txObject.issuerKeyManager,
+                issuer: txObject.issuer ? Object.keys(txObject.issuer) : null,
             };
             resolve(params);
         });

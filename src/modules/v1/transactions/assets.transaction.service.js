@@ -4,7 +4,6 @@
  * @date 2021.05.27
  */
 
-const BramblHelper = require("../../../lib/bramblHelper");
 const AssetTransfer = require("../../../modifier/transaction/assetTransfer");
 const TransferTransactionValidator = require("../../../modifier/transaction/transferTransactionValidator");
 const stdError = require("../../../core/standardError");
@@ -94,6 +93,7 @@ class AssetTransactionService {
      */
     static async createAsset(args) {
         let bramblHelper;
+        args.minting = true;
         [bramblHelper, args] = await TransactionsServiceHelper.initiateBramblHelperFromRequest(args);
         args.address = bramblHelper.brambljs.keyManager.address;
         if (bramblHelper) {
@@ -121,6 +121,7 @@ class AssetTransactionService {
      */
     static async updateAsset(args) {
         let bramblHelper;
+        args.minting = false;
         [bramblHelper, args] = await TransactionsServiceHelper.initiateBramblHelperFromRequest(args);
         args.address = bramblHelper.brambljs.keyManager.address;
         if (bramblHelper) {

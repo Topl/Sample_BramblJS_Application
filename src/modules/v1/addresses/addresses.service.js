@@ -176,9 +176,7 @@ class AddressesService {
                 console.error(err);
                 return [false, false];
             });
-            if (!args.polyBalance) {
-                args.polyBalance = balances.polyBalance;
-            }
+            args.polyBalance = balances.polyBalance;
 
             // retrieve boxes. Only update the new boxes in the DB and for the address
             if (balances) {

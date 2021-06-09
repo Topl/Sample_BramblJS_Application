@@ -70,11 +70,16 @@ function getObjectDiff(obj1, obj2) {
     return diff;
 }
 
+function countProperties(obj) {
+    return Object.keys(obj).length;
+}
+
 module.exports = {
     asyncFlatMap,
     asyncMap,
     flatMap,
     flatten,
     getObjectDiff,
+    countProperties,
     StringOps,
 };

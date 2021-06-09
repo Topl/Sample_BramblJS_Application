@@ -2,10 +2,10 @@ const { checkExists } = require("../../../lib/validation");
 const Address = require("../addresses/addresses.model");
 const AddressesService = require("../addresses/addresses.service");
 const ReadTransactionService = require("./read.transactions.service");
-const BoxUtils = require("../../../lib/boxes/boxUtils");
 const stdError = require("../../../core/standardError");
 const BramblJS = require("brambljs");
 const BramblHelper = require("../../../lib/bramblHelper");
+const { countProperties } = require("../../../util/extensions");
 
 const serviceName = "TransactionServiceHelper";
 
@@ -96,24 +96,49 @@ class TransactionServiceHelper {
 
     static async initiateBramblHelperFromRequest(args) {
         let senderKeyManagers = [];
+        let bramblKeyManager;
+        let issuerKeyManager;
         let bramblHelperParams;
-        const result = await this.getKeyfileForAddresses(Object.keys(args.sender));
-        if (result.error) {
-            throw stdError(500, result.error, serviceName, serviceName);
+        let createAddressParams = [];
+        let issuerKeyStorage;
+        if (args.issuer) {
+            if (countProperties(args.issuer) != 1) {
+                throw stdError(400, "One issuer required, received issuer count != 1", serviceName, serviceName);
+            }
+            issuerKeyStorage = this.getKeyfileForAddresses(Object.keys(args.issuer));
+            if (issuerKeyStorage && issuerKeyStorage.length > 0 && !issuerKeyStorage[0].keyfile) {
+                issuerKeyManager = bramblKeyManager = BramblJS.KeyManager.importKeyPairFromFile(
+                    `private_keyfiles/${issuerKeyStorage[0].address}.json`,
+                    args.password
+                );
+                createAddressParams.push({
+                    network: args.network,
+                    password: args.issuer[issuerKeyStorage.address],
+                    name: `${issuerKeyStorage.address}`,
+                    userEmail: args.userEmail,
+                    address: issuerKeyStorage.address,
+                    keyfile: bramblKeyManager.getKeyStorage(),
+                });
+            }
+        }
+        let senderKeyStorage = await this.getKeyfileForAddresses(Object.keys(args.sender));
+
+        if (senderKeyStorage.error) {
+            throw stdError(500, senderKeyStorage.error, serviceName, serviceName);
         }
         //partitions the result based on whether a keyfile was found in the db
-        const [addressesWithKeyfilesInDB, addressesWithoutKeyfilesInDB] = result.reduce(
+        const [senderKeyStorageInDB, senderKeyStorageNotInDB] = senderKeyStorage.reduce(
             ([p, f], e) => (e.keyfile ? [[...p, e], f] : [p, [...f, e]]),
             [[], []]
         );
-        if (addressesWithoutKeyfilesInDB.length > 0) {
-            for (const keyStorage of addressesWithoutKeyfilesInDB) {
+        if (senderKeyStorageNotInDB.length > 0) {
+            for (const keyStorage of senderKeyStorageNotInDB) {
                 const kM = BramblJS.KeyManager.importKeyPairFromFile(
                     `private_keyfiles/${keyStorage.address}.json`,
                     args.password
                 );
                 senderKeyManagers.push(kM);
-                await AddressesService.create({
+                createAddressParams.push({
                     network: args.network,
                     password: args.sender[keyStorage.address],
                     name: `${keyStorage.address}`,
@@ -123,26 +148,35 @@ class TransactionServiceHelper {
                 });
             }
         }
-        if (senderKeyManagers.length > 0) {
-            bramblHelperParams = {
-                readOnly: false,
-                network: args.network,
-                keyManager: senderKeyManagers[0],
-            };
-        } else {
-            bramblHelperParams = {
-                readOnly: false,
-                network: args.network,
-                password: args.sender[addressesWithKeyfilesInDB[0].address],
-                keyFile: addressesWithKeyfilesInDB[0].keyfile,
-            };
+
+        if (!bramblKeyManager) {
+            if (senderKeyManagers.length > 0) {
+                bramblKeyManager = senderKeyManagers[0];
+            } else {
+                bramblKeyManager = BramblJS.KeyManager.importKeyPair(
+                    senderKeyStorageInDB[0].keyfile,
+                    args.sender[senderKeyStorageInDB[0].address]
+                );
+            }
         }
+        bramblHelperParams = {
+            readOnly: false,
+            network: args.network,
+            keyManager: bramblKeyManager,
+        };
         const bramblHelper = new BramblHelper(bramblHelperParams);
-        args.keyfiles = senderKeyManagers
+        if (bramblHelper.error) {
+            throw stdError(400, bramblHelper.error, serviceName, serviceName);
+        }
+        if (!issuerKeyManager) {
+            issuerKeyManager = bramblHelper.brambljs.keyManager;
+        }
+        args.senderKeyfiles = senderKeyManagers
             .map(function (manager) {
                 return manager.getKeyStorage();
             })
-            .concat(addressesWithKeyfilesInDB.map((keyStorage) => keyStorage.keyfile));
+            .concat(senderKeyStorageInDB.map((keyStorage) => keyStorage.keyfile));
+        args.issuerKeyManager = issuerKeyManager;
         return [bramblHelper, args];
     }
 
@@ -160,7 +194,6 @@ class TransactionServiceHelper {
                             address: address,
                             network: args.network,
                             password: args.senderPasswords[0],
-                            polyBalance: BoxUtils.calculatePolyBalance(transactionResult.result.newBoxes),
                         };
                         return ReadTransactionService.getBalanceHelper(internalArgs)
                             .then(function (result) {
