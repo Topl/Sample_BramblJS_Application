@@ -94,6 +94,7 @@ class AssetTransactionService {
      */
     static async createAsset(args) {
         let bramblHelper;
+        args.minting = true;
         [bramblHelper, args] = await TransactionsServiceHelper.initiateBramblHelperFromRequest(args);
         args.address = bramblHelper.brambljs.keyManager.address;
         if (bramblHelper) {
@@ -121,6 +122,7 @@ class AssetTransactionService {
      */
     static async updateAsset(args) {
         let bramblHelper;
+        args.minting = false;
         [bramblHelper, args] = await TransactionsServiceHelper.initiateBramblHelperFromRequest(args);
         args.address = bramblHelper.brambljs.keyManager.address;
         if (bramblHelper) {

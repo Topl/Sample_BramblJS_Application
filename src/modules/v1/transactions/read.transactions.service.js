@@ -14,7 +14,6 @@ class ReadTransactionService {
             addressId: args.address,
             network: args.network,
             password: args.password,
-            polyBalance: args.polyBalance,
         }).then(function (result) {
             if (result.error) {
                 throw stdError(500, result.error, serviceName, serviceName);
