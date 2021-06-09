@@ -120,7 +120,7 @@ function shutdown() {
             process.exit(1);
         }
 
-        if (agenda != null) {
+        if (agenda) {
             await agenda.stop();
             console.log("Agenda Connection Terminated");
         }

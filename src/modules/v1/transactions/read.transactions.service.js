@@ -14,7 +14,6 @@ class ReadTransactionService {
             addressId: args.address,
             network: args.network,
             password: args.password,
-            newBoxes: args.newBoxes,
             polyBalance: args.polyBalance,
         }).then(function (result) {
             if (result.error) {

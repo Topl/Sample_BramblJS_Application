@@ -1,7 +1,7 @@
-const settings = require("../lib/mongoDBSettings");
+const settings = require("../lib/db/mongoDBSettings");
 
 module.exports = async (req, res, next) => {
-    const auth = { login: settings.swaggerUesr, password: settings.sswaggerPass };
+    const auth = { login: settings.swaggerUser, password: settings.swaggerPass };
 
     //parse login and password from headers
     const b64auth = (req.headers.authorization || "").split(" ")[1] || "";

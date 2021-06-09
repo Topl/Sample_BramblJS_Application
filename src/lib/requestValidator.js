@@ -1,4 +1,4 @@
-const BramblJS = require("../../brambljs");
+const BramblJS = require("brambljs");
 
 class RequestValidator {
     static validateAddresses(value, network) {

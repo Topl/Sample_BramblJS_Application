@@ -1,7 +1,7 @@
 const connections = require(`./db/connections`);
 const networkUrl = connections.networkUrl;
 const apiKey = connections.networkApiKey;
-const BramblJS = require("../../brambljs");
+const BramblJS = require("brambljs");
 const BoxUtils = require("./boxes/boxUtils");
 
 class BramblHelper {

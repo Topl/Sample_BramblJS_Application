@@ -4,7 +4,7 @@ const AddressesService = require("../addresses/addresses.service");
 const ReadTransactionService = require("./read.transactions.service");
 const BoxUtils = require("../../../lib/boxes/boxUtils");
 const stdError = require("../../../core/standardError");
-const BramblJS = require("../../../../brambljs");
+const BramblJS = require("brambljs");
 const BramblHelper = require("../../../lib/bramblHelper");
 
 const serviceName = "TransactionServiceHelper";
@@ -160,7 +160,6 @@ class TransactionServiceHelper {
                             address: address,
                             network: args.network,
                             password: args.senderPasswords[0],
-                            newBoxes: transactionResult.result.newBoxes,
                             polyBalance: BoxUtils.calculatePolyBalance(transactionResult.result.newBoxes),
                         };
                         return ReadTransactionService.getBalanceHelper(internalArgs)

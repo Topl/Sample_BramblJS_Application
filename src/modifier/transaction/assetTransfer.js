@@ -87,13 +87,13 @@ class AssetTransfer extends TransferTransaction {
 
     static ioTransfer(txInputState, toReceive, changeAddress, consolidationAddress, fee, amtToSpend, assetCode) {
         let obj = {};
-        let assetBoxes = txInputState.senderBoxes.filter((box) => box.boxType === "AssetBox");
+        let assetBoxes = txInputState.senderBoxes.filter((box) => box.typeString === "AssetBox");
         if (assetBoxes.length < 1) {
             obj.error = `No Assets Found with assetCode ${assetCode}`;
             return obj;
         }
 
-        const availableToSpend = assetBoxes.map((box) => box.value.quantity).reduce((a, b) => a + b, 0);
+        const availableToSpend = assetBoxes.map((box) => box.value.quantity).reduce((a, b) => +a + +b, 0);
         // create the list of inputs and outputs (senderChangeOut and recipientOut)
         const inputs = assetBoxes
             .map((bx) => {

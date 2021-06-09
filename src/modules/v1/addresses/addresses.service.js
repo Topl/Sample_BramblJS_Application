@@ -168,23 +168,16 @@ class AddressesService {
             // eslint-disable-next-line no-unused-vars
             let balances;
             let keyfile;
-            if (args.newBoxes) {
-                balances = {
-                    boxes: args.newBoxes,
-                    polyBalance: args.polyBalance,
-                };
-            } else {
-                [balances, keyfile] = await AddressesService.getBalancesForAddress(
-                    args.addressId,
-                    args.network,
-                    args.password
-                ).catch(function (err) {
-                    console.error(err);
-                    return [false, false];
-                });
-                if (!args.polyBalance) {
-                    args.polyBalance = balances.polyBalance;
-                }
+            [balances, keyfile] = await AddressesService.getBalancesForAddress(
+                args.addressId,
+                args.network,
+                args.password
+            ).catch(function (err) {
+                console.error(err);
+                return [false, false];
+            });
+            if (!args.polyBalance) {
+                args.polyBalance = balances.polyBalance;
             }
 
             // retrieve boxes. Only update the new boxes in the DB and for the address
