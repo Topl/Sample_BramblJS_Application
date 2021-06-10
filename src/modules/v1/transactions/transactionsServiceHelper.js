@@ -107,7 +107,7 @@ class TransactionServiceHelper {
             }
             issuerKeyStorage = this.getKeyfileForAddresses(Object.keys(args.issuer));
             if (issuerKeyStorage && issuerKeyStorage.length > 0 && !issuerKeyStorage[0].keyfile) {
-                issuerKeyManager = bramblKeyManager = BramblJS.KeyManager.importKeyPairFromFile(
+                issuerKeyManager = bramblKeyManager = BramblJS.KeyManager.importKeyFileFromDisk(
                     `private_keyfiles/${issuerKeyStorage[0].address}.json`,
                     args.password
                 );
@@ -133,7 +133,7 @@ class TransactionServiceHelper {
         );
         if (senderKeyStorageNotInDB.length > 0) {
             for (const keyStorage of senderKeyStorageNotInDB) {
-                const kM = BramblJS.KeyManager.importKeyPairFromFile(
+                const kM = BramblJS.KeyManager.importKeyFileFromDisk(
                     `private_keyfiles/${keyStorage.address}.json`,
                     args.password
                 );
@@ -153,7 +153,7 @@ class TransactionServiceHelper {
             if (senderKeyManagers.length > 0) {
                 bramblKeyManager = senderKeyManagers[0];
             } else {
-                bramblKeyManager = BramblJS.KeyManager.importKeyPair(
+                bramblKeyManager = BramblJS.KeyManager.importKeyFile(
                     senderKeyStorageInDB[0].keyfile,
                     args.sender[senderKeyStorageInDB[0].address]
                 );

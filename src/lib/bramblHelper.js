@@ -26,7 +26,7 @@ class BramblHelper {
                         url: `${networkUrl}`,
                         apiKey: `${apiKey}`,
                     },
-                    KeyManager: BramblJS.KeyManager.importKeyPair(args.keyFile, args.password),
+                    KeyManager: BramblJS.KeyManager.importKeyFile(args.keyFile, args.password),
                 });
             } else {
                 this.brambljs = new BramblJS({
@@ -427,7 +427,7 @@ class BramblHelper {
         let keyManagers = [];
         if (Array.isArray(senders)) {
             for (var i = 0; i < senders.length; i++) {
-                keyManagers.push(BramblJS.KeyManager.importKeyPair(senders[i], sendersPasswords[i]));
+                keyManagers.push(BramblJS.KeyManager.importKeyFile(senders[i], sendersPasswords[i]));
             }
         }
         return keyManagers;
