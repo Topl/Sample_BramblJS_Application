@@ -180,6 +180,27 @@ const deleteFailConditions = {
 
 // integration tests
 module.exports = function (app, request) {
+    // stub session
+    const mockSession = {
+        endSession: function () {
+            return "stubbed endSession";
+        },
+        startTransaction: function () {
+            return "stubbed startTransaction";
+        },
+        commitTransaction: function () {
+            return "stubbed commitTransaction";
+        },
+        abortTransaction: function () {
+            return "stubbed abort transaction";
+        },
+    };
+
+    // stub connection
+    const mockConnection = {
+        readyState: 1,
+    };
+
     describe("User Module - Login", function () {
         beforeEach(() => {
             //stub User
@@ -192,27 +213,6 @@ module.exports = function (app, request) {
             sandbox.stub(User.prototype, "save").callsFake(function () {
                 return Promise.resolve(this);
             });
-
-            // stub session
-            const mockSession = {
-                endSession: function () {
-                    return "stubbed endSession";
-                },
-                startTransaction: function () {
-                    return "stubbed startTransaction";
-                },
-                commitTransaction: function () {
-                    return "stubbed commitTransaction";
-                },
-                abortTransaction: function () {
-                    return "stubbed abort transaction";
-                },
-            };
-
-            // stub connection
-            const mockConnection = {
-                readyState: 1,
-            };
 
             sandbox.stub(mongoose, "startSession").returns(Promise.resolve(mockSession));
             sandbox.stub(mongoose, "connection").returns(Promise.resolve(mockConnection));
@@ -284,23 +284,6 @@ module.exports = function (app, request) {
             sandbox.stub(User.prototype, "save").callsFake(function () {
                 return Promise.resolve(this);
             });
-            const mockSession = {
-                endSession: function () {
-                    return "stubbed endSession";
-                },
-                startTransaction: function () {
-                    return "stubbed startTransaction";
-                },
-                commitTransaction: function () {
-                    return "stubbed commitTransaction";
-                },
-                abortTransaction: function () {
-                    return "stubbed abort transaction";
-                },
-            };
-            const mockConnection = {
-                readyState: 1,
-            };
             sandbox.stub(mongoose, "startSession").returns(Promise.resolve(mockSession));
             sandbox.stub(mongoose, "connection").returns(Promise.resolve(mockConnection));
         });
@@ -359,27 +342,6 @@ module.exports = function (app, request) {
             sandbox.stub(User.prototype, "save").callsFake(function () {
                 return Promise.resolve(this);
             });
-
-            //stub session
-            const mockSession = {
-                endSession: function () {
-                    return "stubbed endSession";
-                },
-                startTransaction: function () {
-                    return "stubbed startTransaction";
-                },
-                commitTransaction: function () {
-                    return "stubbed commitTransaction";
-                },
-                abortTransaction: function () {
-                    return "stubbed abort transaction";
-                },
-            };
-
-            // stub connection
-            const mockConnection = {
-                readyState: 1,
-            };
             sandbox.stub(mongoose, "startSession").returns(Promise.resolve(mockSession));
             sandbox.stub(mongoose, "connection").returns(Promise.resolve(mockConnection));
         });
