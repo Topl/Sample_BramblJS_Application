@@ -8,13 +8,13 @@ on:
 jobs:
     build:
         runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v2
-    - name: Use Node
-        uses: actions/setup-node@v1
-        with:
+        steps:
+        - uses: actions/checkout@v2
+        - name: Use Node
+          uses: actions/setup-node@v1
+          with:
             node-version: '16.2.0'
-    - run: npm install
-    - run: npm run test
-        env: 
+        - run: npm install
+        - run: npm run test
+          env: 
             CI: true
