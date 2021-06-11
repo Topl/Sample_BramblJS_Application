@@ -19,7 +19,7 @@ class UserController {
         const handler = UserService.getUser;
         const args = {
             requestedEmail: req.body.requestedEmail,
-            userEmail: req.query.email,
+            userEmail: req.body.user_id,
         };
 
         const responseMsg = { success: "User Retrieved" };

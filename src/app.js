@@ -57,6 +57,13 @@ app.use(
     })
 );
 
+// global fall through server error
+// next must be passed here in order to send back the 500 code instead of the internal workings of the application
+// eslint-disable-next-line no-unused-vars
+app.use(function (err, req, res, next) {
+    res.sendStatus(500);
+});
+
 // log all requests to access.log
 app.use(
     morgan("combined", {
@@ -102,6 +109,7 @@ connectDB().then(async () => {
     //Setup and start the app listening on the specified port
     server = app.listen(settings.port, () => {
         console.log("HTTP Server running on port " + settings.port);
+        app.emit("appStarted");
     });
 });
 
@@ -133,3 +141,5 @@ function shutdown() {
         });
     });
 }
+
+module.exports = app;
