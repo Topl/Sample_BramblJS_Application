@@ -2,7 +2,7 @@ const sinon = require("sinon");
 const chai = require("chai");
 const expect = chai.expect;
 const sandbox = sinon.createSandbox();
-const standardRoute = require("../../../src/core/standardRoute");
+const standardRoute = require("../../src/core/standardRoute");
 const { assert } = require("chai");
 
 describe("Standard Route", function () {

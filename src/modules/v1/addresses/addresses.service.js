@@ -165,9 +165,9 @@ class AddressesService {
         await waitForMongooseConnection();
         const session = await mongoose.startSession();
         try {
-            // eslint-disable-next-line no-unused-vars
             let balances;
             let keyfile;
+            // eslint-disable-next-line no-unused-vars
             [balances, keyfile] = await AddressesService.getBalancesForAddress(
                 args.addressId,
                 args.network,

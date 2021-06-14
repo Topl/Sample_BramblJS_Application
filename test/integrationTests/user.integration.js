@@ -5,6 +5,7 @@ const User = require("../../src/modules/v1/user/user.model");
 const ObjectValidator = require("../lib/ObjectValidator");
 const generateSingleFailureTests = require("../lib/generateSingleFailureTests");
 const generateChainedFailureTests = require("../lib/generatedChainedFailureTests");
+const mockConnection = require("../util/constants");
 const sinon = require("sinon");
 const sandbox = sinon.createSandbox();
 const assert = require("assert");
@@ -196,11 +197,6 @@ module.exports = function (app, request) {
         },
     };
 
-    // stub connection
-    const mockConnection = {
-        readyState: 1,
-    };
-
     describe("User Module - Login", function () {
         beforeEach(() => {
             //stub User
@@ -248,10 +244,6 @@ module.exports = function (app, request) {
             mockFindById.withArgs(sinon.match(mockUser._id.toString())).returns(Promise.resolve(mockUser));
             mockFindUser.withArgs(sinon.match({ email: "mock@mock.com" })).returns(Promise.resolve(mockUser));
             mockFindUser.withArgs(sinon.match({ email: "mock@incorrect.com" })).returns(Promise.resolve(null));
-            // stub connection
-            const mockConnection = {
-                readyState: 1,
-            };
             sandbox.stub(mongoose, "connection").returns(Promise.resolve(mockConnection));
         });
         after(() => {

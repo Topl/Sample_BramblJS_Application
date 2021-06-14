@@ -1,7 +1,7 @@
 const chai = require("chai");
 const { expect } = chai;
 
-const formatError = require("../../../src/lib/formatError");
+const formatError = require("../../src/lib/formatError");
 
 describe("Format Error", function () {
     it("It should return an errors object with message and data", function () {
