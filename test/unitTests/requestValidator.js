@@ -5,7 +5,7 @@ const chaiAsPromised = require("chai-as-promised");
 
 chai.use(chaiAsPromised);
 const sandbox = sinon.createSandbox();
-const requestValidator = require("../../src/lib/RequestValidator.js");
+const requestValidator = require("../../src/lib/requestValidator.js");
 
 describe("Request Validator", function () {
     after(() => {
