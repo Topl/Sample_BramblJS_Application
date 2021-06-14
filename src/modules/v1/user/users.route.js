@@ -30,7 +30,6 @@ router.route("/register").post(
     usersCtrl.register
 );
 router.route("").delete(
-    auth,
     checkSchema({
         user_id: {
             in: ["body"],
@@ -45,15 +44,15 @@ router.route("").delete(
             errorMessage: "Please provide a valid email",
         },
     }),
+    auth,
     usersCtrl.delete
 );
 
 router.route("").patch(
-    auth,
     checkSchema({
-        email: {
+        user_id: {
             in: ["body"],
-            optional: true,
+            optional: false,
             isEmail: true,
             errorMessage: "Please provide a valid email",
         },
@@ -70,11 +69,11 @@ router.route("").patch(
             errorMessage: "Please provide a valid last name",
         },
     }),
+    auth,
     usersCtrl.save
 );
 
 router.route("").get(
-    auth,
     checkSchema({
         email: {
             in: ["body"],
@@ -89,6 +88,7 @@ router.route("").get(
             errorMessage: "Please provide a valid email",
         },
     }),
+    auth,
     usersCtrl.getUser
 );
 

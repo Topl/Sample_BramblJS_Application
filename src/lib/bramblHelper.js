@@ -289,6 +289,7 @@ class BramblHelper {
     returnAssetBoxWithAssetCode(assetBoxes, assetCode) {
         var result = [];
         for (var i = 0; i < assetBoxes.length; i++) {
+            // eslint-disable-next-line no-prototype-builtins
             if (assetBoxes[i].value.hasOwnProperty("assetCode")) {
                 if (assetBoxes[i].value.assetCode === assetCode) {
                     assetBoxes.push(assetBoxes[i].value);

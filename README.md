@@ -42,3 +42,6 @@ In order to build a multi-container application, also providing the linking betw
 
 Run the following command to get up and running quickly, with no hassle from the docker/compose directory
 `docker-compose up`
+
+### Bifrost Compatibility
+- The Sample BramblJS application has been tested on Bifrost 1.3.x+

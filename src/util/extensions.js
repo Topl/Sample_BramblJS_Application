@@ -58,6 +58,7 @@ function flatten(arr) {
  */
 function getObjectDiff(obj1, obj2) {
     const diff = Object.keys(obj1).reduce((result, key) => {
+        // eslint-disable-next-line no-prototype-builtins
         if (!obj2.hasOwnProperty(key)) {
             result.push(key);
         } else if (_.isEqual(obj1[key], obj2[key])) {

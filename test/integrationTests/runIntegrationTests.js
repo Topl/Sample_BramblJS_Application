@@ -4,6 +4,13 @@ const request = require("supertest");
 // global stubs
 const globalSandbox = sinon.createSandbox();
 const app = require("../../src/app");
+app.use(require("body-parser").json());
+
+before(function (done) {
+    app.on("appStarted", function () {
+        done();
+    });
+});
 
 // get integration tests
 const testModules = glob

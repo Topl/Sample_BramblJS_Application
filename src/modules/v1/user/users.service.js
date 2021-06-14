@@ -146,7 +146,7 @@ class UsersService {
 
     static async checkAdmin(email) {
         try {
-            const { isAdmin } = await checkExists(UserModel, email, { serviceName });
+            const { isAdmin } = await checkExists(UserModel, email, "email");
             return isAdmin.doc.role === "PRIVILIGED" || false;
         } catch (e) {
             return { error: e };

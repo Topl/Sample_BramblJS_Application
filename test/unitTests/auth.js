@@ -1,12 +1,12 @@
 /* eslint-disable no-undef */
-const User = require("../../../src/modules/v1/user/user.model");
-const MockUser = require("../../mockData/mockUser");
+const User = require("../../src/modules/v1/user/user.model");
+const MockUser = require("../mockData/mockUser");
 const chai = require("chai");
 const expect = chai.expect;
 const sinon = require("sinon");
 const sandbox = sinon.createSandbox();
 const mongoose = require("mongoose");
-const authorizationMiddleware = require("../../../src/core/auth");
+const authorizationMiddleware = require("../../src/core/auth");
 
 describe("Core: Auth middleware", function () {
     let mockRequest;
