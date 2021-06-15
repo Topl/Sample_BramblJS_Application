@@ -166,7 +166,6 @@ class BramblHelper {
                 return obj;
             });
     }
-    s;
     /**
      * Get transaction details from the block
      * @param {string} transactionId id for transaction
