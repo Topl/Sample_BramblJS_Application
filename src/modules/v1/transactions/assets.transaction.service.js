@@ -76,7 +76,13 @@ class AssetTransactionService {
                         rpcResponse,
                         bramblHelper,
                         args
-                    );
+                    ).then(function (result) {
+                        if (result.err) {
+                            throw stdError(500, result.err, serviceName, serviceName);
+                        } else {
+                            return result;
+                        }
+                    });
                 } else {
                     throw stdError(500, "Invalid RPC Response", serviceName, serviceName);
                 }

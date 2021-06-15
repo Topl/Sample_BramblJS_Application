@@ -77,7 +77,13 @@ class PolyTransactionService {
                             rpcResponse,
                             bramblHelper,
                             args
-                        );
+                        ).then(function (result) {
+                            if (result.err) {
+                                throw stdError(500, result.err, serviceName, serviceName);
+                            } else {
+                                return result;
+                            }
+                        });
                     } else {
                         throw stdError(500, "Invalid RPC Response", serviceName, serviceName);
                     }
@@ -98,7 +104,9 @@ class PolyTransactionService {
         [bramblHelper, args] = await TransactionsServiceHelper.initiateBramblHelperFromRequest(args);
         if (bramblHelper) {
             // iterate through all sender, recipient, and change addresses, checking whether or not they are in the DB
-            TransactionsServiceHelper.extractParamsAndAddAddressesToDb(bramblHelper, args).then(function (result) {
+            return TransactionsServiceHelper.extractParamsAndAddAddressesToDb(bramblHelper, args).then(function (
+                result
+            ) {
                 return PolyTransactionService.polyTransactionHelper(bramblHelper, result).then(function (result) {
                     if (result.error) {
                         throw stdError(500, result.error, serviceName, serviceName);
