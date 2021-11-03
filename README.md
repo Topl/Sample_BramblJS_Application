@@ -1,4 +1,5 @@
 # Sample_BramblJS_Application
+NOTE: This repository is provided *AS IS* and is meant to demonstration purposes only. Best efforts are made to keep it up-to-date and to expand test coverage but we encourage any external users to file issues or pull requests it bugs are encountered.
 
 ## Description
 A sample BramblJS application that uses all of the APIs which can be used for documentation, tutorials, training and onboarding. 
