@@ -1,5 +1,5 @@
 const mongoDBSettings = require("../../../config/mongoDBSettings.json");
-const isDocker = require('is-docker');
+const isDocker = require("is-docker");
 require("dotenv").config();
 
 const settings = {
