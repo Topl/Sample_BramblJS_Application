@@ -1,4 +1,5 @@
 # Sample_BramblJS_Application
+NOTE: This repository is provided *AS IS* and is meant to demonstration purposes only. Best efforts are made to keep it up-to-date and to expand test coverage but we encourage any external users to file issues or pull requests if bugs are encountered.
 
 ## Description
 A sample BramblJS application that uses all of the APIs which can be used for documentation, tutorials, training and onboarding. 
@@ -13,7 +14,9 @@ npm install
 ```
 
 ### Git Crypt
-* This repo uses `git-crypt` for the encryption of secret information. Please be sure to have `git-crypt` available to access encrypted information. YOu must have your GPG public key added to the repo in order to be a collaborator on this project. More information can be found here https://github.com/AGWA/git-crypt. Once you have been added, you can decrypt the environment files by typing the following: 
+* This repo uses `git-crypt` for the encryption and sharing of secret information. This is not a required dependency as a local `.env` file may be used to specify needed environment variables.  
+
+* If you need to access the ecnrypted information, you must have `git-crypt` available locally and have your GPG public key added to the repo by a previous collaborator on this project. More information can be found here https://github.com/AGWA/git-crypt. Once you have been added, you can decrypt the environment files by typing the following: 
 ```
 git-crypt unlock
 ```
